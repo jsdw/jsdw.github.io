@@ -1,0 +1,206 @@
+$contentWidth: 800px;
+$maxWidth: calc(100% - 40px);
+
+$headerColour: #da3889;
+$accentColour: #29329a;
+$accentLinkColour: #b7bdff;
+$bgColour: whitesmoke;
+
+* {
+    box-sizing: border-box;
+}
+
+@mixin link($col) {
+    a, a:visited {
+        color: $col;
+        transition: color 0.2s ease-in-out;
+    }
+    a:hover {
+        color: lighten($col, 10%);
+    }
+}
+
+body {
+    font-family: 'Open Sans', sans-serif;
+
+    padding: 0px;
+    margin: 0px;
+    background-color: $bgColour;
+
+    > .body {
+
+        $spacing: 25px 0px;
+
+        > header {
+
+            background-color: $headerColour;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+
+            > .title-inner {
+
+                width: $contentWidth;
+                max-width: $maxWidth;
+
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-end;
+                padding: $spacing;
+
+                @include link(white);
+
+                a, a:visited {
+                    text-decoration: none;
+                }
+
+                @mixin hover-scale {
+                    transition: 0.2s ease-in-out;
+                    &:hover {
+                        transform: scale(1.12);
+                    }
+                }
+
+                > .jsdw {
+                    font-size: 3em;
+                    line-height: 0.8em;
+                    @include hover-scale;
+                }
+
+                > nav {
+                    margin-top: $spacing;
+                    display:flex;
+                    a {
+                        margin-left: 1em;
+                        @include hover-scale;
+                    }
+                }
+            }
+
+        }
+        > section {
+
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+
+            > .top {
+
+                width: 100%;
+                background-color: $accentColour;
+                color: white;
+
+                padding: 1em 0px;
+                display: flex;
+                justify-content: center;
+
+                @include link($accentLinkColour);
+
+                > .top-inner {
+
+                    width: $contentWidth;
+                    font-size: 1.1em;
+                    max-width: $maxWidth;
+
+                    .title {
+                        font-size: 2.5em;
+                        margin-top: 0.4em;
+                        margin-bottom: 0.4em;
+                    }
+
+                }
+
+            }
+
+            > .content-inner {
+                width: $contentWidth;
+                max-width: $maxWidth;
+            }
+        }
+        > footer {
+            height: 100px;
+        }
+
+    }
+
+}
+
+.toc {
+    h2 {
+        text-decoration: underline;
+    }
+}
+
+@include link($headerColour);
+
+// home page styling:
+.body.home {
+
+    .see-all {
+        font-size: 0.7em;
+    }
+
+}
+
+// blog post styling:
+.body.post {
+
+    .top-inner .date {
+        font-size: 0.5em;
+        font-style: italic;
+        // keep date on one line:
+        white-space: nowrap;
+    }
+
+    .content-inner {
+
+        // code blocks:
+        pre {
+            padding: 0.8em 0.9em;
+            margin-left: -12px;
+            margin-right: -12px;
+            overflow-y: auto;
+        }
+
+        // quotes:
+        blockquote {
+            padding: 0.5em 1em;
+            margin: 2em 3em;
+            background-color: #e4e4e4;
+            border-radius: 5px;
+            box-shadow: 0px 3px 3px 1px rgba(0, 0, 0, 0.37);
+            p {
+                margin: 0;
+            }
+        }
+
+        // images:
+        img {
+            max-width: $maxWidth;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+        }
+    }
+}
+
+// CSS for components:
+[needs-js] {
+    display: none !important;
+}
+
+katex {
+    // experimentation seems to show that this hdies the least fraction lines!
+    font-size: 1.05em;
+    // give fractions plenty of space incase of wrapping and things:
+    .mfrac {
+        line-height: 2;
+    }
+    // allow katex lark to wrap to prevent overflowing:
+    .katex {
+        .base {
+            white-space: normal;
+        }
+    }
+}

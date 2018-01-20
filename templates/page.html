@@ -1,0 +1,22 @@
+{% extends "index.html" %}
+
+{% block title %}
+    {{ super() }} - {{ page.title }}
+{% endblock title %}
+
+{% block loc %}
+    {% set location = "post" %}
+{% endblock loc %}
+
+{% block top %}
+    <h1 class="title">
+        {{ page.title }}
+        <span class="date">{{ page.date }}</span>
+    </h1>
+{% endblock top %}
+
+{% block content %}
+    <div class="post">
+        {{ page.content | safe }}
+    </div>
+{% endblock content %}

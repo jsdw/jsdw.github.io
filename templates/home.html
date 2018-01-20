@@ -1,0 +1,23 @@
+{% extends "index.html" %}
+
+{% block loc %}
+    {% set location = "home" %}
+{% endblock loc %}
+
+{% block top %}
+    <p>Hello there! I'm James. I'm a software developer working in Cambridgeshire, England.</p>
+
+    <p>Take a look at some of the things I've <a href="{{ projects.permalink }}">made</a> or <a href="{{ posts.permalink }}">written about</a>, or have a look at my <a href="https://github.com/jsdw">github</a> account.</p>
+
+    <p needs-js>You can contact me at <email-address></email-address></p>
+{% endblock top %}
+
+{% block content %}
+
+    <h1 id="projects">Latest Projects <span class="see-all">(<a href="{{ projects.permalink }}">see all</a>)</span></h1>
+    {{ macros::projects_toc(pages=projects.pages,limit=3) }}
+
+    <h1 id="posts">Latest Posts <span class="see-all">(<a href="{{ posts.permalink }}">see all</a>)</span></h1>
+    {{ macros::posts_toc(pages=posts.pages,limit=3) }}
+
+{% endblock content %}

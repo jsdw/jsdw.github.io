@@ -1,0 +1,15 @@
+{% extends "index.html" %}
+
+{% block loc %}
+    {% set location = "project" %}
+{% endblock loc %}
+
+{% block content %}
+    {% if page.extra.url %}
+        Click <a href="{{ page.extra.url }}">here</a> to go to the project homepage.
+    {% endif %}
+
+    {% if page.extra.source %}
+        Click <a href="{{ page.extra.source }}">here</a> to go to the project source.
+    {% endif %}
+{% endblock content %}

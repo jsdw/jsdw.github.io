@@ -1,0 +1,17 @@
+{% extends "index.html" %}
+
+{% block title %}
+    {{ super() }} - {{ section.title }}
+{% endblock title %}
+
+{% block loc %}
+    {% set location = "projects" %}
+{% endblock loc %}
+
+{% block top %}
+    <h1 class="title">Projects</h1>
+{% endblock top %}
+
+{% block content %}
+    {{ macros::projects_toc(pages=section.pages,limit=0) }}
+{% endblock content %}

@@ -1,0 +1,35 @@
+{% macro posts_toc(pages,limit) %}
+    <ul class="blog toc">
+        {% for page in pages %}
+        {% if limit <= 0 or loop.index0 < limit %}
+        {% if not page.draft %}
+            <li>
+                <h2><a href="{{ page.permalink | safe }}">{{ page.title }}</a></h2>
+                <p>{{ page.description }}</p>
+                <p>{{ page.date | date(format="%Y-%m-%d") }} </p>
+            </li>
+        {% endif %}
+        {% endif %}
+        {% endfor %}
+    </ul>
+{% endmacro posts_toc %}
+
+{% macro projects_toc(pages,limit) %}
+    <ul class="projects toc">
+        {% for page in pages %}
+        {% if limit <= 0 or loop.index0 < limit %}
+        {% if not page.draft %}
+            <li>
+                <h2><a href="{% if page.extra.url %}{{ page.extra.url | safe }}{% else %}{{ page.extra.source | safe }}{% endif %}">
+                    {{ page.title }}
+                </a></h2>
+                <p>{{ page.description }}</p>
+                {% if page.extra.source %}
+                    <p><a href="{{ page.extra.source }}">view source</a></p>
+                {% endif %}
+            </li>
+        {% endif %}
+        {% endif %}
+        {% endfor %}
+    </ul>
+{% endmacro projects_toc %}
