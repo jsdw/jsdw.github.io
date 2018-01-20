@@ -1,5 +1,5 @@
 # The URL the site will be built for
-base_url = "https://jsdw.github.io"
+base_url = "https://jsdw.me"
 title = "jsdw"
 
 # Whether to automatically compile all Sass files in the sass directory
