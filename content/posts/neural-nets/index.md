@@ -11,12 +11,12 @@ A neural network consists of a number of layers, each containing _neurons_. Each
 
 ![A basic network](basic-network.svg)
 
-It is worth noting that:
+Some points to note:
 
 - _Bias_ neurons always emit a value of 1, but have a weight just like any other neuron. They exist so that the neurons connected to them can be _biased_ towards outputting a higher or lower value by virtue of the bias weight, irrespective of any input values.
 - It's worth keeping in mind that every neuron except for the input neurons has both an input value and an output value, the output value being some function of the input value. Input neurons on the other hand only have an output value.
 
-We input values to the network by setting the value that is output by each of the input neurons. Often, we normalise our input values so that they are always in the range [0..1] or [-1..1], but I don't think that doing so makes any difference in terms of network performance.
+We input values to the network by setting the value that is output by each of the input neurons. Often, we normalise our input values so that they are always in the range [0..1] or [-1..1]. If the range is larger, everything will still work, but training may take longer.
 
 We then work forwards one layer at a time: the input to a given neuron is the sum of the output from each connected neuron in the previous layer multiplied by the weight connecting it. As an example, the input value to neuron <katex>h_1</katex> is:
 
