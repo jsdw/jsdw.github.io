@@ -14,7 +14,7 @@ A neural network consists of a number of layers, each containing _neurons_. Each
 Some points to note:
 
 - _Bias_ neurons always emit a value of 1, but have a weight just like any other neuron. They exist so that the neurons connected to them can be _biased_ towards outputting a higher or lower value by virtue of the bias weight, irrespective of any input values.
-- It's worth keeping in mind that every neuron except for the input neurons has both an input value and an output value, the output value being some function of the input value. Input neurons on the other hand only have an output value.
+- Every neuron except for the input neurons has both an input value and an output value, the output value being some function of the input value. Input neurons on the other hand only have an output value.
 
 We input values to the network by setting the value that is output by each of the input neurons. Often, we normalise our input values so that they are always in the range [0..1] or [-1..1]. If the range is larger, everything will still work, but training may take longer.
 
@@ -35,15 +35,15 @@ There are lots of other choices for the activation function. The activation func
 - Non-linear. If it's linear, then no matter how many layers we have, we can only end up with a linear mapping from input to output values. This means that a given output neuron can only separate inputs by some linear plane. Non-linearity allows a network to emulate arbitrarily complex functions given the right weights. Graphing the input against the output, a linear activation function gives each neuron the ability to plot an arbitrary straight line, but however many straight lines we combine we always end up with another straight line.
 - Differentiable. This is in order that we can perform back propagation during training. There are probably caveats.
 
-Every layer - and in fact every neuron - can have its own activation function. It's common for neural networks that have many layers to use different activation functions across different layers. In our example, we use one activation function throughout.
+Every layer - and in fact every neuron - can have its own activation function. It's common for neural networks that have many layers to use different activation functions across different layers. In our example, we use the sigmoid activation function throughout.
 
 To work out the _output_ from neuron <katex>h_1</katex> given its input, we just combine the above functions to get:
 
 <katex>
-out_{h1} = sigmoid(out_{i1}w_1 + out_{i2}w_3 + w_5)
+out_{h1} = sigmoid(in_{h1}) = sigmoid(out_{i1}w_1 + out_{i2}w_3 + w_5)
 </katex>
 
-Once we have calculated the outputs of each neuron in some layer, we move to the next layer forward and do the same again, using those outputs as our new inputs (remembering that the output from bias neurons is always 1). We are finished once we have computed the outputs from our final layer of neurons. Given some input to the network, we now have a corresponding set of output values from it.
+Once we have calculated the output value for each neuron in a layer, we move to the next layer forward and do the same again, using those outputs as our new inputs (remembering that the output from bias neurons is always 1). We are finished once we have computed the output values of our final layer of neurons. Given some inputs to the network, we now have a corresponding set of outputs from it.
 
 # Training
 
@@ -55,15 +55,15 @@ Training a network requires:
 - An _error function_. We need to know how well the network did in producing the correct output given some input from our training set. For this, we use an error function. A good example is <katex>error = \sum\frac{1}{2}(expected - actual)^2</katex>, where we sum the squared difference between each _actual_ output value and the output value we _expected_. The <katex>\frac{1}{2}</katex> makes no difference other than making the differential of the error function neater, which will come in handy.
 - A means to work out how to update each weight in the network in order to reduce this error. This is where _back propagation_ comes in.
 
-There are two aspects to training a network. Firstly, we want to figure out we would need to update each weight in order to try and reduce the total error of the network given some training sample. The dominant technique here is _back propagation_. Secondly, we want to decide how to use this method to actually apply our proposed updates. I'll talk about each step in order.
+There are two aspects to training a network. Firstly, we want to figure out how to update each weight in order to try and reduce the total error of the network given some training sample. The dominant technique here is _back propagation_. Secondly, we want to decide how to actually apply our proposed updates. I'll talk about each step in order.
 
 ## Back Propagation
 
-Finding out how to change each weight in the network to reduce the total error is achieved using a method called _back propagation_. Given some training sample - a single mapping from inputs to outputs - we want to work out how to adjust each of the weights in the network in order to minimise the error between the expected outputs and the actual ones produced by the network on seeing these inputs.
+Finding out how to update each weight in the network to reduce the total error is achieved using a method called _back propagation_. Given some training sample - a single mapping from inputs to outputs - we want to work out how to adjust each of the weights in the network in order to minimise the error between the expected outputs and the actual ones produced by the network given these inputs.
 
 The key intuition for me here is that this mapping from input values to some total error is simply one big function. To illustrate this, here is a function based on the network illustrated above that goes all the way from our two initial inputs to our error value, broken down into parts using variables to be more readable:
 
-First, we see that the total error in the network is based on the difference between our two expected and output values:
+First, we see that the total error in the network is based on the difference between our expected and actual output values:
 
 <katex>error = \frac{1}{2}(expected_{o1} - out_{o1})^2 + \frac{1}{2}(expected_{o2} - out_{o2})^2</katex>
 
@@ -93,7 +93,7 @@ First, we see that the total error in the network is based on the difference bet
 
 So, if we set the input neurons to be outputting some values <katex>out_{i1}</katex> and <katex>out_{i2}</katex>, and use current value of each weight in the network, we can calculate what the error is.
 
-So, a neural network is _just a function_, and the goal is to find out how much the error changes with respect to some change to each weight, so that we know hot to update each weight in order to reduce the error for the given training sample. Well, this is exactly what _differentiation_ is for. As such, it forms the core of how back propagation works.
+So, a neural network is _just a function_, and the goal is to find out how much the error changes with respect to some change to each weight. Given this, we know how to update each weight in order to reduce the error for the given training sample. Well, this is exactly what _differentiation_ is for. As such, it forms the core of how back propagation works.
 
 ### Differentiation
 
@@ -101,7 +101,7 @@ Differentiation is the act of finding out how much one value changes with respec
 
 ![Graph showing the change in y given some corresponding change in x](differentiation1.svg)
 
-The slope here is simply <katex>\frac{\Delta{y}}{\Delta{x}}</katex> - The change in <katex>y</katex> with respect to <katex>x</katex>
+The slope here is simply <katex>\frac{\Delta{y}}{\Delta{x}}</katex> - The change in <katex>y</katex> with respect to <katex>x</katex>.
 
 As we make <katex>\Delta{x}</katex> smaller, <katex>\Delta{y}</katex> becomes smaller as well, and the slope <katex>\frac{\Delta{y}}{\Delta{x}}</katex> gets closer and closer to being equal to the slope at the point <katex>(x,y)</katex>. The function that returns the value of this slope at some value of <katex>x</katex> is referred to as <katex>f'(x)</katex> or <katex>\frac{dy}{dx}</katex>.
 
@@ -199,11 +199,11 @@ Finally, we can differentiate <katex>in_{h1}</katex> with respect to our weight 
 
 <katex>\frac{d(in_{h1})}{d(w_1)} = out_{i1}</katex>
 
-Remembering that we now have two sets of values to chain together (because there are two output neurons we had to differentiate with respect to) we end up needing to compute:
+Remembering that we now have two sets of values to chain together (because there are two output values that we had to differentiate with respect to) we end up needing to compute:
 
 <katex>\frac{d(error)}{d(w_1)} = \frac{d(error)}{d(in_{o1})} . \frac{d(in_{o1})}{d(out_{h1})} . \frac{d(out_{h1})}{d(in_{h1})} . \frac{d(in_{h1})}{d(w_1)} + \frac{d(error)}{d(in_{o2})} . \frac{d(in_{o2})}{d(out_{h1})} . \frac{d(out_{h1})}{d(in_{h1})} . \frac{d(in_{h1})}{d(w_1)}</katex>
 
-We can then rearrange this to be:
+We can rearrange this to be:
 
 <katex>\frac{d(error)}{d(w_1)} = (\frac{d(error)}{d(in_{o1})} . \frac{d(in_{o1})}{d(out_{h1})} + \frac{d(error)}{d(in_{o2})} . \frac{d(in_{o2})}{d(out_{h1})}) . \frac{d(out_{h1})}{d(in_{h1})} . \frac{d(in_{h1})}{d(w_1)} </katex>
 
@@ -215,7 +215,7 @@ As before, we can now work out the new value of our weight by travelling some sm
 
 <katex>w_1^{new} = w_1 - \alpha\frac{d(error)}{d(w_1)}</katex>
 
-However many hidden layers the network has, the steps that we have run through is the same. For weights connected to output neurons our job is quite simple, and otherwise we end up adding errors propagated from the next layer forward multiplied by the corresponding weights connecting them, and then differentiating the rest of the way down from there as we've done above.
+However many hidden layers the network has, the steps that we run through are the same. For weights connected to output neurons our job is quite simple, and otherwise we end up adding errors propagated from the next layer forward multiplied by the corresponding weights connecting them, and then differentiating the rest of the way down from there as we've done above.
 
 We repeat this back propagation process for all of our weights, at which point we know how to update every weight in order to reduce the error given the training sample we used.
 
@@ -224,18 +224,18 @@ We repeat this back propagation process for all of our weights, at which point w
 Using back propagation, we can provide a training sample to the network, and find out how to alter each weight in it in order to reduce the error for that sample. We have a few options for how to make use of this information:
 
 - We apply all of our proposed updates immediately after completing the back propagation step. This is known as _stochastic gradient descent_.
-- We save up proposed updates for some batch of training samples, and then for each weight, we take the average of the proposed updates that we have saved up for it and apply that. This is known as _minibatch gradient descent_, and has the advantage of nudging each weight in a direction that is the best on average for each training sample in this batch, but the disadvantage that we have to do a bunch more work before each actual update.
+- We save up proposed updates for some batch of training samples, and then for each weight, we take the average of the proposed updates that we have saved up for it and apply that. This is known as _mini-batch gradient descent_, and has the advantage of nudging each weight in a direction that is the best on average for each training sample in this batch, but the disadvantage that we have to do a bunch more work before each actual update.
 - We take _mini-batch_ to the extreme, and save up proposed updates as we look at the entire training set, applying the average updates once at the end. This is known as _batch gradient descent_.
 
-_Mini-batch_ is a common choice, as it lies between the other two in terms of performance and amount of computation required.
+_Mini-batch_ is a common choice, as it is a good compromise in terms of performance and amount of computation required.
 
 # Summary
 
-A neural network boils down to being a big function which, given some inputs, produces some outputs. By tuning the weights in the network, we can shape this function in order produce an almost arbitrary mapping between input and output values.
+A neural network boils down to being a big function which, given some inputs, produces some outputs. By altering the weights in the network, we can shape this function in order produce an almost arbitrary mapping between input and output values.
 
-Training a network involves teaching the network what output values to expect given some inputs. For each pair of input and output values in the training set, we want to figure out how to update each weight in the network so as to reduce the total error. By differentiating the error with respect to each weight we can find out how to adjust each weight in order to achieve this.
+Training a network involves teaching the it what output values to expect given some input values. For each pair of input and output values in a training set, we want to figure out how to update each weight in the network so as to reduce the total error. By differentiating the error with respect to each weight we can find out how to adjust each weight in order to achieve this.
 
-We then apply our proposed immediately of after some number of training samples has been seen in order to reduce the total error between actual and expected outputs. Eventually, we hope that the network error will then reduce to an acceptable level, at which point we consider it trained.
+We then apply our proposed weight updates either immediately, or after some number of training samples has been seen, in order to reduce the total error between actual and expected outputs. Eventually, we hope that the network error will reduce to an acceptable level over the course of this training, at which point we consider it trained. Hopefully, the network will then be able to produce the expected outputs given some input valuess have not been seen during training; this is the true test of how well it has been trained.
 
 Almost every aspect of how a network works can be modified to suit specific needs:
 - The activation function of each neuron (As an example, _tanh_ is generally considered better than the sigmoid function we used here).
@@ -244,7 +244,7 @@ Almost every aspect of how a network works can be modified to suit specific need
 - The error function used to calculate our total network error.
 - The training algorithm itself! Back propagation with something like mini-batch gradient descent is the dominant choice, but there are other ways to update our weights (for example, genetic algorithms).
 
-As such, there is an almost endless amount of exploration one can do. That said, I hope that this post helps you to get started!
+As such, there is an almost endless amount of exploration one can do. That said, I hope that this post helps to build a foundation on which this exploration can be carried out.
 
 [nn-example]: https://github.com/jsdw/neural-net-example
 [nn-slides]: https://github.com/jsdw/neural-network-talk
