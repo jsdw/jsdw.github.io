@@ -6,7 +6,7 @@
             <li>
                 <h2><a href="{{ page.permalink | safe }}">{{ page.title }}</a></h2>
                 <p>{{ page.description }}</p>
-                <p>{{ page.date | date(format="%Y-%m-%d") }} </p>
+                <p class="date"><span class="date-inner">{{ page.date | date(format="%Y-%m-%d") }}</span></p>
             </li>
         {% endif %}
         {% endif %}

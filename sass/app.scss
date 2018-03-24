@@ -1,13 +1,21 @@
 $contentWidth: 800px;
 $maxWidth: calc(100% - 40px);
 
-$headerColour: #da3889;
-$accentColour: #29329a;
+$headerColour: #f8409c; // #da3889;
+$accentColour: #121645; // #29329a;
 $accentLinkColour: #b7bdff;
 $bgColour: whitesmoke;
 
 * {
     box-sizing: border-box;
+}
+
+@mixin headerFont {
+    font-family: 'Open Sans', sans-serif;
+}
+
+@mixin bodyFont {
+    font-family: 'IBM Plex Serif', serif;
 }
 
 @mixin link($col) {
@@ -21,11 +29,15 @@ $bgColour: whitesmoke;
 }
 
 body {
-    font-family: 'Open Sans', sans-serif;
 
+    @include bodyFont;
     padding: 0px;
     margin: 0px;
     background-color: $bgColour;
+
+    h1, h2, h3, h4 {
+        @include headerFont;
+    }
 
     > .body {
 
@@ -33,6 +45,7 @@ body {
 
         > header {
 
+            @include headerFont;
             background-color: $headerColour;
             display: flex;
             justify-content: center;
@@ -105,8 +118,14 @@ body {
 
                     .title {
                         font-size: 2.5em;
+                        font-weight: normal;
                         margin-top: 0.4em;
                         margin-bottom: 0.4em;
+                    }
+
+                    > p {
+                        margin-top: 0.8em;
+                        margin-bottom: 0.8em;
                     }
 
                 }
@@ -116,6 +135,10 @@ body {
             > .content-inner {
                 width: $contentWidth;
                 max-width: $maxWidth;
+
+                > h1#projects, h1#posts {
+                    font-size: 2em;
+                }
             }
         }
         > footer {
@@ -126,10 +149,21 @@ body {
 
 }
 
-.toc {
-    h2 {
-        text-decoration: underline;
+ul.toc {
+
+    padding: 0;
+
+    > li {
+        list-style: none;
+        margin-bottom: 2em;
+        margin-top: 2em;
+
+        > .date {
+            color: gray;
+        }
+
     }
+
 }
 
 @include link($headerColour);
@@ -148,59 +182,45 @@ body {
 
     .top-inner .date {
         font-size: 0.5em;
-        font-style: italic;
+        color: #e4e4e4;
         // keep date on one line:
         white-space: nowrap;
     }
 
     .content-inner {
+        > .post {
 
-        // code blocks:
-        pre {
-            padding: 0.8em 0.9em;
-            margin-left: -12px;
-            margin-right: -12px;
-            overflow-y: auto;
-        }
-
-        // quotes:
-        blockquote {
-            padding: 0.5em 1em;
-            margin: 2em 3em;
-            background-color: #e4e4e4;
-            border-radius: 5px;
-            box-shadow: 0px 3px 3px 1px rgba(0, 0, 0, 0.37);
-            p {
-                margin: 0;
+            // code blocks:
+            pre {
+                padding: 0.8em 0.9em;
+                margin-left: -12px;
+                margin-right: -12px;
+                overflow-y: auto;
             }
-        }
 
-        // images:
-        img {
-            max-width: $maxWidth;
-            margin-left: auto;
-            margin-right: auto;
-            display: block;
-        }
-    }
-}
+            // quotes:
+            blockquote {
+                padding: 0.5em 1em;
+                margin: 2em 3em;
+                background-color: #e4e4e4;
+                border-radius: 5px;
+                box-shadow: 0px 3px 3px 1px rgba(0, 0, 0, 0.37);
+                p {
+                    margin: 0;
+                }
+            }
 
-// CSS for components:
-[needs-js] {
-    display: none !important;
-}
+            // images:
+            img {
+                max-width: $maxWidth;
+                margin-left: auto;
+                margin-right: auto;
+                display: block;
+            }
 
-katex {
-    // experimentation seems to show that this hdies the least fraction lines!
-    font-size: 0.95em;
-    // give fractions plenty of space incase of wrapping and things:
-    .mfrac {
-        line-height: 2;
-    }
-    // allow katex lark to wrap to prevent overflowing:
-    .katex {
-        .base {
-            white-space: normal;
         }
     }
 }
+
+@import "katex";
+@import "needsJs";

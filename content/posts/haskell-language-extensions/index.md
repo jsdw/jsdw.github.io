@@ -1,6 +1,6 @@
 +++
 title = "Haskell: Some Awesome Language Extensions Explained"
-description = "A living post, partly for my own reference, containing details of some of the more awesome/useful/interesting looking Haskell language extensions with plenty of examples. I'll update it as I have more to add."
+description = "A guide covering some of the more awesome/useful/interesting looking Haskell language extensions that I've come across so far, with plenty of examples."
 date = "2015-08-22"
 [extra]
 created = "2015-07-04"

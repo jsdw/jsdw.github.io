@@ -1,0 +1,14 @@
+katex {
+    // experimentation seems to show that this hdies the least fraction lines!
+    font-size: 0.95em;
+    // give fractions plenty of space incase of wrapping and things:
+    .mfrac {
+        line-height: 2;
+    }
+    // allow katex lark to wrap to prevent overflowing:
+    .katex {
+        .base {
+            white-space: normal;
+        }
+    }
+}
