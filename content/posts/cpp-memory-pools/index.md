@@ -1,7 +1,7 @@
 +++
 title = "C++ Optimization: Making use of Memory Pools"
 description = "Utilising memory pools can be one of the most significant optimisations you can make to a C++ program. Here, I walk through building and using one from the ground up."
-date = "2013-05-03"
+date = 2013-05-03
 [extra]
 created = "2013-05-02"
 +++

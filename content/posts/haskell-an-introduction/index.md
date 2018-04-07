@@ -1,7 +1,7 @@
 +++
 title = "Haskell, and Why It Might Just Be My New Favourite Language"
 description = "Coming from imperative programming languages like Javascript, Haskell might just be the most different language out there for me to learn, but here are several reasons why it also might be one of the best."
-date = "2014-05-25"
+date = 2014-05-25
 +++
 
 As I am currently working mostly in front-end Web Development, Javascript is the language I have most experience in nowadays. In my spare time however, I've been doing what a lot of programmers do and searching for one language to rule all others. For me, that's a language that's concise and elegant in its construction, and one that is versatile enough that it lets the programmer create things similar to those features the language itself provides.

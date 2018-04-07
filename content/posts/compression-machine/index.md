@@ -1,7 +1,7 @@
 +++
 title = "Web App: Compression Machine"
 description = "In this post I describe and link you to my Javascript compression machine, which makes use of several compression techniques described in other posts. Have a play!"
-date = "2013-05-15"
+date = 2013-05-15
 [extra]
 created = "2013-03-12"
 +++

@@ -1,7 +1,7 @@
 +++
 title = "Haskell: Another Lens Tutorial"
 description = "As someone who just got lenses after several days of trying to find out about them, I thought I'd reflect on this new understanding by showing you what a lens really is, starting from scratch."
-date = "2014-08-29"
+date = 2014-08-29
 +++
 
 I recently stumbled across the `lens` package when I was working with JSON data. I was keen to start working with lenses more, but without really knowing what they were, at least at some level, I was hesitant. I spent the next few days on and off reading about lenses and trying to make sense of them. For me, the turning point was [this post][lenses] by Jakob Arnold, so I very much encourage reading that as well. Anyway, let's get on with it. All of the code used in the examples is available in a single file [here][code], ready to be loaded into ghci with a `ghci code.hs` command, so that you can easily follow along.

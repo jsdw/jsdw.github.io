@@ -1,7 +1,7 @@
 +++
 title = "Angular and React: A Tale of Two Frameworks"
 description = "Having used Angular pretty heavily for over a year at work and more recently ReactJS from Facebook in rebuilding my website, I thought I'd share my views on how they compare."
-date = "2015-03-15"
+date = 2015-03-15
 +++
 
 # TL;DR

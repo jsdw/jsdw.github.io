@@ -1,7 +1,7 @@
 +++
 title = "Two Handy Tools to Help Build an AJAX Site"
 description = "Two utilities I built for a pre-Angular (or Ember) website, which help with routing URL requests to function calls, and storing/monitoring state in a tree structure."
-date = "2013-06-10"
+date = 2013-06-10
 +++
 
 This page introduces two lightweight Javascript tools I have created to aid in the process of creating AJAX heavy websites, [Engine.js][engine] for controlling requests for different pages/resources, and [State.js][state] for keeping track of the current state of things clientside, and attaching functions to changes in this state. Both are lightweight and relatively simple, so I'll explain by example:

@@ -1,7 +1,7 @@
 +++
 title = "Compression Algorithms: Sequitur"
 description = "An introduction to the Sequitur compression algorithm with an updated algorithm describing how it works, along with the common pitfalls in implementing it."
-date = "2013-04-30"
+date = 2013-04-30
 [extra]
 created = "2013-03-10"
 +++

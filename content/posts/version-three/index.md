@@ -1,7 +1,7 @@
 +++
 title = "Website Reboot: Version Three"
 description = "Welcome to the third incarnation of my website, this time built to be simple, slick, and to the point."
-date = "2014-01-26"
+date = 2014-01-26
 +++
 
 Since I built the last iteration of this site back in early 2013, I've come a long way (with web development inparticular) and learned a lot of cool things, so it felt like time to reflect that with a new site and a renewed dedication to putting down what I've learned in writing.

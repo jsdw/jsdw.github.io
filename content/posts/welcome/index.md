@@ -1,7 +1,7 @@
 +++
 title = "Welcome to unbui.lt!"
 description = "An introductory post to celebrate the launch of my new website."
-date = "2013-02-26"
+date = 2013-02-26
 +++
 
 Hello, and welcome to my brand spanking new website! Being an introductory post, I haven't yet written anything else, so rather than giving you a tour of existing content, I'll just tell you a bit about me, why this site came to be, and what you can expect from it in the very near future! So, lets do it.

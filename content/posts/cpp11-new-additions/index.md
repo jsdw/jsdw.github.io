@@ -1,7 +1,7 @@
 +++
 title = "C++11: An Introduction to Some of the Fun New Additions"
 description = "A pretty comprehensive introduction to a large proportion of the new features of C++11. This is to help refresh my mind as much as any, but it's a good place to start, and full of examples."
-date = "2013-04-11"
+date = 2013-04-11
 [extra]
 created = "2013-04-10"
 +++

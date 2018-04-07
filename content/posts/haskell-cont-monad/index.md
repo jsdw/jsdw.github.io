@@ -1,7 +1,7 @@
 +++
 title = "Haskell: A Look at the Continuation Monad"
 description = "Some notes I developed on the continuation monad in Haskell as a result of exploring how they work and how to use them, complete with plenty of examples along the way."
-date = "2015-06-07"
+date = 2015-06-07
 +++
 
 Some notes on Continuations in Haskell. What are they, how are they used and what are they good for? All of the following code can be found [here][example-code] ready to be plugged into GHCI and played with.

@@ -1,7 +1,7 @@
 +++
 title = "Sequitur: a templated C++ implementation"
 description = "In this post I briefly describe my C++ implementation of the lesser known Sequitur compression algorithm, and provide some usage examples. The source code is available to use however you wish."
-date = "2013-05-15"
+date = 2013-05-15
 +++
 
 Recently, on getting back into C++, I decided to have a go at reimplementing the Sequitur algorithm, which I had originally implemented in Javascript for use in my [compression application][compressor]. Despite the inherent advantages of Javascript as a dynamic language, it was never an ideal choice for an algorithm that requires lower level optimisation to perform at its best.

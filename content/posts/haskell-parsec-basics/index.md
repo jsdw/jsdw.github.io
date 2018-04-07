@@ -1,7 +1,7 @@
 +++
 title = "An introduction to parsing text in Haskell with Parsec"
 description = "Parsec makes parsing text very easy in Haskell. I write this as much for myself as for anyone else to have a tutorial and reference which starts from the ground up and works through how each function can be used with examples all the way."
-date = "2015-05-29"
+date = 2015-05-29
 [extra]
 created = "2014-07-25"
 +++

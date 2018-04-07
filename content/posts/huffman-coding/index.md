@@ -1,7 +1,7 @@
 +++
 title = "Compression Algorithms: Huffman Coding"
 description = "A look at a simple form of compression known as Huffman Coding that is frequently combined with other techniques, and easy to implement. I walk through an example and provide a full description of how it all works."
-date = "2013-03-12"
+date = 2013-03-12
 [extra]
 created = "2013-03-11"
 +++

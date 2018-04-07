@@ -1,7 +1,7 @@
 +++
 title = "An Introduction to Lambda Calculus"
 description = "A pretty in depth introduction to Lambda Calculus, the precursor to modern functional programming as well as some crazy esoteric programming languages like Iota and Jot."
-date = "2013-03-17"
+date = 2013-03-17
 [extra]
 created = "2013-03-16"
 +++

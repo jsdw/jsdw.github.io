@@ -1,7 +1,7 @@
 +++
 title = "Neural Networks: An Introduction"
 description = "An introduction to feed-forward neural networks with learning via back propagation."
-date = "2018-01-19"
+date = 2018-01-19
 draft = false
 +++
 

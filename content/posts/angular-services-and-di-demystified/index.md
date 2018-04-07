@@ -1,7 +1,7 @@
 +++
 title = "AngularJS: Demystifying Services and Dependency Injection"
 description = "This post is my attempt to unravel the mystery often surrounding the difference between services, providers, values and the like in Angular. I then run through how dependency injection works, building a plain Javascript example along the way."
-date = "2014-02-23"
+date = 2014-02-23
 +++
 
 For the last few months, I have been working with AngularJS to build web applications. This website itself is a simple example of that, but at work we are building far more complex single-page applications, and it is there that Angular really starts to shine.

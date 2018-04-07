@@ -1,7 +1,7 @@
 +++
 title = "Enigma #1749"
 description = "A quick look at New Scientist Enigma number 1749, with a simple solution in Javascript."
-date = "2013-06-10"
+date = 2013-06-10
 [extra]
 created = "2013-05-30"
 +++

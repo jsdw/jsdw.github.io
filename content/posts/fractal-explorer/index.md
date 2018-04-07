@@ -1,7 +1,7 @@
 +++
 title = "Web App: Fractal Explorer"
 description = "A post describing my Javascript Fractal Explorer, with a link to the real thing so you can go have a play from the comfort of your browser."
-date = "2013-05-15"
+date = 2013-05-15
 [extra]
 created = "2013-03-06"
 +++

@@ -1,7 +1,7 @@
 +++
 title = "Web App: Competitive Learner"
 description = "One of my first Javascript based applications, the Competitive Learner, is based on algorithms I built on during my PhD. Draw shapes, and see how it learns!"
-date = "2013-05-15"
+date = 2013-05-15
 [extra]
 created = "2013-03-06"
 +++

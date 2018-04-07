@@ -1,7 +1,7 @@
 +++
 title = "Rick Astley Inspired Self-decompressing Text Compressor"
 description = "A bit of code-golf inspired fun: introducing a Javascript snippet and tool to build it that when executed, prints out the lyrics to a well known song."
-date = "2013-05-15"
+date = 2013-05-15
 +++
 
 After a friend directed me to [this][golf] code golf on Stack Exchange, I thought I'd have a quick go myself at implementing a Javascript version. Here it is:
