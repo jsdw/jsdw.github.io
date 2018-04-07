@@ -3,6 +3,7 @@
 
 {% set posts = get_section(path="posts/_index.md") %}
 {% set projects = get_section(path="projects/_index.md") %}
+{% set cv = get_page(path="cv.md") %}
 
 <!DOCTYPE html>
 <html>
@@ -23,6 +24,7 @@
                 <nav>
                     <a href="{{ posts.permalink }}">posts</a>
                     <a href="{{ projects.permalink }}">projects</a>
+                    <a href="{{ cv.permalink }}">cv</a>
                 </nav>
             </div>
         </header>

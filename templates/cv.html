@@ -1,0 +1,172 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="description" content="My CV">
+    <meta name="author" content="James Wilson">
+    <link type="text/css" rel="stylesheet" href="/cv.css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Slab:400,600" rel="stylesheet">
+</head>
+
+<body>
+    <div class="page">
+        <header>
+            <h1>Dr. James Wilson</h1>
+            <div class="sub">
+                <info-tag>
+                    <div>Location</div>
+                    <div>Cambridge</div>
+                </info-tag>
+                <info-tag>
+                    <div>Website</div>
+                    <a href="https://jsdw.me">jsdw.me</a>
+                </info-tag>
+                <info-tag>
+                    <div>Email</div>
+                    <email-address></email-address>
+                </info-tag>
+                <info-tag>
+                    <div>Github</div>
+                    <a href="https://github.com/jsdw">github.com/jsdw</a>
+                </info-tag>
+            </div>
+        </header>
+
+        <main>
+
+            <summary>Passionate about programming. A bit of a language geek, with experience in JavaScript, TypeScript, SCSS, Go, Rust, Haskell, Elm, C++ and more. I have loads of frontend experience using frameworks such as AngularJS, React and JQuery, but I enjoy working across the stack, having built web services in Go, Rust, Haskell and Node.JS. Good UX and API design is important to me, as is robustness and maintainability.</summary>
+
+            <section class="professional">
+                <h1>Professional</h1>
+
+                <project-section>
+                    <header>
+                        <h1>Lead Frontend Developer, <project-location>Third Light Ltd</project-location></h1>
+                        <date-stamp>March 2016 &ndash; Present</date-stamp>
+                    </header>
+                    <ul>
+                        <li>Continuing development of Angular and Go codebases, and other in house tools using Rust, Haskell and React</li>
+                        <li>Interviewing new candidates for frontend, backend and UX roles.</li>
+                        <li>Migrating our core product to TypeScript and evangelising its use.</li>
+                        <li>Instigating and running talk days; day long company wide events every few months wherein people give presentations about anything that interests them.</li>
+                    </ul>
+                </project-section>
+
+                <project-section>
+                    <header>
+                        <h1>Senior Developer, <project-location>Third Light Ltd</project-location></h1>
+                        <date-stamp>June 2015 &ndash; March 2016</date-stamp>
+                    </header>
+                    <ul>
+                        <li>Continued development of our AngularJS frontend.</li>
+                        <li>Created Go microservices and packages to support features like publishing and a workflow/automation prototype involving a user scriptable JS layer.</li>
+                        <li>Architectural and planning oversight of the frontend team.</li>
+                    </ul>
+                </project-section>
+
+                <project-section>
+                    <header>
+                        <h1>Developer, <project-location>Third Light Ltd</project-location></h1>
+                        <date-stamp>July 2013 &ndash; June 2015</date-stamp>
+                    </header>
+                    <ul>
+                        <li>Worked on the core product; a PHP/Smarty backend using MySQL and exposing a JSON API.</li>
+                        <li>Built from scratch a small AngularJS SPA for browsing, cropping and exporting images.</li>
+                        <li>Created a WordPress plugin to make use of this and updated our Drupal plugin.</li>
+                        <li>Began building, from scratch, an AngularJS/SCSS based SPA to serve as the next version of our core product.</li>
+                    </ul>
+                </project-section>
+
+                <project-section>
+                    <header>
+                        <h1>PhD: Developmental Robotics, <project-location>Aberystwyth University</project-location></h1>
+                        <date-stamp>Sept 2007 &ndash; March 2012</date-stamp>
+                    </header>
+                    <ul>
+                        <li>Developed and tested novel competitive learning algorithms for affordance based learning to drive a robot arm and camera system.</li>
+                        <li>Helped mentor students with learning difficulties.</li>
+                        <li>Assisted in lectures, invigilation, running tutorial sessions, and advisory sessions in the CompSci department.</li>
+                    </ul>
+                </project-section>
+
+                <project-section>
+                    <header>
+                        <h1>BSc: Cognitive Science, <project-location>Hertfordshire University</project-location></h1>
+                        <date-stamp>Sept 2004 &ndash; June 2007</date-stamp>
+                    </header>
+                    <ul>
+                        <li>Graduated 1st class with Honours.</li>
+                        <li>Psychology and computer science with a focus on machine learning.</li>
+                    </ul>
+                </project-section>
+            </section>
+
+            <section class="personal">
+                <h1>Personal</h1>
+
+                <project-section>
+                    <header>
+                        <h1>FUSS, <project-summary>A powerful SCSS alternative built using Rust</project-summary></h1>
+                    </header>
+                    <ul>
+                        <li>A fast and robust functional language with a simple yet powerful set of core concepts.</li>
+                        <li>Overcomes various limitations of SCSS, for instance imports are treated like any other variable, variables are properly scoped and do not need to be declared in order, and CSS blocks can be passed around just like anything else.</li>
+                    </ul>
+                </project-section>
+
+                <project-section>
+                    <header>
+                        <h1>TalkLicker, <project-summary>A Haskell/Elm SPA built to manage company talk days</project-summary></h1>
+                    </header>
+                    <ul>
+                        <li>A drag and drop interface for creating and scheduling talks.</li>
+                        <li>A built in admin interface for user and day management.</li>
+                        <li>Handles user accounts and sessions, with thought applied to data migration across versions.</li>
+                        <li>Uses a unique markdown based approach to interleave draggable talks with arbitrary information.</li>
+                    </ul>
+                </project-section>
+
+                <project-section>
+                    <header class="no-underline">
+                        <h2><a href="https://github.com/jsdw">Visit my github page for more</a></h2>
+                    </header>
+                </project-section>
+            </section>
+
+        </main>
+
+    </div><!-- /.page -->
+
+    <script type="text/javascript">
+
+        // create components!
+        function runBehaviour(selector, fn) {
+            var els = document.querySelectorAll(selector);
+            for(var i = 0; i < els.length; i++) {
+                fn(els[i]);
+            }
+        }
+
+        // My email addy, obfuscated.
+        function emailAddress() {
+            return [50,42,55,48,63,13,56,66,52,72,0,64,57].reduce(function(s,n,i){
+                return s + String.fromCharCode(n - i + 56);
+            },"");
+        }
+
+        runBehaviour("email-address", function(el){
+            setTimeout(function(){
+                requestAnimationFrame(function(){
+                    var link = document.createElement("a");
+                    link.href = "mailto:" + emailAddress();
+                    link.appendChild(document.createTextNode(emailAddress()));
+                    el.replaceWith(link);
+                })
+            })
+        });
+
+    </script>
+</body>
+
+</html>

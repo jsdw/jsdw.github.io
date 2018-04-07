@@ -1,0 +1,159 @@
+// Define the size of each printable page:
+@page {
+    size: 210mm 297mm;
+    margin: 0pt 0pt;
+}
+
+html {
+    font-size: 83%;
+    font-family: 'Roboto Slab', serif;
+}
+
+body {
+    margin: 0px;
+    padding: 0px;
+}
+
+h1, h2, h3, h4, h5, h6, p {
+    margin: 0;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+// Because padding-box is silly.
+* {
+    box-sizing: border-box;
+}
+
+.page {
+
+    background-color: white;
+    padding: 2.5rem 3rem;
+
+    > header {
+        > h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            margin-bottom: 1.0rem;
+        }
+        > .sub {
+            display: flex;
+            flex-wrap: wrap;
+        }
+    }
+
+    main {
+        padding-top: 1rem;
+
+        > summary {
+            font-size: 90%;
+        }
+
+        > section {
+            > h1 {
+                font-size: 2rem;
+                color: #5a5ab3;
+                margin: 0.5em 0em;
+                // border-left: 5px solid #5a5ab3;
+                // padding-left: 0.2em;
+            }
+        }
+
+    }
+
+}
+
+project-section {
+
+    > header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        &:not(.no-underline) {
+            border-bottom: 1px solid #e4e4e4;
+        }
+
+        > h1 {
+            font-size: 1.2rem;
+            margin-right: 0.5em;
+        }
+        > h2 {
+            font-size: 1rem;
+        }
+
+        date-stamp {
+            color: #a5a5a5;
+            font-size: 90%;
+        }
+    }
+    > ul {
+        font-size: 90%;
+    }
+
+}
+
+info-tag {
+
+    display: flex;
+    line-height: 1em;
+    margin: 0;
+    margin-bottom: 0.5em;
+
+    &:not(:last-child) {
+        margin-right: 0.4em;
+    }
+
+    > :first-child {
+        padding: 0.2em 0.3em;
+        color: #ff4b00;
+        border-left: 4px solid #ff4b00;
+        font-weight: 600;
+    }
+    > :last-child {
+        padding: 0.2em 0.5em;
+    }
+}
+
+// Make the CV look presentable in a web browser.
+@media screen {
+    body {
+        background-color: rgb(232, 232, 232);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 1em;
+    }
+
+    .page {
+        height: 297mm;
+        width: 210mm;
+        box-shadow: 0px 4px 14px 0px rgba(0, 0, 0, 0.459);
+        &:not(:last-child) {
+            margin-bottom: 1em;
+        }
+    }
+
+    a {
+        text-decoration: underline;
+        color: #ff9d00;
+    }
+
+    @media (max-width:230mm) {
+        .page {
+            width: 100%;
+            height: auto;
+        }
+    }
+
+    @media (max-width:150mm) {
+        .page {
+            padding: 1.5rem 2rem;
+        }
+    }
+
+}
