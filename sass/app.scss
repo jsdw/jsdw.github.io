@@ -103,6 +103,7 @@ body {
                 width: 100%;
                 background-color: $accentColour;
                 color: white;
+                position: relative;
 
                 padding: 1em 0px;
                 display: flex;
@@ -110,22 +111,152 @@ body {
 
                 @include link($accentLinkColour);
 
+                background-color: #cacfff;
+
+                // a little "scene"
+                > .top-scene {
+
+                    position: absolute;
+                    top: 0;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    overflow: hidden;
+
+                    $scene-fg: #9191e2;
+                    border-bottom: 9px solid $scene-fg;
+
+                    > .sun {
+
+                        @keyframes spin {
+                            0% { transform: rotateZ(0deg) }
+                            100% { transform: rotateZ(360deg) }
+                        }
+
+                        $sun-color: white;
+                        $diameter: 80px;
+
+                        content: '';
+                        height: $diameter;
+                        width: $diameter;
+                        border-radius: 50%;
+                        position: absolute;
+                        left: calc( 60% + 300px );
+                        top: 28px;
+                        background-color: $sun-color;
+                        animation: spin 120s linear infinite;
+                        box-shadow: 0px 0px 40px 15px $sun-color;
+
+                        @mixin ray($rot, $dist) {
+                            position: absolute;
+                            background-color: $sun-color;
+                            background: linear-gradient(to right,
+                                rgba($sun-color,0)   0%,
+                                rgba($sun-color,0.8) 50%,
+                                rgba($sun-color,0)   100%);
+                            opacity: 0.2;
+                            left: 50%;
+                            top: 50%;
+                            transform:
+                                translate(-50%, -50%)
+                                rotate($rot)
+                                translateX(-50%)
+                                translateX( calc(-#{$diameter} / 2 - #{ $dist } ) );
+                        }
+
+                        > .ray1 {
+                            @include ray(40deg, 5px);
+                            height: 40px;
+                            width: 60px;
+                        }
+                        > .ray2 {
+                            @include ray(91deg, 5px);
+                            height: 20px;
+                            width: 70px;
+                        }
+                        > .ray3 {
+                            @include ray(121deg, 5px);
+                            height: 10px;
+                            width: 90px;
+                        }
+                        > .ray4 {
+                            @include ray(160deg, 5px);
+                            height: 40px;
+                            width: 60px;
+                        }
+                        > .ray5 {
+                            @include ray(203deg, 5px);
+                            height: 20px;
+                            width: 70px;
+                        }
+                        > .ray6 {
+                            @include ray(228deg, 5px);
+                            height: 10px;
+                            width: 90px;
+                        }
+                        > .ray7 {
+                            @include ray(269deg, 5px);
+                            height: 40px;
+                            width: 60px;
+                        }
+                        > .ray8 {
+                            @include ray(316deg, 5px);
+                            height: 20px;
+                            width: 70px;
+                        }
+                        > .ray9 {
+                            @include ray(349deg, 5px);
+                            height: 10px;
+                            width: 90px;
+                        }
+
+                    }
+
+                }
+
+
                 > .top-inner {
 
                     width: $contentWidth;
                     font-size: 1.1em;
                     max-width: $maxWidth;
+                    position: relative;
 
+                    width: 800px;
+                    font-size: 1.1em;
+                    max-width: calc(100% - 40px);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-start;
+                    justify-content: center;
+
+                    margin-top: 1em;
+                    margin-bottom: 1em;
+
+                    // uniform paddings for text in the top
+                    // area.
+                    > * {
+                        background-color: #303158;
+                        padding-left: 20px;
+                        padding-right: 20px;
+                        padding-top: 15px;
+                        padding-bottom: 0px;
+                        margin-bottom: 0px;
+                        margin-top: 0px;
+
+                        &:last-child {
+                            padding-bottom: 15px;
+                        }
+                    }
+
+                    // give title a bit of extra space below:
                     .title {
                         font-size: 2.5em;
                         font-weight: normal;
-                        margin-top: 0.4em;
-                        margin-bottom: 0.4em;
+                        padding-bottom: 10px;
                     }
 
                     > p {
-                        margin-top: 0.8em;
-                        margin-bottom: 0.8em;
                     }
 
                 }
@@ -137,7 +268,7 @@ body {
                 max-width: $maxWidth;
 
                 > h1#projects, h1#posts {
-                    font-size: 2em;
+                    font-size: 2.5em;
                 }
             }
         }
@@ -162,6 +293,10 @@ ul.toc {
             color: gray;
         }
 
+        &:not(:last-child) {
+            border-bottom: 1px solid #e0e0e0;
+        }
+
     }
 
 }
@@ -172,7 +307,7 @@ ul.toc {
 .body.home {
 
     .see-all {
-        font-size: 0.7em;
+        font-size: 0.5em;
     }
 
 }
@@ -220,6 +355,10 @@ ul.toc {
 
         }
     }
+}
+
+.icon {
+    vertical-align: middle;
 }
 
 @import "katex";

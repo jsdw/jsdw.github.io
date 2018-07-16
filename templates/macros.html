@@ -14,7 +14,7 @@
     </ul>
 {% endmacro posts_toc %}
 
-{% macro projects_toc(pages,limit) %}
+{% macro projects_toc(pages,limit,config) %}
     <ul class="projects toc">
         {% for page in pages %}
         {% if limit <= 0 or loop.index0 < limit %}
@@ -25,7 +25,7 @@
                 </a></h2>
                 <p>{{ page.description }}</p>
                 {% if page.extra.source %}
-                    <p><a href="{{ page.extra.source }}">view source</a></p>
+                    <p><img class="icon" src="{{ config.base_url }}/icons/view_source.svg" /> <a href="{{ page.extra.source }}">view source</a></p>
                 {% endif %}
             </li>
         {% endif %}
