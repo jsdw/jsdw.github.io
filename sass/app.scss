@@ -126,6 +126,52 @@ body {
                     $scene-fg: #9191e2;
                     border-bottom: 9px solid $scene-fg;
 
+                    > .cloud {
+
+                        @mixin cloud($col, $speed, $left) {
+
+                            $anim: "cloud"+random(10000000);
+                            @keyframes #{ $anim } {
+                                from {
+                                    left: calc(#{$left} - 100vw);
+                                }
+                                to {
+                                    left: calc(200vw + #{$left});
+                                }
+                            }
+
+                            position: absolute;
+                            left: $left;
+                            animation: unquote($anim) $speed linear infinite;
+                            animation-delay: -$speed/3;
+
+                            .cloud-bubble {
+                                fill: $col;
+                            }
+                        }
+
+                        &.cloud1 {
+                            @include cloud($scene-fg, 80000s, calc(40% - 400px));
+                            top: 20px;
+                            width: 130px;
+                        }
+
+                        &.cloud2 {
+                            @include cloud( desaturate(darken($scene-fg, 10%), 20%), 100000s, calc(40% - 200px) );
+                            top: 10px;
+                            width: 100px;
+
+                        }
+
+                        &.cloud3 {
+                            @include cloud($scene-fg, 70000s, -50vw);
+                            top: 20px;
+                            width: 130px;
+                        }
+
+
+                    }
+
                     > .sun {
 
                         @keyframes spin {
