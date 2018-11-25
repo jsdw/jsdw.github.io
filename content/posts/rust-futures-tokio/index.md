@@ -12,12 +12,12 @@ The first step in the challenge is to write an interpreter. You're given the spe
 
 Prior to this experience, I had thought that Futures, Sinks and Streams were the smallest building blocks in the world of Tokio, and so I went looking for these things to read and write my bytes for me. Actually, all of the fundamental objects to read and write bytes to things (in my case I was only interested in [`tokio::io::Stdout`][tokio-stdout], [`tokio::io::Stdin`][tokio-stdin] and [`tokio::net::TcpStream`][tokio-tcpstream]) implement one or both of `AsyncRead` and `AsyncWrite`, but not the `Future`, `Sink` or `Stream` traits. In fact, there are lots of `poll_x` methods dotted around, so I realised I needed to figure out how to make use of them.
 
-My goal was simple—reading and writing single bytes at a time—so that is the focus of my example code, but adding things like buffering, or encoding/decoding the bytes into more complex structures all felt much more achievable once I grasped the basics! I'll look at each of the possible ways to convert these things:
+My goal was simple—reading and writing single bytes at a time—so that is the focus of my example code. You should be able to build on these foundations to add things like buffering, or to encode/decode bytes into more complex structures. I'll look at each of the possible ways to convert these things:
 
 - `AsyncRead` to `Future`, for one-off reads
 - `AsyncRead` to `Stream`, for continuous reading
 - `AsyncWrite` to `Sink`, for continuous writing
-- `AsyncWrite` to `Future`, for one-off writing
+- `AsyncWrite` to `Future`, for one-off writes
 
 Complete code samples can be found [here][code].
 
