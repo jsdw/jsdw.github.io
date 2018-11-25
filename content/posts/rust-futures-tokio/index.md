@@ -6,19 +6,26 @@ date = 2018-11-24
 created = "2018-11-24"
 +++
 
-Recently, I started having a go at the [boundvariable][boundvariable] programming challenge (you can find my results [here][jsdw-boundvariable], but there be spoilers!). I won't give away any spoilers about it here incase you want to have a go yourself, except to say that it was good fun, and much deeper than I expected.
+Recently, I started having a go at the [boundvariable][boundvariable] programming challenge (you can find my results [here][jsdw-boundvariable], but there be spoilers!).
 
-The first step in the challenge is to write an interpreter. You're given the spec you need to adhere to. The interpreter is capable of being fed ASCII input one byte at a time, as well as handing back ASCII output one byte at a time. I eventually decided that it would be nice if my interpreter could allow TCP connections to be established to it; input from these connections would be sent into the interpreter, and output from the interpreter would be sent to any current TCP connections as well as to stdout.
+The first step in the challenge is to write an interpreter. You're given the spec that you need to adhere to. The interpreter that you create is capable of being fed ASCII input one byte at a time, as well as handing back ASCII output one byte at a time. I eventually decided that it would be nice if my interpreter could allow TCP connections to be established to it; input from these connections would be sent into the interpreter, and output from the interpreter would be sent to any current TCP connections as well as to stdout. This seemed like a good opportunity to have anothe go with _Tokio_; an asynchronous IO framework for Rust.
 
-My first thought was that I could get away with using the basic, blocking `std::net::TcpListener`, since I wasn't too bothered about supporting multiple TCP connections being established at once. This would have worked fine I'm sure, but I decided that it would be much nicer to handle any number of concurrent connections, and for that I figured using `Tokio`—a Futures-based framework for doing asynchronous IO in Rust—was the best bet, since I'd done a little with Futures before, and surely streaming raw bytes around would be pretty easy!
+Prior to this experience, I had thought that Futures, Sinks and Streams were the smallest building blocks in the world of Tokio, and so I went looking for these things to read and write my bytes for me. Actually, all of the fundamental objects to read and write bytes to things (in my case I was only interested in [`tokio::io::Stdout`][tokio-stdout], [`tokio::io::Stdin`][tokio-stdin] and [`tokio::net::TcpStream`][tokio-tcpstream]) implement one or both of `AsyncRead` and `AsyncWrite`, but not the `Future`, `Sink` or `Stream` traits. In fact, there are lots of `poll_x` methods dotted around, so I realised I needed to figure out how to make use of them.
 
-Prior to this experience, I had thought that Futures, Sinks and Streams were the smallest building blocks in the world of Tokio, and so that it what I was initially trying to find. Actually, all of the fundamental objects to read and write bytes to things ([`tokio::io::Stdout`][tokio-stdout], [`tokio::io::Stdin`][tokio-stdin] and [`tokio::net::TcpStream`][tokio-tcpstream] in my case) implement one or both of `AsyncRead` and `AsyncWrite`, but not the `Future`, `Sink` or `Stream` traits. In fact, there are lots of `poll_something` methods dotted around, so it's useful to know how to make use of these in the world of Futures.
+My goal was simple—reading and writing single bytes at a time—so that is the focus of my example code, but adding things like buffering, or encoding/decoding the bytes into more complex structures all felt much more achievable once I grasped the basics! I'll look at each of the possible ways to convert these things:
 
-My goal was simple—reading and writing single bytes at a time—so that is the focus of my example code, but adding things like buffering, or encoding/decoding the bytes into larger structures all felt much more achievable once I grasped the basics!
+- `AsyncRead` to `Future`, for one-off reads
+- `AsyncRead` to `Stream`, for continuous reading
+- `AsyncWrite` to `Sink`, for continuous writing
+- `AsyncWrite` to `Future`, for one-off writing
+
+Complete code samples can be found [here][code].
+
+So, let's begin!
 
 ## Converting an `AsyncRead` to a `Future`, for one-off reads
 
-The most verbose way to turn a thing implementing AsyncRead into a future that emits a single byte is by manually implementing the `Future` trait on an appropriate type to do this for us:
+The most verbose way to turn a thing implementing AsyncRead into a future that emits a single byte when completed is by manually implementing the `Future` trait on an appropriate type to do this for us:
 
 ```rust
 struct ByteFuture<R>(R);
@@ -247,9 +254,12 @@ let write_once = io::write_all(io::stdout(), &[b'x']);
 
 Hopefully I've managed to shine some light on how to work with `AsyncRead`/`AsyncWrite` things. I've demonstrated various ways to "upgrade" things that have `poll_x` methods into an appropriate type (be it a Future, Sink or Stream), which will hopefully make them easier to work with!
 
+All of the code used above is [available here][code].
+
 [boundvariable]: http://boundvariable.org
 [jsdw-boundvariable]: https://github.com/jsdw/boundvariable
 [AoC]: https://adventofcode.com/
 [tokio-stdin]: https://docs.rs/tokio/0.1.13/tokio/io/struct.Stdin.html
 [tokio-stdout]: https://docs.rs/tokio/0.1.13/tokio/io/struct.Stdout.html
 [tokio-tcpstream]: https://docs.rs/tokio/0.1.13/tokio/net/struct.TcpStream.html
+[code]: https://github.com/jsdw/jsdw.me/blob/master/content/posts/rust-futures-tokio/src/main.rs
