@@ -1,9 +1,9 @@
 +++
 title = "Rust: Converting AsyncRead and AsyncWrite to Futures, Sinks and Streams"
 description = "Recently I had another shot at using Futures and Tokio again in Rust. One of the main challenges I faced was how to work with things that implemented the AsyncRead and AsyncWrite traits. So, here are some ways to 'upgrade' them into Futures, Sinks and Streams to gain access to the various combinators provided by them."
-date = 2018-11-24
+date = 2018-11-25
 [extra]
-created = "2018-11-24"
+created = "2018-11-25"
 +++
 
 Recently, I started having a go at the [boundvariable][boundvariable] programming challenge (you can find my results [here][jsdw-boundvariable], but there be spoilers!).
