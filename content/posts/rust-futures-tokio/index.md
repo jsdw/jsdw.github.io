@@ -8,11 +8,13 @@ created = "2018-11-25"
 
 Recently, I started having a go at the [boundvariable][boundvariable] programming challenge (you can find my results [here][jsdw-boundvariable], but there be spoilers!).
 
-The first step in the challenge is to write an interpreter. You're given the spec that you need to adhere to. The interpreter that you create is capable of being fed ASCII input one byte at a time, as well as handing back ASCII output one byte at a time. I eventually decided that it would be nice if my interpreter could allow TCP connections to be established to it; input from these connections would be sent into the interpreter, and output from the interpreter would be sent to any current TCP connections as well as to stdout. This seemed like a good opportunity to have anothe go with _Tokio_; an asynchronous IO framework for Rust.
+The first step in the challenge is to write an interpreter. You're given the spec that you need to adhere to. The interpreter that you create is capable of being fed ASCII input one byte at a time, as well as handing back ASCII output one byte at a time.
 
-Prior to this experience, I had thought that Futures, Sinks and Streams were the smallest building blocks in the world of Tokio, and so I went looking for these things to read and write my bytes for me. Actually, all of the fundamental objects to read and write bytes to things (in my case I was only interested in [`tokio::io::Stdout`][tokio-stdout], [`tokio::io::Stdin`][tokio-stdin] and [`tokio::net::TcpStream`][tokio-tcpstream]) implement one or both of `AsyncRead` and `AsyncWrite`, but not the `Future`, `Sink` or `Stream` traits. In fact, there are lots of `poll_x` methods dotted around, so I realised I needed to figure out how to make use of them.
+I eventually decided that it would be nice if my interpreter could allow TCP connections to be established to it; input from these connections would be sent into the interpreter, and output from the interpreter would be sent to any current TCP connections as well as to stdout. This seemed like a good opportunity to have another go with _Tokio_; an asynchronous IO framework for Rust.
 
-My goal was simple—reading and writing single bytes at a time—so that is the focus of my example code. You should be able to build on these foundations to add things like buffering, or to encode/decode bytes into more complex structures. I'll look at each of the possible ways to convert these things:
+Prior to this experience, I had thought that Futures, Sinks and Streams were the smallest building blocks in the world of Tokio, and so I went looking through the Tokio documentation for these things. Actually, all of the fundamental objects to read and write bytes to things implement one or both of `AsyncRead` and `AsyncWrite`, but not the `Future`, `Sink` or `Stream` traits. In fact, there are lots of `poll_x` methods dotted around, so I realised I needed to figure out how to make use of them.
+
+My goal was simple—reading and writing single bytes at a time—so that is the focus of my examples. You should be able to build on these foundations to add things like buffering, or to encode/decode bytes into more complex structures. I'll look at each of the possible ways to convert these things:
 
 - `AsyncRead` to `Future`, for one-off reads
 - `AsyncRead` to `Stream`, for continuous reading
@@ -174,7 +176,7 @@ let byte_stream = stream::unfold((), |_| {
 
 This has a notable downside however; there is no way to decide whether to return or not after running the `io::read`, and so I can't signal that the reader has reached the end. This is fine however for something like `stdin`, which you might expect never to be closed, but no good for streaming file data and such.
 
-A nicer, and even mroe concise approach, is to use functionality from the `tokio::codec` module, which allows you to describe how to encode and decode bytes from `AsyncRead`/`AsyncWrite` things, and wraps them into Streams and Sinks for you. This is how we could make our one-byte-at-a-time Stream:
+A nicer, and even more concise approach, is to use functionality from the `tokio::codec` module, which allows you to describe how to encode and decode bytes from `AsyncRead`/`AsyncWrite` things, and wraps them into Streams and Sinks for you. This is how we could make our one-byte-at-a-time Stream:
 
 ```rust
 let byte_stream = codec::FramedRead::new(io::stdin(), codec::BytesCodec::new())
