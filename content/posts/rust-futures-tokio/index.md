@@ -60,11 +60,16 @@ impl <R: AsyncRead> Future for ByteFuture<R> {
 let byte_future = ByteFuture(io::stdin());
 ```
 
-The nice thing about implementing the `Future` yourself is that you have complete control over things like buffering, errors and such. You can also replace `poll_read` with any similar `poll_x` method you find to create a Future that resolves when it returns something.
+The nice thing about implementing the Future yourself is that you have complete control over things like buffering and error handling. You can also replace `poll_read` with any similar `poll_x` method you find to create a Future that resolves when it returns something.
 
-How does anything know when to call `poll` again if `NotReady` is returned? It is assumed that the `poll_read` method called inside it will notify the Task containing this future (a Task is just a future that has been handed off to `tokio` to be run) once it's ready to be tried again. Without this, the `poll` method would never be called again, so if you return `NotReady`, it should be because an inner `poll_x` method also returned `NotReady`, so you can be sure that something will try again. Another offshoot of this is that it is assumed that `poll_x` methods are called in the context of a running Task so that they can notify the task when it needs to try again. In other words, don't use any `poll` method outside of a Future.
+It's important to note that the `poll` method on a future will only be called when something notifies the current Task (just the term given to a future that's been handed back to Tokio to be executed) that it can make progress. This means that if your Future implementation returns `NotReady`, it must be because either:
 
-One step less verbose is using the `futures::future::poll_fn` helper function, which transforms any poll method into an ad-hoc future on the fly, without the need for custom types and such. This achieves the same as above, reading from `stdin`:
+- The underlying `poll_x` method did (and so *it* will have arranged to wake the Task up when needed)
+- You arrange to wake the Task up yourself.
+
+If neither of these are true, the task will never resume and your Future will therefore never be polled again, and never finish.
+
+One step less verbose than implementing your own Future is using the `futures::future::poll_fn` helper function, which transforms any poll method into an ad-hoc future on the fly, without the need for custom types and such. This achieves the same as above, reading from `stdin`:
 
 ```rust
 let byte_future = future::poll_fn(move || {
@@ -100,7 +105,7 @@ This helper consumes an `AsyncRead`er and a buffer, but fortunately gives back t
 
 ## Converting an `AsyncRead` to a `Stream`, for continuous reading
 
-A `Stream` is very similar to a `Future`, except that it can keep yielding items indefinitely. Once again, we can create a thing that takes an `AsyncRead` and implements `Stream` for us:
+A _Stream_ is very similar to a Future, except that it can keep yielding items indefinitely. Once again, we can create a thing that takes an `AsyncRead` and implements the `Stream` trait for us:
 
 ```rust
 struct ByteStream<R>(R);
@@ -135,9 +140,9 @@ impl <R: AsyncRead> Stream for ByteStream<R> {
 let byte_stream1 = ByteStream(io::stdin());
 ```
 
-This is very similar to the `Future` implementation, except that we make a note of when the `AsyncRead` has made it to the end and signal that the `Stream` is done too.
+This is very similar to the Future implementation, except that we make a note of when the `AsyncRead` has made it to the end and signal that the Stream is done too.
 
-Once again, we have a helper function that we can use to implement a `Stream` in a more ad-hoc way:
+Once again, we have a helper function that we can use to implement a Stream in a more ad-hoc way:
 
 ```rust
 let byte_stream = stream::poll_fn(move || {
@@ -158,7 +163,7 @@ let byte_stream = stream::poll_fn(move || {
 
 This is almost a copy of the `poll` method above, just like our usage of `futures::poll_fn` above.
 
-If you wonder whether there is a way to put the nice `io::read` helper function to use again, but this time for a Stream, there is! We can combine it with the `stream::unfold` function to convert a future into a stream of futures:
+If you wonder whether there is a way to put the nice `io::read` helper function to use again, but this time for a Stream, there is! We can combine it with the `stream::unfold` function to convert a Future into a Stream of Futures:
 
 ```rust
 let byte_stream = stream::unfold((), |_| {
@@ -224,7 +229,7 @@ impl <W: AsyncWrite> Sink for ByteSink<W> {
 let byte_sink = ByteSink(io::stdout());
 ```
 
-There's room for improvement here, for instance I don't attempt to buffer anything at all, and rely on the underlying `AsyncWrite` to be performant for me. As with implementing `Future`s and `Stream`s, you must only return `NotReady` if the underlying writer did, to be sure that the underlying writer will wake the task up and call these methods again when appropriate. Failure to do so will lead to your implementation hanging forever as nothing knows to try it again.
+There's room for improvement here, for instance I don't attempt to buffer anything at all, and rely on the underlying `AsyncWrite` to be performant for me. As with implementing Futures and Streams, you must only return `NotReady` if the underlying writer did, to be sure that the underlying writer will wake the task up and call these methods again when appropriate.
 
 As with our `Stream` implementation, `tokio::codec` comes to the rescue again to give us a significantly more concise way to implement the above:
 
@@ -236,13 +241,13 @@ let byte_sink = codec::FramedWrite::new(io::stdout(), codec::BytesCodec::new())
     });
 ```
 
-As with the above implementation it does not attempt to do any buffering. the `with` method is a bit like `map` in reverse; instead of mapping the value coming out of the `Stream`/`Future`, we map the value before it comes into the `Sink`, to turn it into the required type.
+As with the above implementation it does not attempt to do any buffering. the `with` method is a bit like `map` in reverse; instead of mapping the value coming out of the Stream/Future, we map the value before it comes into the Sink, to turn it into the required type.
 
 There seem to be fewer ways to convert an `AsyncWrite` into a `Sink`, I suppose because it is a little more complex.
 
 ## Converting an `AsyncWrite` to a `Future`, for one-off writing
 
-For completeness sake, I include the final of the possible conversions; one-off writes to an `AsyncWrite` which leads to a single `Future`. Once you have a `Sink`, this can be done by using the `send` or `send_all` methods available on `Sink`. An alternative if you only have an `AsyncWrite` is to use the `tokio::io::write_all` helper function:
+For completeness sake, I include the final of the possible conversions; one-off writes to an `AsyncWrite` which leads to a single Future. Once you have a Sink, this can be done by using the `send` or `send_all` methods available on the `Sink` trait. An alternative if you only have an `AsyncWrite` is to use the `tokio::io::write_all` helper function:
 
 ```rust
 let write_once = io::write_all(io::stdout(), &[b'x']);
