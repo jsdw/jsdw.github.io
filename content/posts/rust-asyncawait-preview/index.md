@@ -128,11 +128,13 @@ tokio::run_async(async {
 });
 ```
 
-I'll show more examples as we go, but hopefully you have already gotten a feel for how ergonomically superior async/await syntax is to chaining futures together.
+`await` is non-blocking, so the Runtime is happy to go and work on progressing other Futures (if there are any) while waiting on any given `await` call.
+
+I'll show more examples as we go, but hopefully you have already been given a feel for how ergonomically superior async/await syntax is to chaining futures together.
 
 ## Converting new style Futures to old style Futures
 
-To make use of new style Futures alongside the various combinators and such exposed on old style Futures, you'll need to convert them. Although not explicitly exposed, you can make use of the machinery in the `tokio-async-await` crate to make quick work of it (I can't guarantee that this API will not change however):
+To make use of new style Futures alongside the various combinators and such exposed on old style Futures, you'll need to convert them. Although not explicitly exposed, you can make use of the machinery in the `tokio-async-await` crate to make quick work of it (This is correct as of `tokio-async-await` 0.1.4 but may change at any time):
 
 ```rust
 // converts from a new style Future to an old style one:
@@ -142,7 +144,7 @@ fn backward<I,E>(f: impl StdFuture<Output=Result<I,E>>) -> impl futures::Future<
 };
 ```
 
-The only caveat here is that the enw style future needs to output a `Result`, so that we can map to the `Item` and `Error` associated types needed for old style futures. With this in hand, we can use a new Future (made by an async thing) as if it was an old one:
+The only caveat here is that the new style future needs to output a `Result`, so that we can map to the `Item` and `Error` associated types needed for old style futures. With this in hand, we can use a new Future (made by an async thing) as if it was an old one:
 
 ```rust
 // Map our hello_world() future to return a Result<&str,()> rather
@@ -162,11 +164,11 @@ tokio::run(
 );
 ```
 
-The main use case for this is making use of combinators like `select` and `join` from the land of old Futures, rather than having to reimplement them to work alongside new Futures.
+The main use case for this that I can see is making use of combinators like `select` and `join` from the land of old Futures, rather than having to reimplement them to work alongside new Futures.
 
 ## Converting old style Futures into new style Futures
 
-The easiest way to convert an old style Future into a new one is simply by using the `await!` macro that Tokio gives us (rather than `std::await`), since it will convert old style Futures for us. We've already seen this above using the `tokio::timer::Delay` future in a new style `async` block.
+The easiest way to convert an old style Future into a new one is simply by using the `await!` macro that Tokio gives us (rather than `std::await`), since it will convert old style Futures for us. We've already seen this above when using the `tokio::timer::Delay` future in a new style `async` block.
 
 If we want, we can use the same approach to write ourselves a function to manually convert them for us:
 
@@ -240,7 +242,7 @@ let byte_future = ByteFuture(tokio::io::stdin());
 
 `Pin` is a type that is used to guarantee that we can't move `Self`. This is necessary because new style futures can contain self referential variables (which allows references working across `await` points). If `Self` could be moved, those references would be invalidated.
 
-`Unpin` is a marker trait that means it is safe to move a thing. This being true, it becomes safe to mutably access the thing (which lets you move memory about, eg with `mem::replace`). We need mutable access so that we demand that the `AsyncRead` type is also `Unpin` in order to get it.
+`Unpin` is a marker trait that means it is safe to move a thing. If this is true, it is safe to mutably access the thing (which lets you move it, eg with `mem::replace`). We need mutable access, so we demand that the `AsyncRead` type we accept is also `Unpin`. Almost everything implements `Unpin`. I imagine that `async` blocks with references that are used across `await` points would not be `Unpin`, since they are no longer safe to move around.
 
 We can achieve exactly the same and avoid implementing our own `Future` by making use of the `read_async` method provided on `AsyncRead`:
 
@@ -253,7 +255,7 @@ let byte_future2 = async {
 };
 ```
 
-This returns a `Future<Output=Result<u8,tokio::io::Error>>` just like our Future implementation above. We also use `?` to bail out early if `read_async` returns with an error. It's great that these things play nice together like this.
+This returns a `Future<Output=Result<u8,tokio::io::Error>>` just like our Future implementation above. We also use `?` to bail out early if `read_async` returns with an error. It's great to see that async/await plays well with existing operators and control flow like this.
 
 
 ## Writing new style streams to work with old-style AsyncReaders
@@ -317,7 +319,7 @@ let sink_message = async {
 }
 ```
 
-This time, we loop over some bytes we want to output, and send each one to `stdout` using `write_all_async`. We could certainly improve the buffering here by writing more bytes at a time. We need to remember to `flush_async` at the end to ensure bytes have been written out completely.
+This time, we loop over some bytes we want to output, and send each one to `stdout` using `write_all_async`. We could probably improve the performance here by writing more bytes at a time. We need to remember to `flush_async` at the end to ensure bytes have been written out completely.
 
 If you already have a `Sink`, you get a new `send_async` method on it, which makes it easy to send things into it without the messy ownership transferring stuff you have to do with `send`. In this example I forward bytes from a Stream to a Sink:
 
@@ -376,7 +378,7 @@ tokio::run_async(async {
 
 ## Conclusion
 
-I'm really very excited about async/await syntax; it makes writing and composing Futures way easier. This post has discussed how to make use of all of this new stuff alongside the current Futures 0.1 ecosystem, so that you can start playing with and benefitting from it straight away.
+I'm really very excited about async/await syntax; it makes writing and composing Futures much, much nicer. This post has discussed how to make use of all of this new stuff alongside the current Futures 0.1 ecosystem, so that you can start playing with and benefitting from it straight away.
 
 You can find all of the example code [here][code].
 
