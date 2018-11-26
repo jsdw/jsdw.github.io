@@ -6,9 +6,13 @@ date = 2018-11-26
 created = "2018-11-26"
 +++
 
-The async/await support coming to Rust brings with it a much more ergonomic way to work with asynchronous computations. In this post I'll introduce `std::future::Future`, and run through how to make use of them, and how to interoperate with the current ecosystem which is built around version `futures::Future` from the `futures` package (version 0.1).
+Following on from my [last post][last-post], I thought I would look at async/await support in Rust.
 
-I'll refer to Futures from the 0.1 `futures` package as "0.1 Futures" or "old Futures", and the `Future` trait exposed in the nightly standard library that is the backbone of the async/await syntax as "std Futures" or "new Futures" (or something along that line!).
+The async/await support coming to Rust brings with it a much more ergonomic way to work with asynchronous computations. In this post I'll introduce `std::future::Future`, and run through how to make use of them, and how to interoperate with the current ecosystem which is built around version 0.1 of the `futures` package.
+
+I'll refer to Futures from the 0.1 `futures` package as "0.1 Futures" or "old style Futures", and the `Future` trait exposed in the nightly standard library that is the backbone of the async/await syntax as "std Futures" or "new style Futures" (or something along those lines!).
+
+All of the example code used below can be [found here][code]
 
 ## Prerequisites
 
@@ -193,7 +197,7 @@ I'm not really sure if this is super useful, but it's nice to know that you can 
 
 ### Manually implementing a new style Future on top of Tokio poll_x methods
 
-In my last post, I manually implemented an old style `Future` which reads one byte at a time from some `AsyncRead` type. Let's do the same again here, but with new style Futures.
+In my [last post][last-post], I manually implemented an old style `Future` which reads one byte at a time from some `AsyncRead` type. Let's do the same again here, but with new style Futures.
 
 Implementing a new style Future isn't significantly more difficult; the main challenges are understanding `Pin`, and converting between the `Async` type Tokio uses and the `std::task::Poll` type that new Futures hand back.
 
@@ -373,3 +377,9 @@ tokio::run_async(async {
 ## Conclusion
 
 I'm really very excited about async/await syntax; it makes writing and composing Futures way easier. This post has discussed how to make use of all of this new stuff alongside the current Futures 0.1 ecosystem, so that you can start playing with and benefitting from it straight away.
+
+You can find all of the example code [here][code].
+
+
+[code]: https://github.com/jsdw/jsdw.me/blob/master/content/posts/rust-asyncawait-preview/src/main.rs
+[last-post]: ./posts/rust-futures-tokio/index.md
