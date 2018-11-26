@@ -137,8 +137,11 @@ I'll show more examples as we go, but hopefully you have already been given a fe
 To make use of new style Futures alongside the various combinators and such exposed on old style Futures, you'll need to convert them. Although not explicitly exposed, you can make use of the machinery in the `tokio-async-await` crate to make quick work of it (This is correct as of `tokio-async-await` 0.1.4 but may change at any time):
 
 ```rust
+use std::future::Future as NewFuture;
+use futures::Future as OldFuture;
+
 // converts from a new style Future to an old style one:
-fn backward<I,E>(f: impl StdFuture<Output=Result<I,E>>) -> impl futures::Future<Item=I, Error=E> {
+fn backward<I,E>(f: impl NewFuture<Output=Result<I,E>>) -> impl OldFuture<Item=I, Error=E> {
     use tokio_async_await::compat::backward;
     backward::Compat::new(f)
 };
@@ -173,8 +176,11 @@ The easiest way to convert an old style Future into a new one is simply by using
 If we want, we can use the same approach to write ourselves a function to manually convert them for us:
 
 ```rust
+use std::future::Future as NewFuture;
+use futures::Future as OldFuture;
+
 // converts from an old style Future to a new style one:
-fn forward<I,E>(f: impl futures::Future<Item=I, Error=E> + Unpin) -> impl StdFuture<Output=Result<I,E>> {
+fn forward<I,E>(f: impl OldFuture<Item=I, Error=E> + Unpin) -> impl NewFuture<Output=Result<I,E>> {
     use tokio_async_await::compat::forward::IntoAwaitable;
     f.into_awaitable()
 }
@@ -269,7 +275,8 @@ let stream_bytes = async {
     let mut buf = [0;1];
     let mut stdin = tokio::io::stdin();
 
-    // While read_async returns a number of bytes read and not an error:
+    // While read_async returns a number of bytes
+    // read and not an error:
     while let Ok(n) = await!(stdin.read_async(&mut buf)) {
         // bail if we've read everything:
         if n == 0 { break };
