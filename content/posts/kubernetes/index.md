@@ -38,7 +38,7 @@ A Pod can contain one or more *Containers* (often just one). A Container is the 
 
 Here is the configuration for a Pod that simply runs an echo server on port `3000` (by default):
 
-```
+```yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -60,7 +60,7 @@ If we save this to a file, eg `echo-server.yaml`, we can run it in our Kubernete
 To test this echo server, we can spin up an interactive `busybox` prompt in another Pod with the following:
 
 ```
-kubectl run -i -t busybox --image=busybox --rm
+kubectl run -it busybox --image=busybox --rm
 ```
 
 This should give us a prompt inside a Pod running `busybox`. Now, if we take the IP address from the earlier command of the echo pod (this IP address is internal to the cluster), we can ping the echo Pod from our `busybox` one and see what happens by typing something like `wget POD_IP_ADDRESS:3000 -O -`.
@@ -79,12 +79,12 @@ Some other useful commands:
 
 There's loads more that you can configure about Pods and the Containers that live inside them; you can peruse the full API [here][api-pods]. Here are some interesting ones for Pods:
 
-- `volumes`: Make volumes available to mount onto the Containers within this Pod.
-- `affinity`: Decide which other Pods or Nodes this Pod will be scheduled near to or away from:
+- `spec.volumes`: Make volumes available to the Pod that can then be mounted into the Containers inside it.
+- `spec.affinity`: Decide which other Pods or Nodes this Pod will be scheduled near to or away from. Sub properties include:
   - `podAffinity`/`podAntiAffinity`: Describe which other Pods you want the Pod to be spun up next to or to avoid. You use labels to select other Pods, and a `topologyKey` to select which label on the Node you're trying to match up in order to know where to schedule the Pod. Using this, you can make sure Pods are spun up on the same machine, or just the same geographic Region, or anything else based on the labels you give your Nodes.
   - `nodeAffinity`: Schedule the Pod onto Nodes matching the labels selected.
-- `tolerations`: Nodes can be tainted to avoid things being scheduled onto them (for example, maybe you have a high spec Node that you only want specific jobs to run on). `tolerations` allow a Pod to be scheduled onto one of these tainted Nodes.
-- `initContainer`: If we define this container, the Pod won't be marked as ready until this container has successfully completed.
+- `spec.tolerations`: Nodes can be tainted to avoid things being scheduled onto them (for example, maybe you have a high spec Node that you only want specific jobs to run on). `tolerations` allow a Pod to be scheduled onto one of these tainted Nodes.
+- `spec.initContainer`: If we define this container, the Pod won't be marked as ready until this container has successfully completed.
 
 And for containers:
 
@@ -96,6 +96,24 @@ And for containers:
 - `envFrom`: Inject environment variables from a `configMap` or `secretMap` (these are things you can write YAML config to create, and contain lists of useful variables and such that you can share across Containers).
 - `command`/`args`: Run a command when the container starts up, or provide args to override the command that was already configured to run from the Docker image.
 - `readinessProbe`/`livenessProbe`: Define when the Container is ready to start receiving traffic and whether it's still alive. These can be a command that needs to run on the container, or an HTTP GET request to perform against it, for instance. A Pod is only marked as ready once all of the containers in it are. The Container is restarted (not the Pod) if `livenessProbe` fails.
+
+# Namespaces
+
+If we have lots of things we'd like to run in our Kubernetes cluster, we can put things into namespaces. Most `kubectl` commands allow you to add `-n some-namespace` as a flag to run inside that namespace. the `metadata.namespace` setting in configuration files sets the namespace that things will be deployed into.
+
+When something is in a namespace, it won't show up when you run commands like `kubectl get resource thing` unless you use the`-n` flag as well to set the namespace. You can however add `--all-namespaces` to show things everywhere.
+
+To create a namespace, you can either run `kubectl create namespace my-namespace-name`, or add it via config like anything else, for example:
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: my-namespace-name
+```
+
+As with other objects in Kubernetes, we can view our namespaces by running `kubectl get namespaces`.
+
 
 # Controllers
 
@@ -109,7 +127,7 @@ The job of a ReplicaSet is to keep track of how many of some Pod are running (gi
 
 We can create and apply a ReplicaSet for our `echo-server` as follows, to ensure that 3 copies of it will always be running:
 
-```
+```yaml
 apiVersion: apps/v1
 kind: ReplicaSet
 metadata:
@@ -133,7 +151,7 @@ spec:
 
 Once we have saved and applied this, `kubectl get replicasets` will now show this new ReplicaSet, along with the state of the underlying Pods. If we run `kubectl get pods`, we'll see several Pods of the above spec, each with a random hash appended to them so that they have unique identifiers. If we `kubectl delete` one of these Pods, we'll see that a new one is spun up in its place. You'll need to delete the ReplicaSet in order to permanently delete the associated Pods.
 
-If we edit the number of `replicas` in our config and `kubectl apply` it again, the state of our system will update to match that new replica count.
+If we edit the number of `spec.replicas` in our config and `kubectl apply` it again, the state of our system will update to match that new replica count.
 
 `kubectl edit replicaset echo-server` is another way to edit the details of our ReplicaSet (or indeed any other object in Kubernetes), but it generally now recommended as your local config files will then be out of sync with the actual state of the system.
 
@@ -147,7 +165,7 @@ When you create a Deployment, you'll find that a corresponding ReplicaSet has be
 
 Let's `kubectl delete replicaset echo-server` and instead create a Deployment for it that looks like the following:
 
-```
+```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -182,9 +200,15 @@ The problem is that the Pod's cluster IP address does not persist if the Pod is 
 
  *Services*, on the other hand, have a persistent IP address (and cluster-internal dns name). They therefore make it easy for Pods within a cluster to communicate with each other, as well as exposing certain ports on Pods to the outside world and more.
 
-A very basic Service that allows other Pods to communicate with our `echo-server` might look like this:
+If a Service is created before the Pods that it matches on, then when the Pods are created they will be spread across Nodes by default, because Kubernetes understands that the Service will be more resilient if the Pods it forwards traffic to are spread out in this way.
 
-```
+## ClusterIP
+
+The most basic service type is ClusterIP. This Service provides a single IP address internal to the cluster that routes traffic to the Pods selected by it.
+
+To allow other Pods on the same cluster to communicate with our `echo-server`, we could write a ClusterIP Service like so:
+
+```yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -203,17 +227,19 @@ If we save that to a file, eg `echo-server-service.yaml`, we can tell Kubernetes
 
 Once applied, `kubectl get services` will list active services and their internal (and external if applicable) IP addresses.
 
-Applying a Service in Kubernetes leads to changes in `iptables` and `resolv.conf` rules in order that requests that look like they are destined for the Service are actually sent, in a round-robin fashion, to any Pods matching the selector provided in the Service config.
+Applying a Service in Kubernetes leads to changes in `iptables` and `resolv.conf` in order that requests that look like they are destined for the Service are actually sent, in a round-robin fashion, to any Pods matching the selector provided in the Service config (in the above example, Pods with an 'app' label set to 'echo-server').
 
-To test this new Service, make sure that the `echo-server` Pod is running again. Then, we can use the same trick as before to give us a Pod running busybox (`kubectl run -i -t busybox --image=busybox --rm`). This time, instead of using the IP address of the Pod itself, we can use the IP address of the Service, and run for example `wget SERVICE-CLUSTER-IP -O -` to get a result from it. Even better, service names resolve as you might expect via DNS, so we can also use `wget http://my-echo-server-service -O -` to talk to the `echo-server` Pod now. Even if we delete and re-apply the `echo-server` config and it ends up with a different IP address (`kubectl get pods -o wide` to see the Pod IPs), the Service will continue to work.
+To test this new Service, make sure that the `echo-server` Pod is running again. Then, we can use the same trick as before to give us a Pod running busybox (`kubectl run -i -t busybox --image=busybox --rm`). This time, instead of using the IP address of the Pod itself, we can use the IP address of the Service, and run for example `wget SERVICE-CLUSTER-IP -O -` to get a result from it. Even better, service names resolve as you might expect via DNS, so we can also use `wget http://my-echo-server-service -O -` to talk to the `echo-server` Pod now. If the Service is in a namespace, it will be accessible via something like `http://service-name.namespace-name`. Since the same service could be running in several namespaces, this allows you to disambiguate which one you want.
+
+Even if we delete and re-apply the `echo-server` config and it ends up with a different IP address (`kubectl get pods -o wide` to see the Pod IPs), the Service will continue to work.
 
 See [here][api-services] for the complete API reference for Services.
 
-## NodePorts
+## NodePort
 
-A Service of type `NodePort` can additionally forward traffic from a given port on the Node itself to the desired Pods. We can expose our `echo-server` by tweaking our `echo-server-service.yaml` above to look like:
+The *NodePort* Service type builds upon the ClusterIP Service type and additionally forwards traffic from a given port on the Node itself to the desired Pods. We can expose our `echo-server` to the outside world by tweaking our `echo-server-service.yaml` above to look like:
 
-```
+```yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -231,14 +257,123 @@ spec:
 
 If we don't provide a `nodePort` ourselves, one will be allocated for us, which we can discover using `kubectl get services`. The `nodePort` must be within the range 30000-32767.
 
-If we apply this, we should find that we can still communicate with it the same way via our busybox Pod. Additionally, if we know the IP address of one of our cluster Nodes (`minikube ip` provides that for minikube), we can now access our `echo-server` on port 30001 (try browsing to it!) from our local machine.
+If we apply this, we should find that we can still communicate with it the same way when we spin up our busybox Pod. Additionally, if we know the IP address of one of our cluster Nodes (`minikube ip` provides that for minikube), we can now access our `echo-server` on port 30001 (try browsing to it!) from our local machine.
 
 ## LoadBalancer
 
-Services like Google Cloud also offer a `LoadBalancer` Service type, which allocates an external IP for us. This will then load balance traffic to the Pods we've selected. Whether this works or not is dependent on whether the provider offers such a service. It can also incur quite a large additional cost.
+Services like Google Cloud also offer a *LoadBalancer* Service type, which builds on the NodePort Service and leads to an external IP address being allocated for us. Sending traffic to this address will then load balance it across our different cluster Nodes, which in turn will forward traffic through their exposed ports to the Pods selected by the underlying ClusterIP Service.
+
+A LoadBalancer Service can incur quite a large additional cost, so various tutorials exist about configuring your own load balancing inside the Kubernetes cluster.
+
+The configuration for the LoadBalancer Service type is identical to the NodePorts configuration, just with a different `spec.type` and a couple of additional options (see [the api][api-services]). For our `echo-server` it could look like this:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-echo-server-service
+spec:
+  type: NodePort
+  selector:
+    app: echo-server
+  ports:
+  - nodePort: 30001
+    protocol: TCP
+    port: 80
+    targetPort: 3000
+```
 
 Using `minikube`, the 'External IP' field of the LoadBalancer service is stuck in a pending state (it's just the same as `minikube ip`. On other providers, it should show up next to the service in `kubectl get services` once it's been allocated.
 
+# Configuration
+
+We've talked about Pods and Services, which define the things you want to run and how they can communicate with each other. When it comes to configuring these Pods (for example, telling them where to look for things or which port to run on), we can use *ConfigMaps* and *Secrets*.
+
+## ConfigMap
+
+Our various Pods and such will potentially have various configuration that needs setting. Rather than baking this configuration into the Containers themselves, we can provide it to Pods using ConfigMaps and SecretMaps. Our `echo-server` for instance starts on a port defined by the environment variable `PORT`, defaulting to `3000` if it's not provided. We could put this configuration into a ConfigMap like so:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: echo-server-config-v1
+data:
+  PORT: "3000"
+```
+
+We can apply this as usual with `kubectl apply -f the-file-name.yaml`, and we can list our ConfigMaps with `kubectl get configmaps`. Particularly useful for ConfigMaps (but usable everywhere) is `kubectl get configmap echo-server-config-v1 -o yaml`, which prints out the yaml so that you can see the configuration values inside. `kubectl describe configmap echo-server-config-v1` also shows you the data.
+
+With this, we can provide the data as a mount point (in which there is a file per variable name which contains just the value), or via environment variables using the `env` or `envFrom` options.
+
+To provide the config to our `echo-server` as environment variables we can edit the `deployment` to look like:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo-server
+  labels:
+    app: echo-server
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: echo-server
+  template:
+    metadata:
+      labels:
+        app: echo-server
+    spec:
+      containers:
+      - name: echo-server-container
+        image: kennship/http-echo
+        envFrom:
+        - configMapRef:
+            name: echo-server-config-v1
+```
+
+We could use `env` instead of `envFrom` if we want to map specific config variables to environment variables, rather than provide everything as-is.
+
+If this is already running, you'll see that applying this updated config will spin down the old Pods and spin up new ones, since the template Pod spec has changed. We can verify that it is still accessible on port 3000 by spinning up a busybox Pod again if we like (`kubectl run -it busybox --image=busybox --rm`) and using `wget` on one of the `echo-server` Pods.
+
+If we want to change the port, a good approach now is to edit the ConfigMap to specify the new port, but also alter its name, so we might end up with:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: echo-server-config-v2
+data:
+  PORT: "4000"
+```
+
+With that applied, we would end up with a `v1` and a `v2` of the ConfigMap in Kubernetes. If we then edit the deployment to use `v2` of the config and apply it, it will spin down the old Pods and spin up some new Pods that use the new config. Running `wget` directly to one of the Pods, we'll now see that port 4000 responds and port 3000 does not (the Service we defined earlier will now not work, since it forwards traffic to port 3000).
+
+Because we have kept the old config around, and explicitly changed the deployment pod spec to use the new config, we can also rollback the deployment very easily if we realise we've made a mistake with the new config.
+
+`kubectl rollout history deploy echo-server` will list the revisions. adding eg `--revision=2` lets you inspect the details. We can undo a rollout of a Deployment using, in this case, `kubectl rollout undo deploy echo-server`, optionally adding `--to-revision=N` to roll back to a specific revision N. eventually, when we are happy with the new config, we can manually `kubectl delete configmap` the old versions if we like (noting that we'll be unable to rollback to anything using them once they are gone).
+
+## Secret
+
+*Secrets* are fundamentally very similar to ConfigMaps, but make it slightly harder to expose the secret information. One difference is that data is always base64 encoded, presumably so that it's slightly harder to read it from the API.
+
+# Conclusion
+
+The basic building block of Kubernetes is the Pod, which defines the (docker) images to run as containers inside it. We can manage the lifecycle of Pods using Deployments, and we can describe how Pods can talk to each other using Services. Finally, we can pass in configuration to Pods to avoid needing to base it into the images that they run.
+
+There's loads of stuff I haven't gone into any detail at all about however, including:
+
+- `PersistentVolumes` and `PersistentVolumeClaims`, which allow you to define persistent storage that is available to the cluster, and claim it by specific Pods. Using this, we can run things like databases and know that they will survive Pod restarts and such. I didn't play with this stuff as much though during the training course!
+- `StatefulSets`, which are like Deployments but are more regular in how they are spun up and down, and what storage they are given, so that you can run stateful applications a little easier (like databases). Once again, I had a cursory play with these but not much.
+- `DaemonSets`, which run one instance of a Pod per node
+- `Jobs`, which manage running Pods that expect to complete.
+
+And much more.
+
+That said, I hope that I've provided enough of a foundation that you can go away and learn about the things you've missing out on.
+
+Good luck Kubernetesing!
 
 [api-pods]: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#pod-v1-core
 [api-services]: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#service-v1-core
