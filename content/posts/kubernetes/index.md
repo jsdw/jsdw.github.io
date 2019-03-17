@@ -1,9 +1,9 @@
 +++
 title = "Notes on Kubernetes"
 description = "Some notes I wrote up on Kubernetes from having attended the beginner and intermediate training courses hosted by JetStack at the Google building in London."
-date = 2019-03-16
+date = 2019-03-17
 [extra]
-created = "2019-03-16"
+created = "2019-03-17"
 +++
 
 *Docker* is a platform for building *images*, which contain everything your application needs to run. These images can be quickly spun up in the form of *containers*, which can be thought of as lightweight VMs (they share the underlying OS kernel where possible, and isolate themselves from other processes using linux kernel features rather than full fledged VMs).
