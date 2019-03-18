@@ -6,7 +6,7 @@ date = 2019-03-17
 created = "2019-03-17"
 +++
 
-*Docker* is a platform for building *images*, which contain everything your application needs to run. These images can be quickly spun up in the form of *containers*, which can be thought of as lightweight VMs (they share the underlying OS kernel where possible, and isolate themselves from other processes using linux kernel features rather than full fledged VMs).
+*Docker* is a platform for building *images*, which contain everything your application needs to run. These images can be quickly spun up into *containers*, which can be thought of as lightweight VMs. They share the underlying OS kernel where possible, and isolate themselves from other processes using linux kernel features rather than full fledged VMs.
 
 *Kubernetes* is a container orchestration platform which helps coordinate the running of your Docker images. In plain english, you use Kubernetes by describing what and how you want various images to run by writing configuration files, and Kubernetes takes care of making sure that what *is* running lines up with the configuration it's been given.
 
@@ -28,7 +28,7 @@ Each master has a copy of a distributed key-value store called *etcd*, which is 
 
 The configuration files you write to describe your kubernetes environment are written in YAML, which is a [superset of JSON][json2yaml]. You'll normally use the `kubectl` CLI tool to interact with the API provided by the Kubernetes cluster, but you can manually communicate with it via its HTTP interface using JSON as well.
 
-At a basic level, a running Kubernetes cluster consists of various *Pods*, each of which contains one or more Docker containers. We create *Services* to describe how the Pods can communicate with each other and the outside world. Instead of directly creating Pods, we create *Controllers* that take care of scaling the number of Pods up and down and transitioning between old and new versions when you update the configuration describing what Pods you want running. Finally, we can describe the environment and storage that we want attached to Pods so that our application can store state, and we can adapt the configuration given to our containers.
+At a basic level, a running Kubernetes cluster consists of various *Pods*, each of which contains one or more Docker containers. We create *Services* to describe how the Pods can communicate with each other and the outside world. Instead of directly creating Pods, we tend to create *Controllers* that take care of scaling the number of Pods up and down and transitioning between old and new versions of Pods. Finally, we can describe the environment and storage that we want attached to Pods so that our application can store state, and we can adapt the configuration given to our containers.
 
 I'll look at each of these things in turn, stopping short of persistent storage and leaving that as an exercise for the reader, but I hope by then you'll have gained a decent intuition for how Kubernetes works.
 
@@ -39,7 +39,7 @@ A *Pod* is the basic building block in kubernetes that describes something you w
 In short, if you want to get some application running in Kubernetes, you'll typically take the following steps:
 
 * Write a `Dockerfile` for your application. This describes how to package it up into a docker image that contains everything necessary to run it.
-* Push the image to some place on the internet that your kubernetes cluster can access (this is reminiscent of pushing code to github for instance; you can also `pull` Docker images from the internet to run them in locally).
+* Push the image to a Docker container library on the internet that your kubernetes cluster can access (this is reminiscent of pushing code to github for instance; you can also `pull` Docker images from a container library to run them locally). This can be a private library in Google Cloud, for instance, or a public one like [Docker Hub][dockerhub].
 * When describing a Pod you'd like to run in Kubernetes, you can then point to the image you'd like it to run. Kubernetes will then be able to download the image and spin it up whenever it needs to.
 
 Here is the configuration for a Pod that simply runs an echo server on port `3000` (by default):
@@ -57,9 +57,9 @@ spec:
     image: kennship/http-echo
 ```
 
-Here, we give the Pod a name of "echo-server" and give it a single key-value label of `app: echo-server`. We could add labels specifying the version of our app and so forth as well if we like. We can use labels to select matching Pods in various scenarios, so they are really useful. Finally, we provide a spec describing the containers we want to run. The image name here (`kennship/http-echo`) refers to an image on Docker Hub by the same name.
+Here, we give the Pod a name of "echo-server" and give it a single key-value label of `app: echo-server`. We could add labels specifying the version of our app and so forth as well if we like. We can use labels to select matching Pods in various scenarios, so they are really useful. Finally, we provide a spec describing the containers we want to run. The image name here (`kennship/http-echo`) refers to an image on Docker Hub by the same name that we'd like to run.
 
-If we save this to a file, eg `echo-server.yaml`, we can run it in our Kubernetes cluster by running `kubectl apply -f echo-server.yaml`. This command sends whatever configuration file (or folder) you point it at to Kubernetes, which then takes the necessary steps to make it so.
+If we save this to a file, eg `echo-server.yaml`, we can run it in our Kubernetes cluster by running `kubectl apply -f echo-server.yaml`. This command sends whatever configuration file (or folder) you point it at to Kubernetes, which then updates the cluster to reflect it.
 
 `kubectl get pods` should now list a single Pod, `echo-server`, as running. `kubectl get pods -o wide` shows some extra information, including the Pods' cluster IP addresses.
 
@@ -71,7 +71,7 @@ kubectl run -it busybox --image=busybox --rm --generator=run-pod/v1
 
 `--image=busybox` specifies the Docker image we want to run. `-it` provides `stdin`/`stdout` so that you can interact with the running application (busybox in this case). `--rm` removes the Pod when we are done with it. `--generator` specifies the type of thing this command should create (here, just a Pod, but we'll learn about Deployments and such soon). Finally, we have to give the Pod that this command creates a name, in this case "busybox".
 
-Running this should give us a prompt inside a Pod running `busybox`. Now, if we get the IP address of the `echo-server` Pod using `kubectl get pods -o wide` (this IP address is internal to the cluster), we can ping the echo Pod from our `busybox` one and see what happens by typing something like `wget [echo-server-ip-address]:3000 -O -` (I had a peek at the code to find out that the container in `echo-server` listens on port 3000 by default).
+Running this should give us a prompt inside a Pod running `busybox`, so we're now inside our Kubernetes cluster! Now, if we get the IP address of the `echo-server` Pod using `kubectl get pods -o wide` in another terminal (Pod IP addresses are internal to the cluster), we can communicate with the `echo-server` Pod from our `busybox` prompt by typing something like `wget [echo-server-ip-address]:3000 -O -`. As the name states, this will echo back some information about the request you just made.
 
 Some other useful commands in the area:
 
@@ -96,7 +96,7 @@ There's loads more that you can configure about Pods and the containers that liv
 - `spec.tolerations`: Nodes can be tainted to avoid things being scheduled onto them (for example, maybe you have a high spec Node that you only want specific jobs to run on). `tolerations` allow a Pod to be scheduled onto one of these tainted Nodes.
 - `spec.initContainer`: If we define this container, the Pod won't be marked as ready until this container has successfully completed.
 
-And for containers (`spec.containers` in the Pod configuration):
+And for the containers we want to run (`spec.containers` in the Pod configuration):
 
 - `resources`: Define the resources (CPU/memory) that you expect the container, and limits before the container will be throttled/killed. The resources are defined in terms of the CPU/memory available on the Node the Pod is running on.
   - `requests`: Define what you expect the Pod to consume ordinarily. The Kubernetes scheduler uses this information to decide on which Node it can fit the Pod. You should almost always use this.
@@ -128,7 +128,7 @@ As with other objects in Kubernetes, we can view our namespaces by running `kube
 
 One of the issues with creating Pods manually is that if they are terminated for whatever reason, they won't be recreated. Your Pod configuration is like a cookie-cutter that cuts out some cookies and then has nothing more to do with them.
 
-Controllers in Kubernetes control some aspects of how Pods are created, restarted, and updated. To use a controller, you'll define what a Pod looks like in the same way as we've looked at, but provide other configuration describing things like how many instance of that Pod should be running. A common controller is a *Deployment*, which coordinates the creation of *ReplicaSets*, whose job it is to make sure a certain number of copies of some Pod are always running.
+Controllers in Kubernetes control some aspects of how Pods are created, restarted, and updated. To use a controller, you'll define what a Pod looks like in the same way as above, but provide other configuration describing things like how many instance of that Pod should be running. A common controller is a *Deployment*, which coordinates the creation of *ReplicaSets*, whose job it is to make sure a certain number of copies of some Pod are always running.
 
 While you can create ReplicaSets directly, Deployments are more powerful, and almost always what you want to be using. That said, since they build on each other, it's a good idea to look at how ReplicaSets work first.
 
@@ -160,9 +160,13 @@ spec:
         image: kennship/http-echo
 ```
 
-The `spec.template` field is a Pod spec describing what the ReplicaSet should create when necessary. `spec.selector` tells the ReplicaSet what Pods are its responsibility (and so it should line up with `spec.template.metadata.labels` so that the Pods created by the ReplicaSet are its responsibility).
+The `spec.template` field is a Pod spec describing the Pod that the ReplicaSet should create when necessary. `spec.selector` tells the ReplicaSet what Pods are its responsibility (and so it should line up with `spec.template.metadata.labels` so that the Pods created by the ReplicaSet are its responsibility).
 
-Once we have saved and applied this, `kubectl get replicasets` will now show this new ReplicaSet, along with the state of the underlying Pods. If we run `kubectl get pods`, we'll see several Pods of the above spec, each with a random hash appended to their name so that they have unique identifiers. If we `kubectl delete` one of these Pods, we'll see that a new one is spun up in its place (the ReplicaSet is doing its job!). You'll need to delete the ReplicaSet in order to permanently delete the associated Pods.
+Once we have saved and applied this, `kubectl get replicasets` will now show this new ReplicaSet, along with the state of the underlying Pods. If we run `kubectl get pods`, we'll see several Pods of the above spec, each with a random hash appended to their name so that they have unique identifiers.
+
+If we left the original `echo-server` pod around from earlier, that will become the responsibility of the ReplicaSet since it matches the selector, so the ReplicaSet will create two new Pods with a random hash, to bring the count up to 3.
+
+If we `kubectl delete` one of these Pods, we'll see that a new one is spun up in its place (the ReplicaSet is doing its job!). You'll need to delete the ReplicaSet in order to permanently delete the associated Pods.
 
 If we edit the number of `spec.replicas` in our config and `kubectl apply` it again, the ReplicaSet will spin up or destroy Pods as necessary to make reality match this new configuration.
 
@@ -207,9 +211,9 @@ If we apply this, we can then use `kubectl get deploy` to view its status. Note 
 
 # Services
 
-Containers within Pods can communicate to each other via ports on `localhost` (thus, if a Pod contains more than one container, those containers share the same port space). In addition, Pods have an IP address internal to the cluster, so that a container in one Pod can talk to a container in another.
+Containers within Pods can communicate to each other via ports on `localhost` (thus, if a Pod contains more than one container, those containers share the same port space). In addition, Pods have an IP address internal to the cluster, so that a container in one Pod can talk to a container in another. We've seen this already using our `busybox` Pod.
 
-The problem is that the Pod's cluster IP address does not persist if the Pod is restarted. If Pods are being managed by Deployments (which is often the case), you'll have several Pods that you want to direct traffic to, and they could come and go at a moments notice.
+The problem is that the Pod's cluster IP address does not persist if the Pod is restarted. If Pods are being managed by Deployments (which is often the case), you'll have several Pods that you want to direct traffic to, and they will be destroyed or created as the Deployment sees fit.
 
  *Services* make it easy for Pods to communicate with each other and the outside world.
 
@@ -217,7 +221,7 @@ The problem is that the Pod's cluster IP address does not persist if the Pod is 
 
 ## ClusterIP
 
-The most basic service type is ClusterIP. This Service provides a single IP address internal to the cluster that routes traffic to the Pods selected by it.
+The most basic service type is ClusterIP. This Service provides a single persistent IP address internal to the cluster that routes traffic to the Pods selected by it. This IP address will persist until you delete the Service. In addition, DNS records are added so that you can use a name instead of an IP address to talk to the selected Pods.
 
 ![A basic ClusterIP Service enabling communicate between Pods][service]
 
@@ -246,7 +250,7 @@ Applying a Service in Kubernetes leads to changes in `iptables` and `resolv.conf
 
 To test this new Service, make sure that the `echo-server` Pod is running again. Then, we can use the same trick as before to give us a Pod running busybox (`kubectl run -it busybox --image=busybox --rm --generator=run-pod/v1`). This time, instead of using the IP address of the Pod itself, we can use the IP address of the Service, and run for example `wget [service-cluster-ip] -O -` to get a result from it. Even better, service names resolve as you might hope via DNS, so we can also use `wget http://my-echo-server-service -O -` to talk to the `echo-server` Pod now. If the Service is in a namespace, it will be accessible via something like `http://service-name.namespace-name`. Since the same service could be running in several namespaces, this allows you to disambiguate which one you want (by default you'll find whatever is running the same namespace if you don't provide one).
 
-Even if we delete and re-apply the `echo-server` config and it ends up with a different IP address (`kubectl get pods -o wide` to see the Pod IPs), the Service will continue to work.
+Even if we delete and recreate the `echo-server` Pod and it ends up with a different IP address (`kubectl get pods -o wide` to see the Pod IPs), the Service will continue to work. This makes it a durable way for Pods to communicate with each other.
 
 See [here][api-services] for the complete API reference for Services.
 
@@ -405,3 +409,4 @@ Good luck Kubernetesing!
 [minikube]: https://kubernetes.io/docs/setup/minikube/
 [kubectl]: https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [json2yaml]: https://www.json2yaml.com/
+[dockerhub]: https://hub.docker.com/search?q=&type=image
