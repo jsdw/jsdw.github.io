@@ -10,7 +10,7 @@ created = "2019-03-17"
 
 *Kubernetes* is a container orchestration platform which helps coordinate the running of your Docker images. In plain english, you use Kubernetes by describing what and how you want various images to run by writing configuration files, and Kubernetes takes care of making sure that what *is* running lines up with the configuration it's been given.
 
-Kubernetes it particularly good at running stateless applications, since it can scale up and down the number of things you want running as well as the number of machines to run these on, perform rolling updates, and direct traffic to groups of containers quite easily. It's possible to run stateful applications as well, though more care needs to be taken in doing so.
+Kubernetes is particularly good at running stateless applications, since it can scale up and down the number of things you want running as well as the number of machines to run these on, perform rolling updates, and direct traffic to groups of containers quite easily. It's possible to run stateful applications as well, though more care needs to be taken in doing so.
 
 # Prerequisites
 
