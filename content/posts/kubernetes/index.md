@@ -1,14 +1,14 @@
 +++
 title = "Notes on Kubernetes"
 description = "Some notes I wrote up on Kubernetes from having attended the beginner and intermediate training courses hosted by JetStack at the Google building in London."
-date = 2019-03-17
+date = 2019-03-31
 [extra]
 created = "2019-03-17"
 +++
 
 *Docker* is a platform for building *images*, which contain everything your application needs to run. These images can be quickly spun up into *containers*, which can be thought of as lightweight VMs. They share the underlying OS kernel where possible, and isolate themselves from other processes using linux kernel features rather than full fledged VMs.
 
-*Kubernetes* is a container orchestration platform which helps coordinate the running of your Docker images. In plain english, you use Kubernetes by describing what and how you want various images to run by writing configuration files, and Kubernetes takes care of making sure that what *is* running lines up with the configuration it's been given.
+*Kubernetes* is a container orchestration platform which helps coordinate the running of these Docker images. In plain english, you use Kubernetes by describing what and how you want various images to run, and Kubernetes takes care of making sure that what *is* running lines up with the description it's been given.
 
 Kubernetes is particularly good at running stateless applications, since it can scale up and down the number of things you want running as well as the number of machines to run these on, perform rolling updates, and direct traffic to groups of containers quite easily. It's possible to run stateful applications as well, though more care needs to be taken in doing so.
 
@@ -24,11 +24,17 @@ Life starts with a *Kubernetes Cluster*. This consists of a set of *nodes* (phys
 
 ![A diagram showing the rough layout of a Kubernetes cluster][kube-cluster]
 
-Each master has a copy of a distributed key-value store called *etcd*, which is where the configuration describing what should be running lives. You control Kubernetes by editing this configuration to describe how you want your applications to run. Things watching that configuration on the master then go forth to make reality match it.
+Each master has a copy of a distributed key-value store called *etcd*, which is where configuration describing what should be running lives. You control Kubernetes by editing this configuration to describe how you want your applications to run. Things watching that configuration on the master then go forth to make reality match it.
 
-The configuration files you write to describe your kubernetes environment are written in YAML, which is a [superset of JSON][json2yaml]. You'll normally use the `kubectl` CLI tool to interact with the API provided by the Kubernetes cluster, but you can manually communicate with it via its HTTP interface using JSON as well.
+The configuration files you write to describe your kubernetes environment are written in YAML, which is a [superset of JSON][json2yaml]. Most of the time, you'll write a bunch of these files and then push them to Kubernetes via the API that it provides. This is normally done via the `kubectl` CLI tool which just provides an interface to the API. You can manually talk to the API via its HTTP interface using JSON as well.
 
-At a basic level, a running Kubernetes cluster consists of various *Pods*, each of which contains one or more Docker containers. We create *Services* to describe how the Pods can communicate with each other and the outside world. Instead of directly creating Pods, we tend to create *Controllers* that take care of scaling the number of Pods up and down and transitioning between old and new versions of Pods. Finally, we can describe the environment and storage that we want attached to Pods so that our application can store state, and we can adapt the configuration given to our containers.
+At a basic level, a running Kubernetes cluster consists of:
+
+- *Pods*, each of which contains one or more Docker containers.
+- *Services*, which describe how these Pods can communicate with each other and the outside world.
+- *Controllers*, that we tend to create instead of directly working with Pods. These take care of things like scaling the number of Pods up and down and transitioning between old and new versions of Pods as we update their configuration.
+- *ConfigMaps* and *Secrets*, which are just configuration files that store variables you want to provide to the containers inside our Pods (as either files or environment variables).
+- *PersistentVolumes* and *PersistentVolumeClaims*, which allow you to define persistent storage and make it available to our containers.
 
 I'll look at each of these things in turn, stopping short of persistent storage and leaving that as an exercise for the reader, but I hope by then you'll have gained a decent intuition for how Kubernetes works.
 
@@ -387,7 +393,7 @@ The basic building block of Kubernetes is the Pod, which defines the Docker imag
 
 There's loads of stuff I haven't gone into any detail at all about however, including:
 
-- `PersistentVolumes` and `PersistentVolumeClaims`, which allow you to define persistent storage that is available to the cluster, and make use of it (claim it) by specific Pods. Using this, we can run things like databases and know that the udnerlying data will survive Pod restarts and such.
+- `PersistentVolumes` and `PersistentVolumeClaims`, which allow you to define persistent storage that is available to the cluster, and make use of it (claim it) by specific Pods. Using this, we can run things like databases and know that the underlying data will survive Pod restarts and such.
 - `StatefulSets`, which are like Deployments but are more regular in how they are spun up and down, their network addresses, and what storage they are given, so that you can run stateful applications a little easier (like databases). I had a cursory play with these but that's all.
 - `DaemonSets`, which run one instance of a Pod per node.
 - `Jobs`, which manage running Pods that expect to complete.
