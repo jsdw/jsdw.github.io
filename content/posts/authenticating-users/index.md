@@ -6,24 +6,23 @@ date = 2019-04-07
 created = "2019-04-07"
 +++
 
-So, you want users to be able to log in to your site. Here are some things that are worth considering.
+So, you want users to be able to log in to your site? Here are some things that are worth considering.
 
 # Use HTTPS
 
 However you choose to authenticate users, use HTTPS. If you do not, somebody can sit between a user and your application and see the password that they enter being sent across plain text, or (if you avoid doing it yourself) see the access code handed to your app. If they do this, they have the chance to masquerade as that user or worse.
 
-HTTPS encrypts communication between the users browser and your application, making this impossible. Somebody snooping on the network traffic can see which IP addresses your browser is communicating with, but they can't see the actual URL or data being transferred back and forth.
+HTTPS encrypts communication between the user's browser and your application, making this impossible. Somebody snooping on the network traffic can see which IP addresses your browser is communicating with, but they can't see the actual URL or data being transferred back and forth.
 
 # Can you avoid doing it yourself?
 
-Github, Google, Facebook and various other services allow users to authenticate with *them* instead. **OAuth** is a common protocol for doing authorization (and authentication as a by product), and a common OAuth flow works like so:
+Github, Google, Facebook and various other services allow users to authenticate with *them* instead. **OAuth** is a common protocol for doing authorisation (and authentication as a by-product), and a common OAuth flow works like so:
 
-1. A user that wants to log in is redirected to the authentication service.
-2. The user logs in with them instead, and then they are redirected back to your app with an *access code*.
+1. A user who wants to log in is redirected to the authentication service.
+2. The user logs in with them instead, and they are then redirected back to your app with an *access code*.
 3. Your app then talks directly to the service, exchanging that access code with an *access token*.
-4. Now, your app can use the access token to obtain information about the user from the service.
 
-Now, your app can use the access token to obtain some unique ID for the user, and associate state (for example, a shopping cart) with that ID. It doesn't ever have to store passwords, handle password resets, or handle registering users. A bunch of these services also offer multi-factor auth.
+Now, your app can use the access token to obtain some unique ID for the user, and associate state (for example, a shopping cart) with that ID. It doesn't ever have to store passwords, handle password resets, or handle registering users. A bunch of these services also offer multi-factor auth, so your users can benefit from this extra security with no extra effort on your side.
 
 One downside is that users have to register with one of the services you use instead (the upside is that they probably already have done so).
 
@@ -48,7 +47,7 @@ Longer passwords are normally better, so don't arbitrarily limit your user to ha
 
 There are technical limits to password size, but there shouldn't be anything wrong with a password that is a couple of hundred characters in length.
 
-[This Page][troy-hunt-auth] covers a bunch of useful bits and is well worth a read.
+[This Page][troy-hunt-auth] covers a bunch of useful bits in this area and is well worth a read.
 
 # Sessions and JWTs
 
@@ -56,7 +55,7 @@ Browsers do not maintain any sort of persistent connection with your application
 
 This is what *sessions* are for. The basic approach is this:
 
-1) When a user logs in, your application generates a random session ID, and stores it in a database alongside the ID of the user that's just logged in.
+1) When a user logs in, your application generates a random session ID (ideally using a CSPRNG), and stores it in a database alongside the ID of the user that's just logged in.
 2) Your application then sends this session ID back to the user's browser (normally in the form of a *Set-Cookie* header).
 3) Each time the user's browser communicates with your app, it sends this session ID to it (this happens automatically if it was set as a Cookie). The application can then look it up and find the corresponding user ID.
 
@@ -72,5 +71,19 @@ An advantage of JWTs is that they if they contain enough information, your appli
 - If you do urgently need to invalidate tokens, and you control enough of the infrastructure, you can change the public/private key pair that was used to sign them, so that existing tokens will no longer have a valid signature. However, the public key has probably been cached anywhere that validates the token, and so you'd need to be able to clear those, too.
 
 For simple apps, I think it's easier to generate and use your own session IDs. The database hit is often acceptable, they can be revoked if needed by simply deleting the session from the database, and they are pretty simple to understand and therefore do right. You may have a good use case for JWTs though.
+
+# Summary
+
+To briefly summarise the above again in a way that should cover simple authentication setups:
+
+- Always use HTTPS.
+- Use `bcrypt` or similar to hash passwords, and consider adding a pepper as well for good measure.
+- Allow long passwords.
+- Use long, randomly generated session IDs to keep track of logged in users. Consider JWTs if you have a need for them.
+- Use HTTP only cookies to avoid those session IDs from being stolen by malicious JavaScript.
+
+Following these points should help you reduce the risk of hackers being able to access user accounts, and minimise the fallout if what you have stored gets into the wrong hands.
+
+We should never assume that our application is un-hackable, but by thinking about security at each stage we can strive to reduce the damage done in the event that a security flaw is found and exploited.
 
 [troy-hunt-auth]: https://www.troyhunt.com/passwords-evolved-authentication-guidance-for-the-modern-era/
