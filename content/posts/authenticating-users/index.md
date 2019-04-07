@@ -1,73 +1,76 @@
 +++
-title = "Rolling your own user authentication (what could possibly go wrong?)"
-description = "You're building a website that you want users to be able to login to, and you don't want to shell out for off the shelf solutions like Auth0. Let's try and roll our own."
-date = 2019-03-31
+title = "Authenticating users on your site"
+description = "You're building a website that you want users to be able to log in to. Whether you use an external service or roll your own, here are a few things to keep in mind."
+date = 2019-04-07
 [extra]
-created = "2019-03-31"
+created = "2019-04-07"
 +++
 
-So, you have a website that needs to be able to identify who is currently using it. In order to do this, the site needs to know who a given person that's using it is. It needs to be able to *authenticate* them.
+So, you want users to be able to log in to your site. Here are some things that are worth considering.
 
-A common way to authenticate somebody is to make them sign up to your site by going through some registration process. Once they've done this, they can prove that they are that same person each time they visit your site by *logging in*, and providing the same unique ID (an email address for instance) and password that they provided on registering.
+# Use HTTPS
 
-                                    [Registration process diagram]
+However you choose to authenticate users, use HTTPS. If you do not, somebody can sit between a user and your application and see the password that they enter being sent across plain text, or (if you avoid doing it yourself) see the access code handed to your app. If they do this, they have the chance to masquerade as that user or worse.
 
-Instead of making them prove who they are to you, some services (Facebook, Google, Github and many others) let users prove who they are to *them* instead. A common protocol for this is called OAuth. In one form of this, users that wish to authenticate are redirected to the external service and made to log in there. The external service them redirects them back to your site with an *access code*, which it can then exchange for an *access
-token* behind the scenes. Your site can then use the access token to access information about the user that's just logged in from the external service, including a unique ID.
+HTTPS encrypts communication between the users browser and your application, making this impossible. Somebody snooping on the network traffic can see which IP addresses your browser is communicating with, but they can't see the actual URL or data being transferred back and forth.
 
-                                    [OAuth Diagram here]
+# Can you avoid doing it yourself?
 
-Now that the user has logged in (and the site has a unique ID representing them), each time their browser communicates with your site (for example to refresh the page or load new content), your site needs to be reminded who they are. In other words, a *session* needs to be established. A common way to do this is for your site to associate the unique ID it now has with some unique token, which it gives back to the user's browser when they authenticate. The browser can then pass this same token back to the server each time it talks to it, and from this the site can look up the unique ID associated with it.
+Github, Google, Facebook and various other services allow users to authenticate with *them* instead. **OAuth** is a common protocol for doing authorization (and authentication as a by product), and a common OAuth flow works like so:
 
-In many cases, using an external service that you trust to do the hard work of authenticating a user is the best option. You don't have to store as much (or indeed any) potentially sensitive user information, build an interface to allow users to sign up, handle forgotten passwords, or worry about the potential security holes you could end up with if you roll your own.
+1. A user that wants to log in is redirected to the authentication service.
+2. The user logs in with them instead, and then they are redirected back to your app with an *access code*.
+3. Your app then talks directly to the service, exchanging that access code with an *access token*.
+4. Now, your app can use the access token to obtain information about the user from the service.
 
-That said, sometimes it's not a bad idea to roll your own solution. For one thing, using an external service does not absolve you of the need to think carefully about the various security implications around it. You'll still end up with something like an access token that you need to keep safe, for instance. Perhaps you simply don't want to rely on users having to have signed up with any external service in order that they can then log in to that service in order to authenticate with your site.
+Now, your app can use the access token to obtain some unique ID for the user, and associate state (for example, a shopping cart) with that ID. It doesn't ever have to store passwords, handle password resets, or handle registering users. A bunch of these services also offer multi-factor auth.
 
-# Rolling your own
+One downside is that users have to register with one of the services you use instead (the upside is that they probably already have done so).
 
-Let's start with a scenario with some issues, and then walk through how to do it better:
+Something to be aware of is that you still have to treat the access token you obtain securely, and you still have to think about *sessions* (see below).
 
-*First thing's first; users will need to be able to register on your site. So you figure, let's keep it simple and assume that to sign up, they are going to provide just a username and a password. The first thing you'll need is some place to put this information, so you make yourself a database (or use a hosted one) to put it all in. Great! Now, when a user wants to log in, you reason, they will simply enter the same username and password that they used when they signed up. Those get sent off to your site's server, which looks them up in the database and confirms that they match or not.*
+# Don't store passwords
 
-*If the username and password match, you need to somehow mark them as logged in, so that when they refresh the page or navigate around it, we know who they are. This is what cookies are for! So you have your server set a cookie on the user's browser called "loggedIn" that contains some string, which we associate in our database with the user that's just logged in. Every time they refresh the page, their browser sends your server that cookie, and the site can look up what user it's associated with to know who they are. Great, job done!*
+If you want or need to implement your own authentication system, don't store passwords in your database. Hash passwords using a *cryptographic hash function* designed for this purpose, such as `bcrypt`. This converts a password into a fixed-length random-looking sequence of bytes. You can then store that instead. Things to consider when hashing passwords:
 
-Now, let's look at each part of this and fic any problems we find with it.
+- Cryptographic hash functions are one-way, so a hacker cannot convert the bytes back into a password. They *can* however try hashing lots and lots of passwords until they find one that hashes to the *same* string of bytes. This means that the hash function should be **slow**, so that it takes a substantial amount of time to do so. `bcrypt` is deliberately slow for this reason.
+- You can configure how slow hash functions like `bcrypt` are; this is the *cost factor*. The lower it is, the quicker somebody can brute force a hash to work out what password was used to create it. Pick a speed that is fast enough for your needs but no faster.
+- Hackers can build up a map from hash to password for common hash functions like `md5`. To defeat this, always *salt* your passwords. A salt is some random bytes, ideally generated using a *Cryptographically Secure Pseudo-Random Number Generator* (CSPRNG). Append these bytes to the password before hashing it, and also store those bytes in your database next to this hashed password. Now, we can append the same salt to password attempts before hashing them to compare with the original.
+- Use a *different* salt for every password you hash. This means that even if multiple users use the same password to log in to your app, they will all look completely different when hashed.
+- Instead of manually working with salts, just use `bcrypt`, which does it all for you automatically. `bcrypt` generates a salt and appends it to the output hash so that it can compare new password attempts against the hashed one.
+- It might be worth adding a *pepper* to passwords as well. Do to this, store some random string of bytes outside of your database, and encrypt each hashed password with it. if a hacker compromises your database, the encrypted passwords will be utterly useless if they do not also find the pepper so that they can decrypt them.
 
-## Registration
+This boils down to just using `bcrypt` or something similar with a decent cost factor, and possibly encrypting passwords with a pepper for that extra layer of security.
 
-*"to sign up, they are going to provide just a username and a password"*
+# Don't have an unhelpful password policy
 
-The first thing that this implies is that the user will have to send details, including a password, to your server. This means that you want the connection between the user's browser and your server to be encrypted, so that people can't watch the traffic going back and forth and see the user's password and such.
+Longer passwords are normally better, so don't arbitrarily limit your user to having a really short password.
 
-To do this, you need to make sure your site is being served over **HTTPS**. This does exactly that. It's also important to make sure that any assets (scripts, images, and so on) that your site requests are also served over HTTPS. If they aren't, an attacker could intercept and modify that data to do scary things like injecting custom code into your site which steals the user's details.
+There are technical limits to password size, but there shouldn't be anything wrong with a password that is a couple of hundred characters in length.
 
-When it comes to looking at the kinds of passwords that you'll allow users to pick, there are a bunch of things to consider. [Read this excellent post][troy-hunt-auth] for a bunch of useful guidance in that area.
+[This Page][troy-hunt-auth] covers a bunch of useful bits and is well worth a read.
 
-Finally, a username is fine, but what happens if the user forgets their password? It might make more sense to require that users provide an email address instead, which you can verify on registration and send password reset requests to if necessary.
+# Sessions and JWTs
 
-## Storing passwords
+Browsers do not maintain any sort of persistent connection with your application. Once a user has logged in, their browser will need to let your app know who they are each time it communicates with it.
 
-*"so you make yourself a database (or use a hosted one) to put it all in"*
+This is what *sessions* are for. The basic approach is this:
 
-This is a bit vague, but somewhat implies that we'll be storing their password in a database, which is a big no-no. Usefully, there is a class of functions—cryptographic hash functions—that perform a one way conversion from some arbitrary data (such as a password) into a chunk of data that is a small, fixed size. This is known as *hashing*. Using one of these functions, you could hash the password that the user provides at registration time and then store the result of doing so instead. Now, to check the password that they enter at login time, just hash that too and check to see whether it matches what you stored earlier.
+1) When a user logs in, your application generates a random session ID, and stores it in a database alongside the ID of the user that's just logged in.
+2) Your application then sends this session ID back to the user's browser (normally in the form of a *Set-Cookie* header).
+3) Each time the user's browser communicates with your app, it sends this session ID to it (this happens automatically if it was set as a Cookie). The application can then look it up and find the corresponding user ID.
 
-This is far from the end of the story though! For one thing, many hash functions (like `md5`) are designed to be really fast, which is great if you are trying to compare two big chunks of data with each other, but less good if
+Session IDs should be random and sufficiently long; somebody should not be able to work out what any other session IDs are from the one that they have. If they manage to do this, they can pretend to be somebody else.
 
-but this means that if somebody gets hold of the hashed password, they can crack it by hashing billions of passwords per second in a brute force approach until they find a password that matches.
+As an alternative to generating a random ID, you might decide to create a *JSON Web Token* (JWT) instead. This is a token constructed in a standard format that can contain arbitrary data, and can be *signed* and optionally *encrypted*. If the signature is valid, it guarantees that the JWT has not been modified, and was created by your app. If it's encrypted, the browser can't view the content of the JWT.
 
-Worse, people have built up [rainbow tables][rainbow-table], which are just large tables mapping from hash to original password. Instead of doing all of the work yourself, you can crack a hashed password by looking up the hash in one of these.
+An advantage of JWTs is that they if they contain enough information, your application can avoid a database lookup, since it can verify and trust the contents of the token. This can help when building distributed and stateless apps. A disadvantage is that, since the token is trusted without any need for database checks and so on, you cannot *untrust* them. A valid token will continue to be valid until it expires. Some notes about JWTs:
 
-To combat this, you want to use a hash function designed for hashing passwordsd like `bcrypt`. `bcrypt` is deliberately slow at hashing passwords, which means that brute forcing a bcrypted hash takes far too long. It also adds a *salt*—a random set of characters—to the password prior to hashing it (and then displays the salt in the output). This makes it immune to rainbow tables, since if you hash a password with two different salts, it will look completely different.
+- JWTs define *how* they are signed in their header. Make sure that you expect them to be signed in a certain way, and don't allow tokens that have not been signed in this way (an unsigned token is perfectly valid, but no longer has any guarantees about who made it).
+- JWTs are **not** encrypted by default, so while they look opaque because they are base64 encoded, users can read the contents of them.
+- If you hand the JWT to a browser, make sure it doesn't live for too long. If it gets stolen, the malicious user will have free reign until it expires. One way to limit the chance of it getting stolen in the browser is to place it in an HTTP-only cookie, so that JavaScript can't read it.
+- If you do urgently need to invalidate tokens, and you control enough of the infrastructure, you can change the public/private key pair that was used to sign them, so that existing tokens will no longer have a valid signature. However, the public key has probably been cached anywhere that validates the token, and so you'd need to be able to clear those, too.
 
-If your passwords are hashed with something like `bcrypt`, they are already pretty safe now, however if they are stolen, it is possible that an attacker could eventually find a password that mapped to that same hash (if the user picked a poor one, at least). Some people therefore recommend also adding a *pepper* to passwords prior to hashing. This is a bunch of random characters that is stored outside of your database. Added to even a weak password, it will make it practically impossible to crack, as long as attackers don't gain access to it.
-
-                                    [Salt and Pepper]
-
-Rather than appending a pepper to the password prior to hashing, you might prefer to encrypt your password using the pepper as the key. This way, you can decrypt and re-encrypt passwords when you want to change the pepper, and once again the resulting output (hashed with a salt and then encrypted with a pepper) is useless to anybody unless they know the pepper too.
-
-# Sessions
-
-*"So you have your server set a cookie on the user's browser called "loggedIn" that contains the username of the user that has logged in"*
+For simple apps, I think it's easier to generate and use your own session IDs. The database hit is often acceptable, they can be revoked if needed by simply deleting the session from the database, and they are pretty simple to understand and therefore do right. You may have a good use case for JWTs though.
 
 [troy-hunt-auth]: https://www.troyhunt.com/passwords-evolved-authentication-guidance-for-the-modern-era/
-[rainbow-table]: https://en.wikipedia.org/wiki/Rainbow_table
