@@ -91,7 +91,7 @@ Some different things that you can do to protect yourself include:
 
 In general, it's well worth reading [this OWASP cheat-sheet][csrf], which goes into a lot more detail on how to prevent CSRF attacks.
 
-### Cross Site Scripting
+## Cross Site Scripting
 
 A Cross Site Scripting (XSS) attack is when an attacker manages to inject malicious code into your site that is then executed when a user visits it. Any site that takes user input in some form and reflects that in the output without proper sanitisation is vulnerable, because that input might contain malicious code that is then run when other users view it.
 
