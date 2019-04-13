@@ -74,20 +74,30 @@ For simple apps, I think it's easier to generate and use your own session IDs. T
 
 # Protecting users
 
-Now that you have users, it's important to protect them while they are using your application. One type of attack worth mentioning here is a Cross Site Request Forgery (CSRF). Here, an attacker convinces some user of your application to visit a malicious site. This malicious site can try to load images or contain links that make arbitrary `GET` requests to your application. It can also contain forms that can be sent via `POST` or `GET` to your application. By interacting with or simply visiting such a site, a user might end up making requests to your application.
+Now that you have users, it's important to protect them while they are using your application.
+
+## Cross Site Request Forgery
+
+One type of attack worth mentioning here is a Cross Site Request Forgery (CSRF). Here, an attacker convinces some user of your application to visit a malicious site. This malicious site can try to load images or contain links that make arbitrary `GET` requests to your application. It can also contain forms that can be sent via `POST` or `GET` to your application. By interacting with or simply visiting such a site, a user might end up making requests to your application.
 
 This is especially dangerous if the user is currently logged in to your application, as the requests made could lead to actions being carried out on their behalf. This is because cookies are (by default) sent along with any request made to your site; this includes the session ID cookie that would tell your application what user is making the requests.
 
 Some different things that you can do to protect yourself include:
 
 - Ensuring that any `GET` request does not alter any state on behalf of the user. With this in place, only submitting forms from malicious sites can be dangerous (since they can target routes that require `POST`).
-- Storing a special randomly generated "CSRF token" alongside the session ID in your database. This is then attached to forms and other requests made. If your application does not see the token with such requests, it rejects them. Since an attacker cannot discover what the value of this token is for some user, they cannot send it with their malicious requests.
-- Setting the "SameSite" attribute on cookies containing sensitive information (like the session ID). This attribute prevents cookies from being sent if the originator of the request is a different domain. Thus, the malicious site owned by the attacker would be able to make requests to your application, but cookies protected by this attribute would not be sent along with them. Your application would see these requests as being unauthenticated, as they have no session ID attached. This only protects users with [modern browsers][samesite-caniuse].
-- Don't send the session ID as a Cookie. If the session ID is not set as a cookie, it is not automatically sent with every request, and so requests from a malicious site would all appear to be unauthenticated. Instead, you'd have to use JavaScript to attach a session ID to requests as needed.
+- Associating a users session with a token—often a randomly generated string—which cannot be discovered by an attacker due to Same Origin restrictions. This token can be returned in the page HTML or headers when it's served, or made available as a Cookie. When a request is made to the server, this token is expected to be sent along with it. Since the hacker doesn't know what the token is, they can't send a valid request.
+- Setting the `SameSite` attribute on cookies containing sensitive information (like the session ID). This attribute prevents cookies from being sent if the originator of the request is a different domain. Thus, the malicious site owned by the attacker would be able to make requests to your application, but cookies protected by this attribute would not be sent along with them. Your application would see these requests as being unauthenticated, as they have no session ID attached. This only protects users with [modern browsers][samesite-caniuse].
+- Don't send the session ID as a Cookie. If the session ID is not set as a cookie, it is not automatically sent with every request, and so requests from a malicious site would all appear to be unauthenticated. Instead, you'd have to use JavaScript to attach a session ID to requests as needed. This does mean that if an attacker gains control of the JavaScript that runs, they can discover the session ID.
 
-Going forwards, the SameSite Cookie attribute seems really promising (for more modern browsers). If you're creating a SPA, then manually attaching a session ID on each request (and storing it in localStorage instead of in a cookie) is also effective at blocking this sort of attack.
+In general, it's well worth reading [this OWASP cheat-sheet][csrf], which goes into a lot more detail on how to prevent CSRF attacks.
 
-It's well worth reading [this OWASP cheat-sheet][csrf], which goes into a lot more detail on how to prevent CSRF attacks.
+### Cross Site Scripting
+
+A Cross Site Scripting (XSS) attack is when an attacker manages to inject malicious code into your site that is then executed when a user visits it. Any site that takes user input in some form and reflects that in the output without proper sanitisation is vulnerable, because that input might contain malicious code that is then run when other users view it.
+
+If an attacker gains control over JavaScript that runs on your page, they can do all sorts of malicious things, such as logging key presses as a user logs in to steal their credentials. You must ensure that your site is safe from this class of attacks, especially if you handle and work with user data. One of the benefits of using an external authentication service is that your site can avoid handling such data at all, limiting exposure if you do fall foul of an XSS attack.
+
+Have a read through [this OWASP cheat-sheet][xss], which explains XSS attacks in much more detail, and walks through some rules that you can apply in order to avoid them.
 
 # Summary
 
@@ -99,6 +109,7 @@ To briefly summarise the above again in a way that should cover simple authentic
 - Use long, randomly generated session IDs to keep track of logged in users. Consider JWTs if you have a need for them.
 - Use HTTP only cookies to avoid those session IDs from being stolen by malicious JavaScript.
 - Be careful to understand and prevent CSRF attacks, which would allow an attacker to perform actions within your application on behalf of the logged in user.
+- Ensure that your site is not susceptible to XSS attacks, which are particularly dangerous if you handle sensitive user data like login credentials.
 
 Following these points should help you reduce the risk of hackers being able to impersonate your users, and minimise the fallout if what you have stored gets into the wrong hands.
 
@@ -106,4 +117,5 @@ We should never assume that our application is un-hackable, but by thinking abou
 
 [troy-hunt-auth]: https://www.troyhunt.com/passwords-evolved-authentication-guidance-for-the-modern-era/
 [csrf]: https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.md
+[xss]: https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.md
 [samesite-caniuse]: https://caniuse.com/#feat=same-site-cookie-attribute
