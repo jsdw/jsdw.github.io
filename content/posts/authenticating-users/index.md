@@ -7,8 +7,6 @@ created = "2019-04-07"
 toc = 2
 +++
 
-> Sometimes, your users don't know what's best
-
 So, you want users to be able to log in to your site? Here are some things that are worth considering.
 
 # Use HTTPS
