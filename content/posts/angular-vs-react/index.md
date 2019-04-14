@@ -138,7 +138,7 @@ Unlike Angular, in which you declare your layout in HTML (on the whole), React m
 
 The meat of our application is then in Javascript:
 
-```javascript
+```tsx
 var Outer = React.createClass({
 
 	getInitialState: function(){
@@ -258,7 +258,7 @@ Fairly often you'll want some form of horizontal communication or coordination b
 
 Here's one way to do that in Angular that is quite widely applicable to a range of problems. First, the HTML:
 
-```
+```html
 <div ng-app="myApp">
 	<div ng-controller="countDisplay as ctrl">
 		Count: {{ctrl.count}}
@@ -369,14 +369,14 @@ I called this a `MixinChannel` because instances of it expose a `createMixin` fu
 
 First, the obligatory HTML to mount our components into. We'll mount two separate components to artificially make our job of communicating more difficult, so we'll have two elements:
 
-```
+```html
 <div id="react-counter-display"></div>
 <div id="react-counter-controls"></div>
 ```
 
 Finally, the Javascript to make it tick.
 
-```javascript
+```tsx
 var Counter = function(){
 	var count = 0;
 	var chan = MixinChannel();
@@ -492,7 +492,7 @@ I have kept it to a bare minimum, expecting titles to be unique (rather than a s
 
 The recursive nature of such a structure can easily trip you up in Angular initially. Let's start with a very simple approach for one-off rendering of some tree structure in Angular. Here's the HTML:
 
-```
+```html
 <div ng-app="myApp">
 	<script type="text/ng-template" id="tree-template">
 		<div ng-repeat='item in items track by item.title'>
@@ -603,7 +603,7 @@ App.directive("jwTreeItem", function(){
 
 And here's how it might be used to render the same tree structure as above without any extra Javascript:
 
-```
+```html
 <div ng-controller="treeCtrl as ctrl">
 	<tree ref="item" key="title" items="ctrl.tree">
 		{{item.title}}
@@ -624,7 +624,7 @@ This highlights one of the best/worst points in Angular I think. You can create 
 
 Let's look at a similar implementation in React. We'll omit the obligatory HTML element and jump to the Javascript:
 
-```javascript
+```tsx
 //our 'tree' component, which is really just repeating over
 //a list of elements and rendering the provided component
 //for each:
@@ -702,7 +702,7 @@ Transclusion is a fancy term for essentially ripping out child nodes of a compon
 
 A very simple example in Angular might take some HTML such as:
 
-```
+```html
 <fancybox>
 	<span>Hello</span>
 	<img src="someimage.jpg"/>
@@ -722,7 +722,7 @@ angular.directive("fancybox", function(){
 
 Render something like the resulting HTML:
 
-```
+```html
 <fancybox>
 	<div class="fancybox">
 		<div class="fancybox-inner">
@@ -739,7 +739,7 @@ The next step from this is multiple transclusion, where you'd like to provide a 
 
 We'll start with this HTML:
 
-```
+```html
 <div ng-controller="fancyWidgetCtrl as ctrl">
 	<fancy-widget>
 		<span part="title-part">
@@ -788,7 +788,7 @@ Multiple directives can be included on the same element to confer different prop
 
 How does the React version compare? Here it is:
 
-```javascript
+```tsx
 var FancyWidget = React.createClass({
 	render: function(){
 
@@ -846,7 +846,7 @@ One of the significant differences that might have become apparent through some 
 
 Because React does not use HTML, it does not have this issue. React components are just functions, and so their name is irrelevant. You can easily hide away components so that they can't be used elsewhere in your application, for example:
 
-```javascript
+```tsx
 var HelloWorld = (function(){
 
 	var HiddenComponent = React.createClass({
@@ -870,7 +870,7 @@ We use a self executing function scope to hide our `HiddenComponent` from the ou
 
 Looking at the component definitions themselves, React forces you to pass props explicitly to child components if you want them to be available there, whereas in angular the default behaviour is to inherit properties from parent scopes. This scope inheritance is often a stumbling block, for instance, what does the following do when you click the "Show Hello" button?
 
-```
+```html
 <div ng-init="hidden = false; showButton = true">
 	<div ng-if="showButton">
 		<button ng-click="hidden = !hidden">Show Hello</button>
@@ -881,7 +881,7 @@ Looking at the component definitions themselves, React forces you to pass props 
 
 The answer is, nothing. The `ng-if` directive on the element above the button actually creates a new scope, and then clicking the button sets the hidden property on that scope, rather than its parent, which is what the `#hello` div is looking at to determine whether to be hidden or not. A tiny change from `ng-if` to `ng-show` fixes the problem, as `ng-show` does not create a new scope:
 
-```
+```html
 <div ng-init="hidden = false; showButton = true">
 	<div ng-show="showButton">
 		<button ng-click="hidden = !hidden">Show Hello</button>

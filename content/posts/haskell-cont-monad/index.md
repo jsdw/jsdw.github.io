@@ -6,7 +6,7 @@ date = 2015-06-07
 
 Some notes on Continuations in Haskell. What are they, how are they used and what are they good for? All of the following code can be found [here][example-code] ready to be plugged into GHCI and played with.
 
-## Introduction to Continuations
+# Introduction to Continuations
 
 Continuations work by providing their result to a callback that's passed in, rather than directly. Starting simple, here is how values can be presented in the form of continuations.
 
@@ -37,7 +37,7 @@ anotherTwoC = ret 2
 anotherHelloC = ret "hello"
 ```
 
-## Chaining Continuations
+# Chaining Continuations
 
 Once we can create continuations, the next thing to do that would be useful is joining them together so that we can work with them. We'll do as Monads would do and create a function called `bind` that takes a continuation and a function which is provided the value of it and returns a new continuation as a result:
 
@@ -82,7 +82,7 @@ Since we never use the callback, all subsequent continuations (that each effect 
 twoBadC id == "boom!"
 ```
 
-## Mapping a Function over some Continuation
+# Mapping a Function over some Continuation
 
 The same approach we took to chain continuations with our `bind` function can be used to write a map function, that runs some function on the eventual result of some continuation. Once again, it does this by wrapping the callback provided to the input continuation to alter the value before returning it to `out`:
 
@@ -115,7 +115,7 @@ badMapC (*2) (\out -> out 5) id == 10
 badMapC (*2) (\out -> 5) id == 10 -- wrong, should be 5
 ```
 
-## The Cont Monad
+# The Cont Monad
 
 This continuation framework already exists in the form of the Cont Monad. The entire basic definition of the Cont monad (with applicative and map lark to satisfy the Monad typeclass) can be seen below. In effect, we take exactly what we have devised above and wrap it into a new type so that we can create typeclass instances for it.
 
@@ -178,7 +178,7 @@ Other than getting to use nicer syntax, the only other change is that, since our
 (runCont twoHelloC') id == "2hello"
 ```
 
-## Playing with Multiple Callback Invocations
+# Playing with Multiple Callback Invocations
 
 As well as escaping early, we can also call the callback more than once. Remember, the callback has (as a result of how `bind` works) wrapped into it all of our surrounding computations, including that from the final function we use to pull out a value. Lets see:
 
@@ -237,7 +237,7 @@ For which the below is true:
 runCont multiMultiC id == "1aX 1aY 1bX 1bY 2aX 2aY 2bX 2bY "
 ```
 
-### Exiting Early from Branches
+## Exiting Early from Branches
 
 Exiting early at different points would limit the amount of branching that takes place. Crucially though, we could not guarantee that we would only exit early once, as other branches would still run. Thus, the following would be true:
 
@@ -271,7 +271,7 @@ boom3C = do
 -- runCont boom3C id == "boom! boom! boom! boom! "
 ```
 
-## What about `callCC`?
+# What about `callCC`?
 
 `callCC` takes a function as an argument, and expects it to return a continuation. It passes the function an exit callback which, when called, returns a continuation that ignores its own callback and just returns a value to the outer continuation, breaking the inner continuation chain.
 
@@ -328,11 +328,11 @@ callCCex4 = do
 
 Note that other structures can emulate breaking free of the control flow but none escape immediately as this does. For instance, the `Maybe` Monad ignores everything once it receives a `Nothing` value, but still runs though everything else in the chain (though that could well be optimised away in some cases).
 
-## What else can we do with Continuations?
+# What else can we do with Continuations?
 
 Here are some samples of what one can create with continuations. You are encouraged to have a play with them yourself however and see what else you can create.
 
-### 1. A for loop that can be broken out of
+## 1. A for loop that can be broken out of
 
 Many imperative languages have for loops that can be broken out of early if desired. Continuations are one way to do the same in Haskell:
 
@@ -365,7 +365,7 @@ infiniteLoop2 = forLoop [1..] $ \i -> do
     lift $ putStrLn $ show i
 ```
 
-### 2. `goto`
+## 2. `goto`
 
 This one is generally discouraged in most languages, but just for fun here it is:
 
@@ -415,7 +415,7 @@ gotoEx2 = flip C.runContT return $ do
     else lift $ putStrLn "done"
 ```
 
-### 3. The List Monad
+## 3. The List Monad
 
 We came quite close to this earlier when playing with multiple callback invocations.
 
@@ -446,7 +446,7 @@ eachEx1 = makeList $ do
 -- [(1,4,7),(1,4,9),(1,5,7),(1,5,9),(1,6,7),(1,6,9),(2,4,7),(2,4,9),(2,5,7),(2,5,9),(2,6,7),(2,6,9),(3,4,7),(3,4,9),(3,5,7),(3,5,9),(3,6,7),(3,6,9)]
 ```
 
-## Summary
+# Summary
 
 Continuations are a powerful tool that are quite mind bending on first encounter. Their main applications seem to be, manipulating control flow, combinatory work and early escaping. The latter has been used to generate more efficient versions of existing monads. With great power comes great responsibility though, and in many cases using Continuations may not be worth the added mental complexity over other simpler approaches.
 

@@ -3,6 +3,8 @@ title = "Neural Networks: An Introduction"
 description = "An introduction to feed-forward neural networks with learning via back propagation."
 date = 2018-01-19
 draft = false
+[extra]
+toc = 0
 +++
 
 > For a well commented Javascript implementation of a simple neural network, check [this][nn-example] out. For some slides on neural networks that I made to be more focused on the general understanding, see [this][nn-slides].

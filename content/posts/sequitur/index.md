@@ -58,17 +58,17 @@ Enforcing rule utility allows any given rule to encompass not just two symbols, 
 
 Added  | S         | R          | D             | Comments
 :------|:----------|:-----------|:--------------|:--------
- A     | A         |            |               | No links made, so nothing to do
- B     | AB        |            | AB            | Link made, new digram AB stored in D
- C     | ABC       |            | AB, BC        | Link made, new digram BC stored in D
- A     | ABCA      |            | AB, BC, CA    | Link made, new digram CD stored in D
- B     | ABCAB     |            | AB, BC, CA    | Link made, digram AB already seen, make rule
-       | 1C1       | 1:AB       | AB            | Rule created to represent AB
-       | 1C1       | 1:AB       | AB, 1C, C1    | Links made, digrams 1C and C1 seen. Both new
- C     | 1C1C      | 1:AB       | AB, 1C, C1    | Link made, digram 1C already seen, make rule
-       | 22        | 1:AB, 2:1C | AB, 1C        | Rule created to represent 1C
-       | 22        | 2:ABC      | AB, BC        | Rule 1 only used once now, so remove
-       | 22        | 2:ABC      | AB, BC, 22    | Link made, new digram 22 stored in D
+| A    | A         |            |               | No links made, so nothing to do
+| B    | AB        |            | AB            | Link made, new digram AB stored in D
+| C    | ABC       |            | AB, BC        | Link made, new digram BC stored in D
+| A    | ABCA      |            | AB, BC, CA    | Link made, new digram CD stored in D
+| B    | ABCAB     |            | AB, BC, CA    | Link made, digram AB already seen, make rule
+|      | 1C1       | 1:AB       | AB            | Rule created to represent AB
+|      | 1C1       | 1:AB       | AB, 1C, C1    | Links made, digrams 1C and C1 seen. Both new
+| C    | 1C1C      | 1:AB       | AB, 1C, C1    | Link made, digram 1C already seen, make rule
+|      | 22        | 1:AB, 2:1C | AB, 1C        | Rule created to represent 1C
+|      | 22        | 2:ABC      | AB, BC        | Rule 1 only used once now, so remove
+|      | 22        | 2:ABC      | AB, BC, 22    | Link made, new digram 22 stored in D
 
 While it may be hard to follow, the main thing of note happens when `C` is added for the second time. This causes the creation of a new rule, `2`, which initially represents `1C`. However, as the rule `1` is now only used once, it is removed and substituted for its contents AB. As a result, rule `2` now represents `ABC`. for longer repeated sequences, the same steps take place and can result in rules representing very long sequences of symbols.
 

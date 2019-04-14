@@ -4,36 +4,14 @@ description = "A pretty comprehensive introduction to a large proportion of the 
 date = 2013-04-11
 [extra]
 created = "2013-04-10"
+toc = 2
 +++
 
 The new standard in C++ - known as C++11 - has bought a host of cool new improvements to the language. I've spent the last week or two getting back into the language myself, which has included a lot of reading about and playing with the new additions. As such, I thought I'd write up everything I learned along the way.
 
 This post turned out a lot longer than I was planning, and still does not cover everything, but I reckon I have hit on most of the more fun additions at the very least. It's worth noting that all of the following examples compile just fine on gcc 4.7.2. For a more complete rundown of the new additions, [this][wiki] article seems to cover everything.
 
-# Table of Contents
-
-1. The `auto` Keyword
-    - `decltype()`
-2. Range for loops
-3. The `using` keyword for aliases
-    - Template `using`
-4. Lambda Functions
-    - Passing local variables in to a lambda function
-5. Multi-threading
-    - `std::thread`
-    - std::mutex and std::lock_guard
-    - `std::async` for higher level multi-threading
-6. Hash tables
-7. New Smart Pointers
-8. _rvalue_ references
-    - `std::move`
-    - `std::forward`
-9. Variadic templates
-10. Tuples
-    - Perfect Forwarding
-11. Summary
-
-# 1. The `auto` Keyword
+# The `auto` Keyword
 
 A lifesaver when long variable types are used. When a variable is first initialized, you can now forgo explicitly telling the compiler what type it is, and let it deduce the type itself by using the `auto` keyword instead. Here is a standard loop using iterators:
 
@@ -112,7 +90,7 @@ decltype(a+b) doSomethingBetter(T a, U b)
 	}
 ```
 
-# 2. Range for loops
+# Range for loops
 
 Even using the auto keyword, standard for loops are more verbose than they need to be when we want to iterate over an entire collection, which is often the case.
 
@@ -157,7 +135,7 @@ As an aside, c++11 also adds the standalone `begin()` and `end()` functions, whi
 
 Remember to explicitly ask for references to the values in the array if you wish to modify them or avoid copying.
 
-# 3. The `using` keyword for aliases
+# The `using` keyword for aliases
 
 The using keyword can replace the `typedef` keyword entirely, and provides a more readable way of defining aliases to things:
 
@@ -188,7 +166,7 @@ int main()
     }
 ```
 
-# 4. Lambda Functions
+# Lambda Functions
 
 Lambda functions are a very cool addition to the language. Essentially, the new syntax allows you to declare anonymous functions when needed, which can help keep related code in the same place, and save effort when you are passing functions in to other functions. Here is the usual way of sorting a vector of custom structs by some value as an example:
 
@@ -343,7 +321,7 @@ The template argument for `std::function` takes its parameter in the form `retur
 
 This provides a simple, standardized way to accept functions which match the given signature as parameters to some other function, or declare lambda functions as local variables (though the auto keyword can be used here too for simplicity).
 
-# 5. Multi-threading
+# Multi-threading
 
 C++11 finally brings in standardised support for multi-threading, which is very cool, and pretty easy to start using too. The current options are the low level `std::thread` class, and the high level wrapper `std::async`, which simplifies exception handling and return values. You'll need to include the `thread` header for these goodies.
 
@@ -540,7 +518,7 @@ int main()
     }
 ```
 
-# 6. Hash tables
+# Hash tables
 
 One of the sought after additions to the standard is hash tables. These work very similarly to the existing set and map (and multiset and multimap) containers. The main advantage is that they have a better average time complexity when it comes to adding and retrieving values than the standard set and map, as they are store values by hashing them rather than inserting them into a tree. The disadvantage is that values are not stored in any particular order, whereas the standard map and set class store values ordered by their keys.
 
@@ -643,7 +621,7 @@ std::cout << "Hello seen "
         << std::endl;
 ```
 
-# 7. New Smart Pointers
+# New Smart Pointers
 
 Managing dynamic resources solely with the `new` and `delete` operator can be a risky business; if an exception is thrown before `delete` can be called, for instance, the result is a memory leak. In addition, when pointers are returned from functions, it is not always clear whether the resource pointed too by it needs to be deleted or not (in other words, has the ownership been transferred).
 
@@ -746,7 +724,7 @@ int main()
 
 All in all, these different pointer types take on the burden of managing resource deletion so that you don't have too, while offering different ownership semantics when required. It is well worth becoming comfortable with these.
 
-# 8. _rvalue_ references
+# _rvalue_ references
 
 In c++, there are two types of expression, _lvalues_ and _rvalues_. _lvalues_ are basically anything that survives beyond a single line; that is, anything with an actual memory address. _lvalues_ can always exist on the left hand side of an expression. _rvalues_ are everything else; expressions whose result would not normally persist longer than that line. _rvalues_ can only ever exist on the right hand side of an expression. Some examples:
 
@@ -959,7 +937,7 @@ Why? Simply put, the template function `stuff` can take in an lvalue or rvalue r
 
 In reality, things are a bit more complex, so I encourage you to read around for more information if you plan on putting this feature to use.
 
-# 9. Variadic templates
+# Variadic templates
 
 Variadic templates are templates that can take a variable number of parameters. They provide a type-safe alternative to regular variadic functions, and enable a range of rather fancy generic programming techniques. I'll kick us off with the simplest example I could think up:
 
@@ -1127,7 +1105,7 @@ int main()
     }
 ```
 
-# 10. Tuples
+# Tuples
 
 A tuple is a type of container that is based on a variadic template, and can take any number of heterogeneous types. One way of looking at it might be as a generic version of a `struct`. Tuples make it easy to return a pack containing multiple values from a function, which can then be unpacked into local variables using the `std::tie` function. Here is a simple example (you'll need the `tuple` header for this):
 
@@ -1286,7 +1264,7 @@ This functionality enables us to define a stopping case in the form of another t
 
 Tuples can be handy for the built in functionality that they provide, and can help make some cases more readable and flexible. That said, as values stored inside them are not named unlike in a struct, they may not always be the best choice and may make it less clear as to what your function is returning. However, for swapping variables around quickly, comparing multiple variables with eachother, and some return cases, not to mention their applications in template programming, they seem to be pretty interesting.
 
-# 11. Summary
+# Summary
 
 Well, that about covers it. I didn’t manage to talk about everything, for example the better random number features, timing, or regular expressions (my version of gcc isn't up to scratch yet, and the post was getting rather long anyway), but if you got this far, you'll no doubt have the tools at your disposal to do some pretty cool things now.
 

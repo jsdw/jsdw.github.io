@@ -24,7 +24,7 @@ A slightly more complex approach has us allocate large blocks of memory, from wh
 
 C++ has one particularly useful feature to help pull this off; placement new. This is used similarly to how the `new` operator is used to create new instances of some object dynamically, except that we provide it with a memory location to do the constructing in, rather than allowing it to allocate a suitable chunk of memory. Here it is in action:
 
-```
+```cpp
 
 struct SomeObject
 	{
@@ -58,7 +58,7 @@ In the above, we also see the global `operator new` and `operator delete` functi
 
 Next, we use the placement new operator to construct an instance of our object at a given location in memory. We pass it our `free_space` pointer, which points to the memory location we wish to construct it at. The syntax of placement new, as seen above, is simply:
 
-```
+```cpp
 new (memory_location) ClassName(constructor_arguments);
 ```
 
@@ -68,7 +68,7 @@ When we are done with the object, we perform the reverse of the above, by first 
 
 Given the above, we can start to put together our first object pool. Let's get straight to the code:
 
-```
+```cpp
 template<typename Type>
 class BasicPool
     {
@@ -126,7 +126,7 @@ class BasicPool
 
 This is a template class, enabling us to create a pool for any object type that we want. It could be used as follows:
 
-```
+```cpp
 struct SomeObject
     {
     int val;
@@ -153,7 +153,7 @@ The main functions then are just `allocate` and `deallocate`. The former outputs
 
 It would be nice if we could simplify the interface to this a little, and remove this potential issue. Thankfully, with C++11 variadic templates (read my previous post [here][cpp11] for more about those) we can. We add two functions to our memory pool, create and remove, that hide the mess away for us:
 
-```
+```cpp
 template<typename Type>
 class BasicPool
     {
@@ -233,7 +233,7 @@ The `remove` function simply adds a pointer to the location in memory that is pa
 
 Now, we can very easily create and destroy objects, like this:
 
-```
+```cpp
 int main()
     {
     BasicPool<SomeObject> p;
@@ -254,7 +254,7 @@ Nice and simple! You'll probably also want to add a function to deallocate all o
 
 So, how exactly does using the simple object pool we created above compare with just using the `new` and `delete` operators to handle our memory management? Well, that obviously depends on how you use it; the more that objects are deleted and later created again - in other words, the more allocation and deallocation we can save by using a pool - the more benefit you'll see. Here is a simple test set-up, where we do a bunch of creating and deleting of our very simple object:
 
-```
+```cpp
 void usePool()
     {
     std::stack<SomeObject*> s;
@@ -321,7 +321,7 @@ Another thing that we can do to make our object pool almost entirely transparent
 
 I did this myself by writing a small template class, which could be inherited from to give the inheriting class this transparent functionality; it looks something like the following:
 
-```
+```cpp
 template<typename Child, template<typename=Child> class PoolClass = BasicPool >
 class InheritablePool
   {
@@ -363,7 +363,7 @@ PoolClass<Child> InheritablePool<Child,PoolClass>::pool;
 
 This can then be used as follows, using the example of our `SomeObject` class:
 
-```
+```cpp
 struct SomeObject: UseObjectPool(SomeObject)
     {
     int val;
@@ -379,7 +379,7 @@ Whether or not you would choose to block the inheritance in this way, or indeed 
 
 If you do inherit object pool functionality as above, make sure to free up any available memory left in the pool when necessary. In the above case, the line:
 
-```
+```cpp
 SomeObject::clearPool();
 ```
 

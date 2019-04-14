@@ -4,6 +4,7 @@ description = "Async/await syntax is one of the most eagerly anticipated feature
 date = 2018-11-26
 [extra]
 created = "2018-11-26"
+toc = 1
 +++
 
 Following on from my [last post][last-post], I thought I would look at async/await support in Rust.
@@ -14,7 +15,7 @@ I'll refer to Futures from the 0.1 `futures` package as "0.1 Futures" or "old st
 
 All of the example code used below can be [found here][code]
 
-## Prerequisites
+# Prerequisites
 
 To use the new async/await syntax, you'll need to be using a relatively recent Rust nightly (as of November 26th 2018). An appropriate  `Cargo.toml` looks like this:
 
@@ -87,7 +88,7 @@ tokio::spawn_async(new_future)
 
 I'll cover almost all of these in the following examples.
 
-## std::future::Future
+# std::future::Future
 
 With that out of the way, we can make new style futures by using the `async` keyword.
 
@@ -132,7 +133,7 @@ tokio::run_async(async {
 
 I'll show more examples as we go, but hopefully you have already been given a feel for how ergonomically superior async/await syntax is to chaining futures together.
 
-## Converting new style Futures to old style Futures
+# Converting new style Futures to old style Futures
 
 To make use of new style Futures alongside the various combinators and such exposed on old style Futures, you'll need to convert them. Although not explicitly exposed, you can make use of the machinery in the `tokio-async-await` crate to make quick work of it (This is correct as of `tokio-async-await` 0.1.4 but may change at any time):
 
@@ -169,7 +170,7 @@ tokio::run(
 
 The main use case for this that I can see is making use of combinators like `select` and `join` from the land of old Futures, rather than having to reimplement them to work alongside new Futures.
 
-## Converting old style Futures into new style Futures
+# Converting old style Futures into new style Futures
 
 The easiest way to convert an old style Future into a new one is simply by using the `await!` macro that Tokio gives us (rather than `std::await`), since it will convert old style Futures for us. We've already seen this above when using the `tokio::timer::Delay` future in a new style `async` block.
 
@@ -201,9 +202,9 @@ tokio::run_async(async {
 
 I'm not really sure if this is super useful, but it's nice to know that you can easily go back and forth between new and old style Futures.
 
-## Fun with new style Futures
+# Fun with new style Futures
 
-### Manually implementing a new style Future on top of Tokio poll_x methods
+## Manually implementing a new style Future on top of Tokio poll_x methods
 
 In my [last post][last-post], I manually implemented an old style `Future` which reads one byte at a time from some `AsyncRead` type. Let's do the same again here, but with new style Futures.
 
@@ -264,7 +265,7 @@ let byte_future2 = async {
 This returns a `Future<Output=Result<u8,tokio::io::Error>>` just like our Future implementation above. We also use `?` to bail out early if `read_async` returns with an error. It's great to see that async/await plays well with existing operators and control flow like this.
 
 
-## Writing new style streams to work with old-style AsyncReaders
+# Writing new style streams to work with old-style AsyncReaders
 
 It's probably worth noting that there is (currently at least) no such thing as a new style Stream or Sink. Instead, helper methods are added to each which return new style Futures that we can `await` in order to send and receive input from them.
 
@@ -306,7 +307,7 @@ let stream_bytes2 = async move {
 Using `while` loops in this way replaces using stream combinators like `for_each`, as well as error handling combinators like `map_err`; we can just use normal Rust syntax to deal with everything. Lovely stuff!
 
 
-## Writing new style sinks to work with old-style AsyncWriters
+# Writing new style sinks to work with old-style AsyncWriters
 
 If you don't yet have a `Sink`, Tokio adds `write_async`, `write_all_async` and `flush_async` methods to `AsyncWriter` types, so it becomes easy to put bytes into them without any extra machinery:
 
@@ -351,7 +352,7 @@ let forward_bytes = async move {
 }
 ```
 
-## Spawning new style futures to run concurrently
+# Spawning new style futures to run concurrently
 
 Just like `tokio::spawn` did for old style Futures, `tokio::spawn_async` allows spawning into the background of new style futures, allowing multiple jobs to run concurrently. Remember, we can always convert our new style Futures back into old style ones if we want to use other methods to spawn and run Futures.
 
@@ -383,7 +384,7 @@ tokio::run_async(async {
 });
 ```
 
-## Conclusion
+# Conclusion
 
 I'm really very excited about async/await syntax; it makes writing and composing Futures much, much nicer. This post has discussed how to make use of all of this new stuff alongside the current Futures 0.1 ecosystem, so that you can start playing with and benefitting from it straight away.
 

@@ -18,14 +18,13 @@ So, the above code is 625 bytes in length. It's not the shortest possible length
 
 With better spacing and use of Javascript, the above code looks like this:
 
-```text
+```javascript
 s="We'r7n6strangers@6loV3 L@h7rules>s6d6I2AJull commitment's;K@hink= of3 wTldn't?et@hisJromBny9?uy.+P4n-2AU if5Bsk m71Don'tF me58bliU t6see++PESS0QE0QP4-P.+++*PMRup/letRdown/runBrTU>desert5/makeRcry/say?oodbye/tellB lie>hurt5*,* each9Jor s6long3r heart:nBch= but38shy@6say it2Insid7w7both L;:n?o= on2W7L@he?ame>we're< play it*2I just wannaFR1Gotta makeRuUerstaU*2NH *)M, nHC2(GiV*howKJeel=2*\n*2YT*2We'V L* yT*o *e *'re@o6* other*'s bee* what*?onna*ing*BU * g* t*A* a*?iV*D*2(Ooh*@ell*G*eVr<*I* f* I'm*know*2NHC*N*O*2 *Rup)*5 *,CQE*ou*nd*ve";
 
-for(c=0;c<47;c++)
-	{
+for(c=0;c<47;c++) {
 	d=s.split('*');
 	s=s.split(String.fromCharCode(c+43)).join(d[c+1]);
-	}
+}
 
 d[0];
 ```

@@ -4,6 +4,7 @@ description = "Recently I had another shot at using Futures and Tokio again in R
 date = 2018-11-25
 [extra]
 created = "2018-11-25"
+toc = 1
 +++
 
 Recently, I started having a go at the [boundvariable][boundvariable] programming challenge (you can find my results [here][jsdw-boundvariable], but there be spoilers!).
@@ -25,7 +26,7 @@ Complete code samples can be found [here][code].
 
 So, let's begin!
 
-## Converting an `AsyncRead` to a `Future`, for one-off reads
+# Converting an `AsyncRead` to a `Future`, for one-off reads
 
 The most verbose way to turn a thing implementing AsyncRead into a future that emits a single byte when completed is by manually implementing the `Future` trait on an appropriate type to do this for us:
 
@@ -105,7 +106,7 @@ let byte_future = io::read(io::stdin(), [0;1])
 
 This helper consumes an `AsyncRead`er and a buffer, but fortunately gives back the buffer (and how many bytes were read into it) when it resolves, so it's easy to map this result to the single byte we're interested in.
 
-## Converting an `AsyncRead` to a `Stream`, for continuous reading
+# Converting an `AsyncRead` to a `Stream`, for continuous reading
 
 A _Stream_ is very similar to a Future, except that it can keep yielding items indefinitely. Once again, we can create a thing that takes an `AsyncRead` and implements the `Stream` trait for us:
 
@@ -190,7 +191,7 @@ If we were happy being fed a Stream of byte buffers, we'd be finished in one lin
 
 To do more complex encoding and decoding, implement `tokio::codec::Decode` and/or `tokio::codec::Encode` on some type, and then pass that in instead of `BytesCodec` to make use of it.
 
-## Converting an `AsyncWrite` to a `Sink`, for continuous writing
+# Converting an `AsyncWrite` to a `Sink`, for continuous writing
 
 Implementing `Sink` is a little harder than implementing `Stream`, because writing to a Sink is a two-stage process; first you begin sending data to the Sink (which might queue it up in a buffer), and then you flush the data out to the Sink to ensure it has all been written out. Here's a simple one-byte-at-a-time implementation:
 
@@ -247,7 +248,7 @@ As with the above implementation it does not attempt to do any buffering. the `w
 
 There seem to be fewer ways to convert an `AsyncWrite` into a `Sink`, I suppose because it is a little more complex.
 
-## Converting an `AsyncWrite` to a `Future`, for one-off writing
+# Converting an `AsyncWrite` to a `Future`, for one-off writing
 
 For completeness sake, I include the final of the possible conversions; one-off writes to an `AsyncWrite` which leads to a single Future. Once you have a Sink, this can be done by using the `send` or `send_all` methods available on the `Sink` trait. An alternative if you only have an `AsyncWrite` is to use the `tokio::io::write_all` helper function:
 
@@ -257,7 +258,7 @@ let write_once = io::write_all(io::stdout(), &[b'x']);
 
 `write_once` is a Future that resolves when the bytes provided are written and flushed to the output.
 
-## Conclusion
+# Conclusion
 
 Hopefully I've managed to shine some light on how to work with `AsyncRead`/`AsyncWrite` things. I've demonstrated various ways to "upgrade" things that have `poll_x` methods into an appropriate type (be it a Future, Sink or Stream), which will hopefully make them easier to work with!
 

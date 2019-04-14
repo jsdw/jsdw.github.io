@@ -18,7 +18,7 @@ There are various different ways to create a service, but the end result is basi
 
 Here are some different ways to create the same service, working from simplest but least flexible to most complete:
 
-```
+```javascript
 //first, we create a new angular module:
 var App = angular.module("myApp", []);
 
@@ -115,7 +115,7 @@ The advantage of using the `provider` method seen above is that the provider can
 
 Here is a simple example:
 
-```
+```javascript
 var App = angular.module("myApp", []);
 
 //create a provider, which will
@@ -165,7 +165,7 @@ In this example, a provider for `myService` is created, which is then configured
 
 Controllers, filters and directives are not services themselves, and so can't be injected into things. They are actually created from functions that are registered to the relevant service providers before the app kicks off (`$controllerProvider`, `$filterProvider` and `$compileProvider`). As an example, one can create a controller one of these two ways:
 
-```
+```javascript
 var App = angular.module("myApp", []);
 
 //1. construct a controller using the provided shortcut
@@ -194,7 +194,7 @@ Services in angular can be intercepted before the app kicks off, and modified to
 
 As well as providing functions to create services, the $provide service provider also exposes a method to decorate services, but as this is less commonly used, a shortcut to it is not exposed on the angular object itself:
 
-```
+```javascript
 var App = angular.module("myApp", []);
 
 //create a very simple service (or assume
@@ -242,7 +242,7 @@ This is a very simple example of a very powerful feature. Not only can services 
 
 Thus far, you have seen many examples of dependency injection. It is the process that occurs every time you ask for an instance of a service in a function which is going to be invoked by angular (which includes those used to create directives, controllers, and other services). Here's an example involving injecting a service and scope object in to a controller constructor function:
 
-```
+```javascript
 //create a new Angular app:
 var App = angular.module("myApp", ["ng"]);
 
@@ -273,7 +273,7 @@ In the above controller declarations, parameters are being passed in by name rat
 
 The answer lies in the `toString()` method. Applied to a function, we get a printout of it as a string, like so:
 
-```
+```javascript
 //declare a simple function:
 function hello(one, two){
 	console.log("passed in:", one, two);
@@ -289,7 +289,7 @@ console.log(hello.toString());
 With this, it becomes quite easy all of a sudden to extract the variable names out of a given function with a regular expression:
 
 
-```
+```javascript
 //print an array of variable names passed to a provided function:
 function annotate(fn){
 
@@ -310,7 +310,7 @@ annotate(function hello(one ,two){}); //returns: ["one", "two"]
 
 Given that we know the names of variables passed in to a function, we can produce a wrapper which takes a function, context and object containing values to pass in, and have the correct values provided to the function depending on its parameters:
 
-```
+```javascript
 //invokes a function fn, with an args object to pass in values:
 function invoke(fn, context, args){
 
@@ -341,7 +341,7 @@ All of a sudden, we have a function that can invoke another function with whatev
 
 In many places within Angular, functions are _invoked_ in much the same way, although in Angular you have a few options for specifying the list of services you'd like passed in to an invokable function besides just using function parameter names:
 
-```
+```javascript
 //these are all the same:
 
 //1. get parameter names from function params as above:
@@ -362,7 +362,7 @@ The first method is obviously most concise, but Javascript minification can scre
 
 By applying the above, we can define something like a controller in angular any one of these three ways:
 
-```
+```javascript
 // 1.
 App.controller("test", function($interval, $scope){
 	/*...*/
@@ -389,7 +389,7 @@ One of the great things about Angular is that it exposes the bits you need to pu
 
 Below, we use `invoke` on a custom function to get hold of angular services inside of it:
 
-```
+```javascript
 var App = angular.module("myApp", []);
 
 App.run(function($injector){
@@ -415,7 +415,7 @@ App.run(function($injector){
 
 Taken one step further however, we can pass in an object whose keys are available to be used as parameters in the function being invoked, much like the custom `invoke` function we created ourselves above:
 
-```
+```javascript
 var App = angular.module("myApp", []);
 
 App.run(function($injector){
@@ -450,7 +450,7 @@ Using the `annotate` function, we can shape this injection process to work howev
 
 The below example injects values only from our predefined "pool", and sets anything else asked for to `null`:
 
-```
+```javascript
 var App = angular.module("myApp", []);
 
 App.run(function($injector){

@@ -4,6 +4,7 @@ description = "Some notes I wrote up on Kubernetes from having attended the begi
 date = 2019-03-31
 [extra]
 created = "2019-03-17"
+toc = 2
 +++
 
 *Docker* is a platform for building *images*, which contain everything your application needs to run. These images can be quickly spun up into *containers*, which can be thought of as lightweight VMs. They share the underlying OS kernel where possible, and isolate themselves from other processes using linux kernel features rather than full fledged VMs.

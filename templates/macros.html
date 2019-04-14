@@ -34,6 +34,36 @@
     </ul>
 {% endmacro projects_toc %}
 
+{% macro page_toc(page) %}
+    {% if page.extra.toc is undefined %}
+        {% set toc = 0 %}
+    {% else %}
+        {% set toc = page.extra.toc %}
+    {% endif %}
+    {% if toc > 0 %}
+        <div class="table-of-contents">
+            <ul>
+            {% for h1 in page.toc %}
+                <li>
+                    <a href="{{h1.permalink | safe}}">{{ h1.title | safe }}</a>
+                    {% if toc > 1 %}
+                    {% if h1.children %}
+                        <ul>
+                            {% for h2 in h1.children %}
+                                <li>
+                                    <a href="{{h2.permalink | safe}}">{{ h2.title | safe }}</a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    {% endif %}
+                </li>
+            {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+{% endmacro post_toc %}
+
 {% macro svg_cloud() %}
     <svg class="svg_cloud" width="100%" height="100%" viewBox="0 0 224 121" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421;">
         <g transform="matrix(1,0,0,1,-141.508,-148.263)">

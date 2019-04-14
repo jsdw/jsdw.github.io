@@ -371,8 +371,63 @@ ul.toc {
     .content-inner {
         > .post {
 
+            $title-emphasis: rgb(250, 79, 165);
+            $quote-emphasis: rgb(202, 207, 255);
+
+            .table-of-contents {
+                > ul {
+                    margin: 0;
+                    padding-left: 2em;
+                    > li {
+                       list-style: number;
+                    }
+                }
+
+                padding: 1em;
+                margin: 0.5em 0em;
+
+                background-color: rgba($title-emphasis, 0.08);
+                border-left: 5px solid rgba($title-emphasis, 0.5);
+            }
+
+            h1 {
+                font-size: 2em;
+                position: relative;
+                display: inline-block;
+                padding-right: 0.2em;
+                padding-left: 0.1em;
+                margin-top: 0.2em;
+                margin-bottom: 0.5em;
+                &::before {
+                    content: '';
+                    height: 15px;
+                    background-color: rgba($title-emphasis, 0.1);
+                    width: 100%;
+                    display: block;
+                    position: absolute;
+                    z-index: -1;
+                    bottom: 0;
+                    left: 0;
+                }
+            }
+
+            h2 {
+                font-size: 1.7em;
+            }
+            h3 {
+                font-size: 1.5em;
+            }
+
+            // Tables:
+            table {
+                th:not(:last-child), td:not(:last-child) {
+                    padding-right: 1em;
+                }
+            }
+
             // code blocks:
             pre {
+                font-size: 1.1em;
                 padding: 0.8em 0.9em;
                 margin-left: -12px;
                 margin-right: -12px;
@@ -389,10 +444,9 @@ ul.toc {
             // quotes:
             blockquote {
                 padding: 0.5em 1em;
-                margin: 2em 3em;
-                background-color: #e4e4e4;
-                border-radius: 5px;
-                box-shadow: 0px 3px 3px 1px rgba(0, 0, 0, 0.37);
+                margin: 2em 0em;
+                background-color: rgba($quote-emphasis, 0.24);
+                border-left: 5px solid $quote-emphasis;
                 p {
                     margin: 0;
                 }

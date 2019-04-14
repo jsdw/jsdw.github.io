@@ -67,7 +67,7 @@ Let's have a look at some of these points and see what the hell they actually me
 
 One of the most boggling concepts to get your head around when starting with Haskell, and something I am still learning, is this whole concept of laziness. One way to think about it is that in most languages, statements are evaluated inside out. That is, if you take a line like this in Javascript:
 
-```
+```javascript
 function doSomething(val){ return val + 4; }
 function anotherFunc(val){ return val - 2; }
 doSomething( anotherFunc(3)+12 );
@@ -441,7 +441,7 @@ doTheAbove = plus10 . minus4 . times2
 
 To do the same in Javascript would be rather more verbose:
 
-```
+```javascript
 function times2(a){ return a*2; }
 function minus4(a){ return a-4; }
 function plus10(a){ return a+10; }
@@ -475,7 +475,7 @@ lessThan10 5 == "Yup"
 
 The same (but not type checked) in Javascript would look something like:
 
-```
+```javascript
 function isValid(fn, a){
 	if( fn(a) ) return "Yup";
 	return "Nope";

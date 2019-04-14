@@ -4,6 +4,7 @@ description = "A guide covering some of the more awesome/useful/interesting look
 date = 2015-08-22
 [extra]
 created = "2015-07-04"
+toc = 1
 +++
 
 Haskell language extensions each add something new to the language. Unlike most languages where such extensions would typically be discouraged for reasons of support, stability or unstable API, many haskell extensions have been around for a while, are used often, and will probably make it into some future revision of the Haskell language spec.
@@ -12,24 +13,7 @@ Let's take a look at some of the haskell extensions out there and see what they 
 
 > Go [here][example-code] to get all of the code used below, ready for you to load straight into GHCI and have a play with. Tested using GHC 7.10.1
 
-1.  [ViewPatterns](#viewpatterns)
-2.  [PatternSynonyms](#patternsynonyms)
-3.  [FlexibleInstances](#flexibleinstances)
-4.  [MultiParamTypeClasses](#multiparamtypeclasses)
-5.  [FunctionalDependencies](#functionaldependencies)
-6.  [OverlappingInstances](#overlappinginstances)
-7.  [ExistentialQuantification](#existentialquantification)
-8.  [GADTs](#gadts)
-9.  [ImplicitParams](#implicitparams)
-10. [TypeFamilies](#typefamilies)
-11. [KindSignatures](#kindsignatures)
-12. [DataKinds](#datakinds)
-13. [TypeOperators](#typeoperators)
-14. [PolyKinds](#polykinds)
-15. [ConstraintKinds](#constraintkinds)
-
-
-## ViewPatterns
+# ViewPatterns
 
 View patterns let you run arbitrary computations anywhere you can use a pattern match, performing the actual pattern match on the result of this computation. Lets see what this looks like:
 
@@ -83,7 +67,7 @@ sumList' _ = 0
 
 
 
-## PatternSynonyms
+# PatternSynonyms
 
 Pattern synonyms allow you define aliases for pattern matches. They allow you to abstract away details of your data structure without introducing the extra overhead of converting to other types, and play nice with view patterns too! First we'll declare a few basic types and functions to play with:
 
@@ -216,7 +200,7 @@ timeOfDay' _              = "It's not morning"
 
 
 
-## FlexibleInstances
+# FlexibleInstances
 
 Allows you to define typeclass instances in a more flexible way. Let's look at the problem they solve by setting up a simple class with a few instances.
 
@@ -244,7 +228,7 @@ instance Truthy String where
 
 We'd get told that instance declarations need to take the form `T a1..an` where `a1..an` are type *variables*, but `String == [Char] == [] Char`, and `Char` is not a type variable but a fixed type.  So basically, `[] a` would be fine, but `[] Char` would not. `FlexibleInstances` removes this restriction, and more generally adds flexibility to the format that your instances can take.
 
-### Avoiding `FlexibleInstances` (in some cases).
+## Avoiding `FlexibleInstances` (in some cases).
 
 An alternate way around the above issue is to enforce that `a` has to be `Char` via some constraint, for example:
 
@@ -305,7 +289,7 @@ Here, running `countLen ([1,2,3] :: [Int])` for example results in a call being 
 
 
 
-## MultiParamTypeClasses
+# MultiParamTypeClasses
 
 Simply, type classes with more than one param allowed (or none!).
 
@@ -336,7 +320,7 @@ Often with `MultiParamTypeClasses` you'll also end up wanting to use `Functional
 
 
 
-## FunctionalDependencies
+# FunctionalDependencies
 
 For use in multi param type classes; functional dependencies provide a way to state that one type is dependant on others, so that the compiler can infer it without you having to explicitly tell it. Let's see why we need this:
 
@@ -380,7 +364,7 @@ add (1::Int) (2::Int)
 now works.
 
 
-## OverlappingInstances
+# OverlappingInstances
 
 In actuality, `OverlappingInstances` has been depracated in GHC 7.10. Instead, we gain a few pragmas that allow us to achieve the same but allow us to enable overlap on a per instance basis rather than globally. Let's look back at our `LooseEq` class from earlier to see why we might need this. Given that we've defined specific instances for `LooseEq` already, we could try to define a more general one that works on multiple numbers types. First, a supporting class and instances:
 
@@ -435,7 +419,7 @@ Use of these pragmas is **potentially dangerous** because you could be relying o
 
 
 
-## ExistentialQuantification
+# ExistentialQuantification
 
 Allows you to remove types variables on the left of a `data` declaration. This is made useful by the fact that you can then constrain types variables on the right hand side to belonging to certain classes (otherwise, you couldnt interact with them at all). Here's the canonical example (where the `Typeable` constraint is used only for casting later and is not necessary here):
 
@@ -479,7 +463,7 @@ data ShowableT a = Show a => ShowableT a
 
 
 
-## GADTs
+# GADTs
 
 Short for _Generalized Algebraic Data Types_, these allows you to declare new `data` types using a function signature style. The advantage of this is that it allows you to decide exactly what the final type will be in each case, which is not possible with the current syntax.
 
@@ -549,7 +533,7 @@ BZZZZT! Type Error. Add expects Expr Int, got Expr String's!
 
 
 
-## ImplicitParams
+# ImplicitParams
 
 Allow functions to require that some value exists in the scope it's used in, without one having to actually explicitly pass in said value. Allows one to define global things in `main` for instance and not have to think about threading them through everywhere explicitly, just adding an implicit requirement in functions where they are actually used. A simple example:
 
@@ -594,11 +578,11 @@ All in all, I think I'll steer clear of this one.
 
 
 
-## TypeFamilies
+# TypeFamilies
 
 One of the most exciting language extensions I'm aware of so far, this one lets you teach Haskell's type system new tricks by defining relationships between types. This language extension actually introduces type families as well as data families, each with syntax do that you can use them inside classes. Let's start with type families themselves:
 
-### Type Families
+## Type Families
 
 This is a simple beginning example of an *open* type family. Think of type families as type aliases on steroids. This one maps the alias `AddResult a b` to some corresponding type. It's called an *open* type family because we can add new instances to it later on if we want to extend it.
 
@@ -761,7 +745,7 @@ applyFnToMyList (LCons "hello" (LCons 12 (LCons 'r' LNil))) $ \h n r -> h ++ sho
 Awesome.
 
 
-### The Equality Constraint
+## The Equality Constraint
 
 Before looking at data families, another goodie that comes with the TypeFamily extension (and also with `GADTs`) is the type equality constraint `~`. This basically allows us to tell the compiler that some type `a` is equal to some other type `b`. As an example, our earlier example avoiding `FlexibleInstances` could be redefined from the original, which was:
 
@@ -789,7 +773,7 @@ instance a ~ Char => Truthy' [a] where
 Here, we define an instance for the general case of `Truthy [a]`, but then add the constraint that `a` must be a `Char`. I expect this comes in particularly handy when you wish to define a function that operates on some type family but only when certain types match up (thus enabling the use of functions specific to those types). At times, it is useful just to provide the compiler with a little extra information if it is struggling to deduce some types.
 
 
-### Data Families
+## Data Families
 
 Also enabled with the TypeFamilies extension, these are the `data` equivalent to type families as described above. Unlike type families where multiple type aliases can map to the same thing, each data instance is expected to have unique constructors; just like in any other data declaration we cant have multiple constructors with the same name.
 
@@ -861,7 +845,7 @@ instance MapKey' Bool where
 This works exactly as before, except now the requirement that you need to define a new data instance is imposed on adding new type class instances.
 
 
-## KindSignatures
+# KindSignatures
 
 This extension allows you to provide *kind* signatures to types, just as we would add type signatures to values. Basically in Haskell every type (I believe there are exceptions) has the *kind* `*`. Just as types are categories of values (`Int` is the category containing 0, 1, 2, 3.., `Char` is the category containing 'a', 'b', 'c' and so on), kinds are categories of types (so the kind `*` is the category containing type types `Int`, `Char`, `Bool` and so on). A function type like `Int -> Char -> Int` would have the kind `* -> * -> *`. You could imagine categorising kinds into something too, and so on; some languages let you do this but Haskell currently stops at kinds (every kind is in the same category, and you can't change that).
 
@@ -882,7 +866,7 @@ Being explicit about the *kind* of `MyMap` without using random variable names.
 This becomes particularly useful with DataKinds and PolyKinds.
 
 
-## DataKinds
+# DataKinds
 
 With this extension, we can actually create new kinds of our own that are separate from the existing kind `*`. This is done by way of automatically promoting any suitable data type declarations one level.
 
@@ -931,7 +915,7 @@ data MyList' :: ListK * -> * where
 This all works exactly as it did before, but by doing this we've locked `MyList` down so that the compiler will throw a hissy if we try using any invalid types like `MyMap Int` or `MyMap Bool`, whereas before the compiler would have let those types slip (and gone on to complain about the values of those nonsense types instead!)
 
 
-## TypeOperators
+# TypeOperators
 
 Type operators let us declare operators at the type level just like we would at the value level. For example, rather than our `ListK`s `ConsTy` type , we could use an operator. Here's a tweaked version of `ListK` which does that:
 
@@ -970,7 +954,7 @@ LCons_ 'a' (LCons_ 12 LNil_) :: MyList2 '[Char,Int]
 Sweet.
 
 
-## PolyKinds
+# PolyKinds
 
 Now we can introduce new kinds, we'll quickly find that we are restricted to working with one kind at a time, unlike types where we can define polymorphic functions to work across different types.
 
@@ -1030,7 +1014,7 @@ type family DoReverse_ (a :: [k]) (b :: [k]) :: [k] where
     DoReverse_ '[] out = out
 ```
 
-## ConstraintKinds
+# ConstraintKinds
 
 This extension gives constraints, the things that ordinarily appear only to the left of `=>`, their own _kind_, `Constraint`. This allows them to be talked about like other kinds, expanding how we can make use of them somewhat. Let's have a quick look at a little of what we can do with this newfound power.
 

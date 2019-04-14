@@ -17,6 +17,8 @@
 
 {% block content %}
     <div class="post">
+        {{ macros::page_toc(page=page) }}
         {{ page.content | safe }}
     </div>
 {% endblock content %}
+

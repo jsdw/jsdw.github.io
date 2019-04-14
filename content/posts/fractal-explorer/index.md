@@ -32,55 +32,50 @@ One thing worth noting here is that colouring by counting iterations leads to di
 
 The exact code I used to calculate the value for each pixel was the following (where capital letters are in place of variables references elsewhere):
 
-```
-function mandelbrotGeneral(x, y, c1, c2)
-	{
+```javascript
+function mandelbrotGeneral(x, y, c1, c2) {
 	var x2 = x * x, y2 = y * y;
 	var i = 0;
-	while(i < MAX_ITERATIONS && x2+y2 < ER_SQUARED)
-		{
+	while(i < MAX_ITERATIONS && x2+y2 < ER_SQUARED) {
 		y = 2 * x * y + c2;
 		x = x2 - y2 + c1;
 		y2 = y * y;
 		x2 = x * x;
 		i++;
-		}
+	}
 
 	//this bit just smooths the colour value out:
-	if(NO_SMOOTHING == true) return i;
-	else
-		{
+	if(NO_SMOOTHING == true) {
+		return i;
+	} else {
 		var p = mathLog(Math.abs(x2+y2),2)/mathLog(ER_SQUARED,2);
 		var frac = mathLog(p);
 		if(isNaN(frac)) return i;
 		else return i - frac;
-		}
 	}
+}
 
-function mandelbrot(args)
-	{
+function mandelbrot(args) {
 	return mandelbrotGeneral(C1, C2, args[0], args[1]);
-	}
+}
 
-function julia(args)
-	{
+function julia(args) {
 	return mandelbrotGeneral(args[0], args[1], C1, C2);
-	}
+}
 ```
 
 The top part of `mandelbrotGeneral` carries out the formula _z = z<sub>2</sub> + c_ iteratively, where `x` and `y` are in fact the real and imaginary parts of _c_, and `c1` and `c2` are the real and imaginary parts of _z_. The iteration stops once the value exceeds `ER_SQUARED`, which is just the square of the escape radius (4 is a sensible value for this), and the number of iterations taken is smoothed (if `NO_SMOOTHING` is true) and returned. The functions `mandelbrot` and `julia` both take in an array of x and y coordinates, and pass these in place of either the _z_ or _c_ values to `mandelbrotGeneral`. So, by passing in the coordinates corresponding to each pixel we want to colour in, we get back a value between 0 and whatever `MAX_ITERATIONS` is set too, and can map this value to a colour.
 
 The smoothing part of the function uses a slightly modified version of `Math.log`, which can optionally take in a base as its second argument. The function is shown below:
 
-```
-function mathLog(val, base)
-	{
-	if(typeof base == "undefined")
-		{
+```javascript
+function mathLog(val, base) {
+	if(typeof base == "undefined") {
 		return Math.log(val);
-		}
-	else return Math.log(val)/Math.log(base);
+	} else {
+		return Math.log(val)/Math.log(base);
 	}
+}
 ```
 
 One of the fun things about fractals is the ability to endlessly zoom in to them. If you understood the last paragraph, it may now be quite obvious how this is done. Essentially, to draw the Mandelbrot fractal (among others) in the first place, you must map coordinates on a grid between say, (-2,-1) to (2,1) onto a 2 dimensional array of pixels. to Zoom in then, we simply change this mapping such that a smaller range of coordinates is mapped onto the same array of pixels. We can repeat this process to zoom in as far as possible, restricted only by the precision of the numbers used.

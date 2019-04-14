@@ -36,25 +36,20 @@ The lambda symbol (λ) is used to mark the beginning of a function. The symbol f
 
 Written in the style of a more conventional programming language, the above might look something like:
 
-```
-function(x)
-	{
+```javascript
+function(x) {
 	return x
-	}
+}
 
-function(y)
-	{
+function(y) {
 	return yz
-	}
+}
 
-function(y)
-	{
-	return function(a)
-		{
+function(y) {
+	return function(a) {
 		return ay
-		}
 	}
-
+}
 ```
 More generally, a function in lambda calculus takes the form:
 

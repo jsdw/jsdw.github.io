@@ -2,35 +2,36 @@
 title = "Two Handy Tools to Help Build an AJAX Site"
 description = "Two utilities I built for a pre-Angular (or Ember) website, which help with routing URL requests to function calls, and storing/monitoring state in a tree structure."
 date = 2013-06-10
+[extra]
+toc = 1
 +++
 
 This page introduces two lightweight Javascript tools I have created to aid in the process of creating AJAX heavy websites, [Engine.js][engine] for controlling requests for different pages/resources, and [State.js][state] for keeping track of the current state of things clientside, and attaching functions to changes in this state. Both are lightweight and relatively simple, so I'll explain by example:
 
 # Engine.js
 
-_Engine.js_ is used as a clientside routing layer, which acts much like the routing in _Express.js_, and allows functions to be associated with page requests. In addition, functions not defined under a particular route are executed every time, allowing for initialisation and cleanup code surrunding the specific functionality for each request.
+_Engine.js_ is used as a clientside routing layer, which acts much like the routing in _Express.js_, and allows functions to be associated with page requests. In addition, functions not defined under a particular route are executed every time, allowing for initialisation and cleanup code surrounding the specific functionality for each request.
 
-The following is a reference cobmined with example usage:
+The following is a reference combined with example usage:
 
 ## Reference
 
 ### new Engine();
 
-```
+```javascript
 //create a new routing engine instance (new is optional):
 var routes = new Engine();
 ```
 
 ### engine.add(function1, [function2, function3..]);
 
-Add a function, or list of functions, that fire for any request made. Functions are all passed two arguments, `request` and `next`. The former is an obejct containing useful information regarding the request made, and the latter is a function that must be called at the end of each function provided in order to execute the next function in the chain.
+Add a function, or list of functions, that fire for any request made. Functions are all passed two arguments, `request` and `next`. The former is an object containing useful information regarding the request made, and the latter is a function that must be called at the end of each function provided in order to execute the next function in the chain.
 
 The following example sets up some routes using the `add` function:
 
-```
+```javascript
 //called first on every request:
-routes.add(function(req, next)
-	{
+routes.add(function(req, next) {
 	var output = req.output = [];
 
 	//let's look at some variables we have access to:
@@ -40,28 +41,25 @@ routes.add(function(req, next)
 	output.push("- passed args: " + req.args);
 
 	//look at each individual part of query string:
-	for(var parameter in req.query)
-		{
+	for(var parameter in req.query) {
 		output.push("  o " + parameter + ": " + req.query[parameter]);
-		}
+	}
 
 	next();
-	});
+});
 
 //only called for routes matching /
-routes.add("/", function(req, next)
-	{
+routes.add("/", function(req, next) {
 	var output = req.output;
 
 	output.push("HOME PAGE");
 
 	//returns, firing off the next function in the chain:
 	return next();
-	});
+});
 
 //only called for routes matching /stuff/[somevalue1]/[somevalue2]
-routes.add("/stuff/{one}/{two}", function(req, next)
-	{
+routes.add("/stuff/{one}/{two}", function(req, next) {
 	var output = req.output;
 
 	output.push("STUFF");
@@ -70,26 +68,24 @@ routes.add("/stuff/{one}/{two}", function(req, next)
 	output.push("- two: " + req.params.two);
 
 	return next();
-	});
+});
 
 //called for any route as long as it did not match any of the above
-routes.add(/.*/, function(req, next)
-	{
+routes.add(/.*/, function(req, next) {
 	//useful as a catchall route (ie an error 404):
 	req.output.push("PAGE NOT FOUND");
 
 	//passing variable to next sets req.error to it:
 	next("location "+req.url+" does not exist");
-	});
+});
 
 //called last on every request:
-routes.add(function(req, next)
-	{
+routes.add(function(req, next) {
 	if(req.error) console.log("ERROR: " + req.error);
 	else console.log(req.output.join("\n"));
 
 	//we'd need a next() here if there was another function following this.
-	});
+});
 ```
 
 ### engine.go(path, [optional arguments]);
@@ -98,7 +94,7 @@ Execute any functions valid given the string `path`, passing any additional argu
 
 Here is the console output for a few example requests, given the routes defined above:
 
-```
+```javascript
 
 routes.go("/");
 /*
@@ -150,7 +146,7 @@ STUFF
 
 These examples build a pretty decent picture up of what is going on. The first parameter passed to each routing function is the _request_ object, which contains some useful information (including the location asked for, querystring, and any arguments passed to `routes.go` after the location). The second parameter is the `next` function, and should be called when the routing function has finished, in order to fire off the next routing function. A route can also have a list of functions added for it, to help reusability, such as:
 
-```
+```javascript
 routes.add("/somepath", function1, function2, function3);
 ```
 
@@ -162,21 +158,17 @@ The querystring (anything after the first "?" in the request) is parsed for your
 
 Once we have defined routes, it's often useful to set the routing engine up to handle changes to the document URL automatically. One major benefit of this is that it preserves browser history. To do this, we just need to set up an interval timer to check for changes to the URL, and pass any changes to the routing engine. Following from the above examples, this could be achieved as follows:
 
-```
-(function()
-	{
+```javascript
+(function() {
 	var old_hash = window.location.hash;
-	function check()
-		{
-		if(window.location.hash !== old_hash)
-			{
+	function check() {
+		if(window.location.hash !== old_hash) {
 			old_hash = window.location.hash;
 			routes.go(old_hash.replace(/^#!?/, ""));
-			}
 		}
+	}
 	var interval = setInterval(check, 100);
-	})();
-
+})();
 ```
 
 This anonymous function just checks the value of the URL hash string (everything including and after the "#" symbol in the current URL), and passes any such changes to the routing engine. Given this, you simply point links in your page to `#[YOUR_ROUTE]` to have the routing functionality kick in and perform whatever is necessary for the given route.
@@ -195,7 +187,7 @@ Thw following is a reference combined with example usage:
 
 ### new State([start_state]);
 
-```
+```javascript
 //create a new instance of State (new prefix is optional):
 var s = new State();
 ```
@@ -206,7 +198,7 @@ Optionally, if an argument is passed in to `new State`, it is used as the inital
 
 Sets the value at the string `path` to the value `value`, where `path` is a period separated location.
 
-```
+```javascript
 //set a basic path to a value:
 s.setValue("hello", 200);
 
@@ -223,12 +215,12 @@ s.setValue({
 	list: {
 		one: "A",
 		two: "B"
-		},
+	},
 	another_list: {
 		three: "C",
 		four: "D"
-		}
-	});
+	}
+});
 ```
 
 Worth noting here is that objects and paths are interchangeable; paths are internally converted into objects to allow for the above.
@@ -237,7 +229,7 @@ Worth noting here is that objects and paths are interchangeable; paths are inter
 
 Gets a **copy** of the value stored at the string `path`.
 
-```
+```javascript
 //carrying on from the examples above.
 s.getValue("list"); //returns object {one: "A", two: "B"}
 s.getValue(".list"); //returns object {one: "A", two: "B"}
@@ -257,25 +249,23 @@ Sets a function `func` to execute whenever the value stored at the string `path`
 
 If path is an object, sets any function stored within the object to fire when the path equal to that functions location in the object is changed.
 
-```
-var f = function(old_val, new_val, path)
-	{
+```javascript
+var f = function(old_val, new_val, path) {
 	console.log(path +": "+old_val+" -> "+new_val);
-	}
+}
 
 //basic function setting:
 s.setFunction("hello", f);
 
 //set function to fire when anything under "list" changes:
-s.setFunction("list", function(old_val, new_val, path)
-	{
+s.setFunction("list", function(old_val, new_val, path) {
 	//log values at "list" when any of them change:
-	if(typeof new_val == "object") for(var i in new_val)
-		{
+	if(typeof new_val == "object") for(var i in new_val) {
 		console.log(i + ": " + new_val[i]);
-		}
-	else console.log(new_val);
-	});
+	} else {
+		console.log(new_val);
+	}
+});
 
 //sets a bunch of paths to the function f:
 s.setFunction({ another_list: {three: f, four: f, five: f}, random: f});
@@ -288,7 +278,7 @@ s.setFunction("list", {one: f, two: f});
 
 Removes the function linked to the path `path`. If `path` is an object, all functions at paths present in the object are removed. If `path2` is present and is an object, all functions at paths in `path2` prefixed with path are removed.
 
-```
+```javascript
 //remove function at "list":
 s.removeFunction("list");
 
@@ -303,7 +293,7 @@ s.removeFunction("list", {one:1, two:2, another:{three:1} });
 
 Executes the function linked to the path `path`. The function is passed the value at that path twice (in place of the old and new values sent to it ordinarily) as well as the path it is called from.
 
-```
+```javascript
 //trigger the function held at "list.one":
 s.triggerFunction("list.one");
 ```

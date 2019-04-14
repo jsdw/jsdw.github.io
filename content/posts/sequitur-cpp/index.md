@@ -24,12 +24,11 @@ The download includes a `main.cpp`, which creates a simple program that can be p
 
 To put to use in a custom project, just add `sequitur.hpp` and all of the files in `sequitur` to your project. Additionally, add `main.cpp` to compile a simple example. I have omitted unit tests in the download for simplicity.
 
-```
+```cpp
 //include the namespace:
 using namespace jw;
 
-int main()
-	{
+int main() {
 	//create a new sequitur instance:
 	Sequitur<char> s;
 
@@ -42,27 +41,25 @@ int main()
 
 	//iterate over elements, printing them:
 	Sequitur<char>::const_iterator it = s.begin();
-	while(it != s.end())
-		{
+	while(it != s.end()) {
 		cout << *it << endl;
 		++it;
-		}
+	}
 
 	//reverse iterators are also implemented:
 	Sequitur<char>::const_reverse_iterator rit;
-	while(rit != s.rend())
-		{
+	while(rit != s.rend()) {
 		cout << *rit << endl;
 		++rit;
-		}
+	}
 
 	return 0;
-	}
+}
 ```
 
 Internally, `s` will be creating rules to represent any repetition, whereby rule 0 is the original string. The main print functions are as follows, and allow for visualisation of what is happening internally:
 
-```
+```cpp
 //print all rules and digram index:
 s.printAll();
 
@@ -78,7 +75,7 @@ s.printDigramIndex();
 
 For more complex tasks, you'll need to manually work with the rule index, which can be obtained as follows:
 
-```
+```cpp
 //get rules (of type std::unordered_map<unsigned, Symbol*>):
 auto rules = s.getRules();
 ```
@@ -89,66 +86,55 @@ auto rules = s.getRules();
 
 Thus, to navigate through symbols, you'll need to inspect the BaseList implementation for details. Iterating over list elements can be done as follows, using the `next()` function to obtain a pointer to the next rule (or a nullptr if one does not exist):
 
-```
+```cpp
 auto rules = s.getRules();
-for(auto rule : rules)
-  {
-  //rule is of type <unsigned,Symbol*>
+for(auto rule : rules) {
+	//rule is of type <unsigned,Symbol*>
 
-  //print rule ID:
-  cout << "rule ID: " << rule.first << endl;
+	//print rule ID:
+	cout << "rule ID: " << rule.first << endl;
 
-  //get first rule symbol:
-  auto current = rule.second;
-  while(current)
-      {
-      //print the type of the symbol:
-      cout << typeid(*current).name() << endl;
+	//get first rule symbol:
+	auto current = rule.second;
+	while(current) {
+		//print the type of the symbol:
+		cout << typeid(*current).name() << endl;
 
-      //get the next symbol:
-      current = current->next();
-      }
-  }
+		//get the next symbol:
+		current = current->next();
+	}
+}
 ```
 
 From `RuleSymbol`s and `RuleHead`s, you can get the number of times the rule occurs, and the rule ID. From `ValueSymbol`s, you can get the value stored at that location, as illustrated (expanding on the previous example):
 
-```
+```cpp
 auto rules = s.getRules();
-for(auto rule : rules)
-  {
-  //rule is of type <unsigned,Symbol*>
+for(auto rule : rules) {
+	//rule is of type <unsigned,Symbol*>
 
-  //print rule ID:
-  cout << "rule ID: " << rule.first << endl;
+	//print rule ID:
+	cout << "rule ID: " << rule.first << endl;
 
-  //get first rule symbol:
-  auto current = rule.second;
-  while(current)
-      {
-      if(typeid(*current) == s.RuleHeadType)
-          {
-          auto head = static_cast<RuleHead*>(current);
-          cout << "Rule Head" <<endl;
-          cout << "- count: " << head->getCount() << endl;
-          cout << "- ID: " << head->getID() << endl;
-          }
-      else if(typeid(*current) == s.RuleSymbolType)
-          {
-          auto rule = static_cast<RuleSymbol*>(current);
-          cout << "Pointer to rule: " << rule->getID() << endl;
-          }
-      else if(typeid(*current) == s.ValueType)
-          {
-          auto value = static_cast<ValueSymbol<char>*>(current);
-          cout << "Value: " << value->getValue() << endl;
-          }
-      else
-          {
-          cout << "Rule Tail" << endl;
-          }
-      }
-  }
+	//get first rule symbol:
+	auto current = rule.second;
+	while(current) {
+		if(typeid(*current) == s.RuleHeadType) {
+			auto head = static_cast<RuleHead*>(current);
+			cout << "Rule Head" <<endl;
+			cout << "- count: " << head->getCount() << endl;
+			cout << "- ID: " << head->getID() << endl;
+		} else if(typeid(*current) == s.RuleSymbolType) {
+			auto rule = static_cast<RuleSymbol*>(current);
+			cout << "Pointer to rule: " << rule->getID() << endl;
+		} else if(typeid(*current) == s.ValueType) {
+			auto value = static_cast<ValueSymbol<char>*>(current);
+			cout << "Value: " << value->getValue() << endl;
+		} else {
+			cout << "Rule Tail" << endl;
+		}
+	}
+}
 ```
 
 As each symbol has a different interface (they are used for different purposes), we must establish which symbol we are looking at. We can then perform a cast to the correct type, and interact with it.
