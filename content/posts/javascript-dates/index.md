@@ -15,9 +15,20 @@ Fri Jul 05 2019 00:00:00 GMT+0100 (BST)
 Fri Jul 05 2019 01:00:00 GMT+0100 (BST)
 ```
 
-Hopefully by the end of this short post you'll know what just happened.
+And here is another example, this time using the `dateFns` library:
 
-Here are some important things to know about Date handling in JavaScript (and in general):
+```
+> dateFns.eachDay('2019-07-05T00:00+00:00', '2019-07-07').map(d => d.toISOString())
+["2019-07-04T23:00:00.000Z", "2019-07-05T23:00:00.000Z", "2019-07-06T23:00:00.000Z"]
+> dateFns.eachDay('2019-07-05T00:00+01:00', '2019-07-07').map(d => d.toISOString())
+["2019-07-04T23:00:00.000Z", "2019-07-05T23:00:00.000Z", "2019-07-06T23:00:00.000Z"]
+> dateFns.eachDay('2019-07-05T00:00+02:00', '2019-07-07').map(d => d.toISOString())
+["2019-07-03T23:00:00.000Z", "2019-07-04T23:00:00.000Z", "2019-07-05T23:00:00.000Z", "2019-07-06T23:00:00.000Z"]
+```
+
+Let's find out what just happened.
+
+FIrst off, here are some important things to know about Date handling in JavaScript (and in general):
 
 **Important thing to know #1**: A _timezone_ like "Europe/London" encodes the idea that there is some offset from UTC+0 that must be applied to get to local time in this area. Additionally, it can encode changes to that offset over time, for example due to daylight savings time.
 
@@ -27,7 +38,7 @@ Here are some important things to know about Date handling in JavaScript (and in
 
 **Important thing to know #4**: To convert a string into a `Date` (ie into a unix timestamp), the offset from UTC of the string needs to be known. This might be explicitly provided, or set implicitly based on some rules. If we know the offset from UTC, we know how to convert the parsed date to a unix timestamp.
 
-Let's have a look at how some strings are parsed into `Date`s to get a feel for the rules at play. In each example, I show the UTC+0 ISO date string that we end up with (which is equivalent to a unix timestamp but easier to read for us humans):
+Armed with these tidbits, let's address the first example and have a look at how some strings are parsed into `Date`s. In each example, I show the UTC+0 ISO date string that we end up with (which is equivalent to a unix timestamp but easier to read for us humans):
 
 - `new Date("2019/07/05").toISOString() == "2019-07-04T23:00:00.000Z"`: Assumed to be midnight 5th July BST (the offset for this date according to my timezone). Thus, we knock an hour off to get our UTC time.
 - `new Date("2019-07-05").toISOString() == "2019-07-05T00:00:00.000Z"`: Oddly, this is assumed to be midnight 5th July UTC, ignoring my local timezone. It is therefore 1 hour later than the above.
@@ -45,27 +56,29 @@ A couple of useful timezone related functions:
 
 If you wish to view dates with respect to some other timezone (perhaps to allow users to set their timezone in your application and ignore their system timezone), you'll need:
 - A library that knows how to work with different timezones (eg `moment-timezone`).
-- The database of timezone information, which contains information as to what offsets happen when for each timezone (this is often provided with the library).
+- A database of timezone information, which contains information as to what offsets happen when for each timezone (this is often provided with the library).
 
-If you work with date libraries, be aware that they may be manipulating dates based on your local timezone (eg by using `date.setDays()`, `date.setHours()`) or not. Providing a date parsed in a non local offset might then give unexpected results.
-
-Here is a quick snippet from playing with `dateFns.eachDay` to show you what I mean:
+If you work with date libraries, be aware that they may be manipulating dates based on their time in your local timezone (eg by using `date.setDays()`, `date.setHours()`) or in UTC time. With this in mind, let's break down the second example and see what's going on:
 
 ```
 > dateFns.eachDay('2019-07-05T00:00+00:00', '2019-07-07').map(d => d.toISOString())
 ["2019-07-04T23:00:00.000Z", "2019-07-05T23:00:00.000Z", "2019-07-06T23:00:00.000Z"]
+```
+
+In this first case, my start date is UTC+0. I get back each day, but zeroed out with respect to local time. In order to do this, `dateFns` must be applying `-getTimezoneOffset()` minutes to the first input date to transform it from UTC to the local timezone. It can then use that as a starting point to produce each day in local time.
+
+```
 > dateFns.eachDay('2019-07-05T00:00+01:00', '2019-07-07').map(d => d.toISOString())
 ["2019-07-04T23:00:00.000Z", "2019-07-05T23:00:00.000Z", "2019-07-06T23:00:00.000Z"]
+```
+
+In this second case, we provide dates that are equal to local time for my timezone (in other words, the start date is the same as `2019-07-05T00:00` or `2019/07/05`). Simply iterating from the start day (in local time) will work fine here.
+
+```
 > dateFns.eachDay('2019-07-05T00:00+02:00', '2019-07-07').map(d => d.toISOString())
 ["2019-07-03T23:00:00.000Z", "2019-07-04T23:00:00.000Z", "2019-07-05T23:00:00.000Z", "2019-07-06T23:00:00.000Z"]
 ```
 
-In the first case, my start date is UTC+0. I get back each day, but zeroed out with respect to local time.
+In this third case, I've picked an offset that is greater than my local time offset. Thus, even when adding `-getTimezoneOffset()` minutes onto the date given, it's still a day behind in local time. So, we end up starting from a day earlier when producing the range.
 
-In the second case, I use an explicit +01:00 offset, which is the same as local time. I get back the same result.
-
-In the third case, I select a slightly different offset. Suddenly, my start date is a day earlier and I have 4 results! Why? I imagine that dateFns is trying to support dates parsed as UTC and local (the common cases) by applying `-getTimezoneOffset` minutes to the date it gets given before handing back a start date with zeroed time.
-
-In other words, be conscious of whether a library expects local dates or UTC dates (or provides methods for both), in order to avoid surprise.
-
-That about covers it. Good luck with that date handling!
+I think that the key takeaway from this post should be that dates in JavaScript are just unix timestamps. In order to work with the days/months/years etc, we have to view that timestamp with respect to some timezone. natively, we can view it in terms of local time or UTC time, but libraries allow us to view it with respect to other timezones as well. Finally, be aware of the assumptions that libraries make when you pass them dates, to avoid surprise.
