@@ -149,6 +149,8 @@ A *search path* is associated with either the database (which applies to all rol
 - A special `$user` variable in the search path is equal to whatever the current role name is.
 - `pg_catalog` is by default the first schema that will be searched regardless of the search path set. Naming it explicitlty in the search path can change when it is searched.
 
+Some examples of viewing and altering the search path:
+
 ```
 -- Show the current user's search path:
 SHOW search_path;
