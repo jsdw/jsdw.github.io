@@ -119,7 +119,7 @@ Read [the docs][sql-alterdefaultprivileges] for more on default privileges.
 
 Dropping roles can be achieved by `DROP ROLE rolename`, though if they own anything in any database, that will not work. One way to get around this is `DROP OWNED BY rolename`. This drops everythng owned by the specified role, revoking any grants along the way.
 
-# Databases and Schemas
+# Databases
 
 Create and drop a database with:
 
@@ -128,18 +128,39 @@ CREATE DATABASE dbname OWNER username;
 DROP DATABASE dbname;
 ```
 
-The same is true of creating a schema (`AUTHORIZATION` sets the owner of a schema):
+- Connections are tied to a specific database, so if you have multiple databases, you'll need to establish multiple connections to talk to them.
+- Roles are shared across the databases in a *cluster* (running instance of Postgres). Most other things are database specific.
+- A database can contain multiple *schemas*, which are a bit like namespaces or "folders" and help to keep things separate.
+- You cannot write SQL queries that span more than one database (eg `JOIN`s), but they can span multiple schemas.
+
+# Schemas
+
+Create and drop a schema (`AUTHORIZATION` sets the owner of a schema):
 
 ```
 CREATE SCHEMA foo AUTHORIZATION username;
 DROP SCHEMA foo;
 ```
 
-- Connections are tied to a specific database, so if you have multiple databases, you'll need to establish multiple connections to talk to them.
-- Roles are shared across the databases in a *cluster* (running instance of Postgres). Most other things are database specific.
-- A database can contain multiple *schemas*, which are a bit like namespaces or "folders" and help to keep things separate.
-- You cannot write SQL queries that span more than one database (eg `JOIN`s), but they can span multiple schemas.
-- The owner of a schema is like a mini-superuser within that schema. You can lock things down better by having a different role owning the schema to that which accesses it.
+The owner of a schema is like a mini-superuser within that schema. You can lock things down better by having a different role owning the schema to that which accesses it.
+
+A *search path* is associated with either the database (which applies to all roles unless overridden for a role) or specific role.
+- If we perform a query without including a specific schema name, the search path determines what schema will be searched and in what order to find the object you're trying to use.
+- A special `$user` variable in the search path is equal to whatever the current role name is.
+- `pg_catalog` is by default the first schema that will be searched regardless of the search path set. Naming it explicitlty in the search path can change when it is searched.
+
+```
+-- Show the current user's search path:
+SHOW search_path;
+-- Set the search path for the current user for this session:
+SET search_path = foo, bar;
+-- Permanently alter the search path for any role in a database:
+ALTER DATABASE dbname SET search_path = foo, bar;
+-- Alter the search path for a given role:
+ALTER ROLE rolename SET search_path = foo, bar;
+```
+
+Aside from looking up things that arent expicitly qualified by a schema name, the first valid schema in the search path is where new items will be created. The `public` schema is included in the search path by default, so new tables and such that are not explicitly qualified by a schema will appear there without further configuration.
 
 
 
