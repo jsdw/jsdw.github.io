@@ -14,7 +14,7 @@ As a refresher, when we want to pass functions around in Rust, we normally resor
 I'm not particularly concerned about the distinction between those traits here ([the rust book][rust-book-closures] covers that), but to sum it up:
 
 - Things that impl `FnOnce` can mutate _and_ consume (take ownership of) the values they close over when they run, and so can only be run once.
-- Things that impl `FnMut` can _mutate_ the values they close over when they run, but not consume them.
+- Things that impl `FnMut` can mutate the values they close over when they run, but not consume them.
 - Things that impl `Fn` can only immutably borrow variables when they run.
 
 Anything that implements `Fn` also implements `FnMut` and `FnOnce`. Anything that's `FnMut` also implements `FnOnce`. Closures and functions automatically implement these traits based on how they use the variables that they close over.
@@ -34,7 +34,7 @@ where
 
 Here, `run_twice` takes a function of `usize -> usize` and an initial `input`, and returns the result of having applied that function twice.
 
-We can make our `run_twice` function more widely usable by making the function argument and return type generic, too:
+We can make our `run_twice` function more widely usable by making the function argument and return type generic:
 
 ```rust
 fn run_twice<F,T>(f: F, input: T) -> T
@@ -45,6 +45,8 @@ where
 }
 ```
 
+Aside: a nice property of this is that we are being less specific to the function about what its arguments will be, and so the range of things that the function can do with the arguments is reduced (this function can't alter the `T`'s itself, for instance, whereas the less generic version could have altered the `usize`s).
+
 Using this looks like:
 
 ```rust
@@ -52,7 +54,7 @@ run_twice(|n| n * 2, 2);
 run_twice(|mut v| { v.push(true); v }, vec![false,true]);
 ```
 
-If we need to, we can also constrain the input and output of the function to requiring certain traits be implemented, here `Debug`:
+If we need to be able to do certain things with our `T`'s, we can constrain the input and output of the function to requiring certain traits be implemented on them, here `Debug`:
 
 ```rust
 fn run_twice_and_log<F,T>(f: F, input: T) -> T
@@ -67,7 +69,7 @@ where
 }
 ```
 
-We can take this a step further and require our own traits to be implemented on the arguments and return type:
+As well as built-in traits, we can also require that our own traits are implemented on the inputs and outputs:
 
 ```rust
 // Return the name of the type as a String
@@ -111,7 +113,9 @@ where
   T1: TypeName,
   T2: TypeName
 {
-    println!("This function has the shape: {} -> {}", T1::type_name(), T2::type_name());
+    println!("This function has the shape: {} -> {}",
+        T1::type_name(),
+        T2::type_name());
 }
 
 inspect_function(|n: usize| n.to_string());
@@ -123,7 +127,7 @@ inspect_function(|mut v: Vec<_>| { v.push(10usize); });
 Is there a way to allow our `inspect_function` to accept functions that take a variable number of arguments? If you'd asked me a few months ago I'd probably have said no, but traits in Rust continue to surprise me, so let's see how we can do this.
 
 
-# Traits on top of the Function Traits
+# More Traits
 
 If we want to work with a collection of different things in a uniform way, we look towards traits. So, what if we could do something like this:
 
@@ -340,7 +344,7 @@ say_what_i_am::<_,One>(IsBoth); // prints "A"
 say_what_i_am::<_,Two>(IsBoth); // prints "B"
 ```
 
-# Getting back on track
+# Accepting variable arity functions using Trait Families
 
 Armed with this knowledge, let's see how we can write a function that can accept closures with variable numbers of arguments.
 
