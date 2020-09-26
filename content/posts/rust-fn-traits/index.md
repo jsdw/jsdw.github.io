@@ -344,6 +344,8 @@ say_what_i_am::<_,One>(IsBoth); // prints "A"
 say_what_i_am::<_,Two>(IsBoth); // prints "B"
 ```
 
+So, what we have here is a way to avoid issues with overlapping implementations (we just stamp out a different concrete trait from a given family of traits each time), but retain some of the niceness of working with traits, because we can work with families of traits in a similar way, and rely on type inference to keep things simple.
+
 # Accepting variable arity functions using Trait Families
 
 Armed with this knowledge, let's see how we can write a function that can accept closures with variable numbers of arguments.
