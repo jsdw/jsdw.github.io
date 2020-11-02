@@ -224,7 +224,7 @@ The above component in Svelte, for reference, might look something like this:
 <div>{lastMessage}</div>
 ```
 
-This does help to highlight how well thought through the `useEffect` API is (I think, at least); in Svelte we are perfectly able to emulate the same behaviour, but we have to manually handle resubscribing as needed, and cleanup when the component is destroyed. `useEffect` takes care of all of this for us.
+This does help to highlight how well thought through the `useEffect` API is (I think, at least); in Svelte we are perfectly able to emulate the same behaviour, but we must manually handle both resubscribing and cleanup as needed. `useEffect` takes care of all of this for us.
 
 Perhaps it's a good idea in Svelte to draw inspiration from `useEffect`. This might lead us to something like:
 
