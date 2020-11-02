@@ -1,6 +1,6 @@
 +++
-title = "Comparing Svelte and React"
-description = "Let's look at some of the differences between Svelte—the new kid on the block—and the longstanding React framework"
+title = "A React Developer Tries Svelte"
+description = "After spending the last couple of years working primarily with React on the frontend, I was introduced to Svelte and was compelled to give it a go. Here are some of my thoughts."
 date = 2020-10-31
 +++
 
