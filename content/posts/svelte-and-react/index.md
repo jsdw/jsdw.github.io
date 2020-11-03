@@ -515,7 +515,7 @@ All in all, Svelte has to have special syntax to pull off certain things, wherea
 
 Svelte is obviously less mature than React, and TypeScript support in Svelte 3 has only been around for a matter of months at the time of writing. The ecosystem will be less mature, as will the level of support and such you'll be able to find from various posts and articles.
 
-That all said, it's pretty easy to embed "plain" JavaScript libraries like D3 into either Svelte or React, and so I'm not too concerned about the lack of Svelte vs React specific bits and pieces. for larger projects though, this might lead to a slowdown as you need to implement things in Svelte that libraries exist for in React. I haven't "shopped around" for libraries enough in Svelte to get a feeling for hw big this difference really is, though.
+That all said, it's pretty easy to embed "plain" JavaScript libraries like D3 into either Svelte or React, and so I'm not too concerned about the lack of Svelte vs React specific bits and pieces. for larger projects though, this might lead to a slowdown as you need to implement things in Svelte that libraries exist for in React. I haven't "shopped around" for libraries enough in Svelte to get a feeling for how big this difference really is, though.
 
 
 # Conclusion
