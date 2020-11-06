@@ -6,7 +6,7 @@ date = 2020-10-31
 
 React and Svelte are both frameworks that are in charge of keeping your HTML in sync with your data, and both make it easy to create highly interactive web pages.
 
-I've been using React professionally for around 2 years now. I've been a huge fan of the functional style that React takes, and it felt like a huge step forwards from my AngularJS 1 days. A few weeks ago I was linked to an [excellent talk][svelte-talk] called "Rethinking Reactivity" by Rich Harris, the creator of Svelte. The talk left me feeling like Svelte might be the next step forwards after React, and compelled me to give it a try myself. Since then, I've created a couple of small Svelte based interfaces, and it's time to reflect on how I feel about Svelte so far, and contrast it with React.
+I've been using React professionally for around 2 years now. I've been a huge fan of the functional style that React takes, and it's felt like a big step forwards from my AngularJS 1 days. A few weeks ago I was linked to an [excellent talk][svelte-talk] called "Rethinking Reactivity" by Rich Harris, the creator of Svelte. The talk left me feeling like Svelte might be the next step forwards after React, and compelled me to give it a try myself. Since then, I've created a couple of small Svelte based interfaces, and it's time to reflect on how I feel about Svelte so far, and contrast it with React.
 
 This won't be an exhaustive look at the differences between React and Svelte; the focus will be around those differences that particularly appeal to me (or not).
 
