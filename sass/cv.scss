@@ -29,6 +29,8 @@ a {
 // Because padding-box is silly.
 * {
     box-sizing: border-box;
+    // Not ideal, but resolves browser inconsistencies:
+    line-height: 1.3em;
 }
 
 .page {
@@ -168,7 +170,8 @@ info-tag {
     }
 
     .page {
-        height: 297mm;
+        // iPad screws with height, so don't enforce it for now as a quick workaround:
+        min-height: 297mm;
         width: 210mm;
         box-shadow: 0px 4px 14px 0px rgba(0, 0, 0, 0.459);
         &:not(:last-child) {
