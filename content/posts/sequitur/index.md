@@ -18,7 +18,7 @@ Core to how Sequitur works is that it starts with the smallest possible type of 
 
 The following is some pseudo-code describing the core steps taken by the algorithm, adapted from [here][sequitur.info]:
 
-```text
+```txt
 For each new input symbol is observed, link it to the last symbol in S
 
 Each time a new link is made between two symbols

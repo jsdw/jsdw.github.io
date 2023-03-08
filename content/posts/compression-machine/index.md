@@ -35,7 +35,7 @@ The other compression algorithm available is actually a combination of the [Burr
 
 Briefly, _BWT_ transforms the data in such a way that repeated characters tend to be next to eachother. It does this by taking all of the possible rotations of an input sequence, sorting them alphabetically, and then returning the last column. Here is an example (adapted from [wikipedia][bwt]):
 
-```text
+```txt
 Input: BANANA
 
 rotations (adding an e for end of file):
@@ -65,7 +65,7 @@ Implementation wise, you do not actually need to store an array containing all o
 
 A rather inefficient way to reverse the transformation is made possible by the fact that, by sorting the output, we obtain the column one rotation around (in other words, the first column of the sorted rotations seen above). Joining them results in:
 
-```text
+```txt
 NA
 NA
 BA
@@ -77,7 +77,7 @@ AN
 
 Where the original output string is the first column, and the sorted version of it is the second column. Sorting this, we actually end up with the first and second row of the sorted rotations:
 
-```text
+```txt
 Ae
 AN
 AN
@@ -89,7 +89,7 @@ NA
 
 Since we know what the last row is still, we can now add that onto the front again and sort once more. In doing so we end up with the first three rows like so:
 
-```text
+```txt
 AeB
 ANA
 ANA
@@ -105,7 +105,7 @@ By repeating this process, we can build up the entire sorted rotations table onc
 
 The _MTF_ transform steps in next, and capitalizes on the increase in repetition by representing repeated sequences in terms of low value outputs. Essentially, it does the following:
 
-```text
+```txt
 Create a list of all possible symbols
 
 For each symbol seen in the input
@@ -146,7 +146,7 @@ By splitting the compression into blocks of a fixed size, each block requiring a
 
 A couple of very rough benchmarks using the default block size of 2000kb:
 
-```text
+```txt
 10.5meg binary:
 Sequitur: 166s compress, 41.8s decompress, output 5.2megs
 BWT+MTF: 67.6s compress, 17.3s decompress, output 4.5megs

@@ -8,7 +8,7 @@ created = "2013-03-11"
 
 Huffman coding, like Arithmetic Coding, is an algorithm which attempts to compress a sequence of inputs based on the frequency that each input in the sequence occurs. This is made possible because it is often the case that some symbols in an input sequence occur more frequently than others. As such, we can represent symbols that occur more often with a shorter sequence of bits, at the expense of needing to use a longer sequence of bits to represent less frequent symbols. Take the following sentence as an example:
 
-```text
+```txt
 this_is_an_example_sentence_to_help_teach_you_about_compression
 ```
 
@@ -43,7 +43,7 @@ Given that we only use 18 characters, we could instead represent the above strin
 
 Invented by David Huffman in 1952, Huffman Coding is one such way of converting symbols and their associated frequencies into sequences of bits, whereby more frequent characters are represented by fewer bits than less frequent characters. The steps are actually quite simple, and are summarized as follows:
 
-```text
+```txt
 Begin with list of all symbols and their associated frequencies
 Find the 2 symbols with the lowest frequency
     Create a new symbol and link it to these two symbols
@@ -55,7 +55,7 @@ Repeat until only 1 symbol remains in the list
 
 Essentially, these steps are used to create a tree of nodes which ends in the original symbols (or, characters) in the list. Given that the list is sorted by frequency, a tree can be created in linear time by performing the following steps:
 
-```text
+```txt
 Place all symbols into a stack in order of frequency (lowest at the top)
 Create an empty queue (created notes will be added to this)
 

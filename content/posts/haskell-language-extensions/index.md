@@ -1030,7 +1030,7 @@ readAndShow val = read $ show val
 
 This extends to associated types, which means we can (with `Typefamilies`) use them in type classes to allow instances to alter the constraints used based on the input type. I found a use for this when I wanted to create a type class recently that did the following transformations:
 
-```text
+```txt
 Bool       ==>  a -> Bool
 a -> Bool  ==>  a -> Bool
 ```

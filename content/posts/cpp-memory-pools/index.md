@@ -300,7 +300,7 @@ int main()
 
 All this test does is push a bunch of pointers to dynamically created instances of `SomeObject` - our structure holding a single integer - to a stack, and then delete them from that stack. The `usePool` function does this using our memory pool, and the `noPool` function does this using `new` and `delete`. Using Valgrind, the number of instructions for each can be counted (fewer is better). The result:
 
-```text
+```txt
 usePool(): 7,925,308
 noPool(): 25,636,536
 ```

@@ -26,7 +26,7 @@ First off, it's worth abandoning many existing ideas you may have in mind regard
 
 So, the only thing that _does_ anything in lambda calculus is the _function_. This is what a few different functions may look like in lambda calculus:
 
-```text
+```txt
 λx.x
 λy.yz
 λy.(λa.ay)
@@ -53,7 +53,7 @@ function(y) {
 ```
 More generally, a function in lambda calculus takes the form:
 
-```text
+```txt
 λ<placeholder>.<definition>
 ```
 
@@ -67,13 +67,13 @@ Let's look at these functions in more detail.
 
 In the following, we provide the variable `y` to the function `λx.wx`, using parentheses to separate the function from the variables passed in (otherwise, we wouldn't know when the function ended and the variables began). The result is obtained by substituting the placeholder `x` in the function definition with the input `y`, and then returning the result of this:
 
-```text
+```txt
 (λx.wx)y = wy
 ```
 
 This is known as an _application_; the function `λx.wx` is applied to the thing to the right of it, in this case the variable `y`. Here are some more examples of some lambda functions being applied to expressions, and the consequent results (don't worry if you can't follow what's going on in all of these yet!):
 
-```text
+```txt
 (λx.xx)y = yy
 (λx.xx)xy = xxy
 (λx.xx)(xy) = xyxy
@@ -90,7 +90,7 @@ In each case, we take the expression to the immediate right of the first functio
 
 Taking an example from above, these steps are carried out as follows:
 
-```text
+```txt
 (λx.wx)y
        ^
        this is our input variable.
@@ -124,7 +124,7 @@ In expressions such as `(λy.y)(λx.y)`, the `y` in the first function expressio
 
 In addition, it is worth noting that variables are bound to the nearest instance of themselves following a λ sign. For example, in the expression `λx.x(λx.x)`, the placeholder `x` used in the inner function definition is not related to that used in the outer definition. So:
 
-```text
+```txt
 Correct:
 (λx.x(λx.x))a = a(λx.x)
 
@@ -135,7 +135,7 @@ Wrong:
 
 One way of looking at this is in terms of variable scope. The placeholder used in the innermost function defines a separate scope inside that function for that placeholder. Any subsequent instances of that placeholder inside the innermost function definition are tied to that scope, and are not related to any placeholders used in containing functions. Thus, the following is true:
 
-```text
+```txt
 (λx.x(λx.x))a = (λx.x(λy.y))a = (λx.x(λt.t))a
 ```
 
@@ -145,7 +145,7 @@ One way to avoid this potential confusion is to rename any placeholder variables
 
 As we have established, it does not matter which symbol is used for placeholders, since as soon as the function is applied to some expression, each placeholder is swapped for an instance of that expression anyway. So, to expand on the above, the following is also true:
 
-```text
+```txt
 Function 1:
 λy.yz = λa.az = λt.tz
 
@@ -171,7 +171,7 @@ It's important to avoid confusing the symbols used as placeholders in functions 
 
 For example:
 
-```text
+```txt
 Correct:
 (λx.(λy.xy))y = (λx.(λt.xt))y = λt.yt
 
@@ -185,7 +185,7 @@ As we can see above, we are passing the variable `y` into a function which will 
 
 As I mentioned earlier, it is important to note that the order in which things are evaluated, by convention, runs from left to right. Failing to do so will lead to errors, as in the following example:
 
-```text
+```txt
 Correct:
 (λa.(λb.ba))(λx.x)(λy.y) =
 (λb.b(λx.x))(λy.y) =
@@ -200,7 +200,7 @@ Wrong (evaluating from the right first):
 
 If we wish to be explicit in the order that things must be evaluated in, we can use parentheses to group things, leading to a different result:
 
-```text
+```txt
 Correct (additional brackets group arguments into one):
 (λa.(λb.ba))((λx.x)(λy.y)) =
 λb.b((λx.x)(λy.y)) =
@@ -220,7 +220,7 @@ Wrong (we're just ignoring brackets here):
 
 The use of brackets groups expressions together. As such, they are treated as one _thing_ outside the brackets. Inside the brackets, you must still evaluate from left to right, but you can hold off evaluating inside the brackets, or evaluate inside them straight away; the result is the same regardless. Here is an example:
 
-```text
+```txt
 Let's evaluate this function application:
 (λa.((λb.ab)a))((λb.ab)c))
 
@@ -245,7 +245,7 @@ As we can see, it doesn't matter when things inside parentheses are evaluted, al
 
 One of the things that you may have noticed thus far is that functions can only take in one input. While strictly true, using a method known as _currying_, we can in fact emulate functions that can take in as many variables as we need. We do this by returning a function when a function is applied to something. This function can then take in another variable. Here is an example:
 
-```text
+```txt
 Function designed to take in two variables:
 λx.(λy.yx)
 
@@ -264,7 +264,7 @@ As we can see above, we can emulate functions with as many variables as we want 
 
 Some random examples of functions which work with multiple variables, and their shorthand abbreviations:
 
-```text
+```txt
 λw.(λx.(λy.yxw)) = λwxy.yxw
 λa.(λb.a(λy.yb)) = λab.a(λy.yb)
 ```
@@ -277,7 +277,7 @@ So, now we (hopefully) have a grasp on how to use functions in lambda calculus, 
 
 Well, given that we don't have things like numbers in this language, one of the most important things to do is to come up with a way to represent them. One such means to represent numbers is known as [Church encoding][church]. Under this, our numbers, known as _Church numerals_, are represented in terms of lambda functions, as follows:
 
-```text
+```txt
 0 = λab.a
 1 = λab.a(b)
 2 = λab.a(a(b))
@@ -287,7 +287,7 @@ Well, given that we don't have things like numbers in this language, one of the 
 
 Each number, as represented above, is supposed to work by taking in two arguments, a function `a`, and something to apply it to: `b`. It then applies the function `a` that number of times to a second thing we pass in, `b`. For example, applying the function `λx.xx` to `y` 3 times would double the number of occurrences of `y` 3 times:
 
-```text
+```txt
 3(λx.xx)y =
 (λab.a(a(a(b))))(λx.xx)y =
 (λb.(λx.xx)((λx.xx)((λx.xx)b)))y =
@@ -303,13 +303,13 @@ So, the church numerals represent numbers in a very fundamental form; the applic
 
 Next up, we can define functions which work with these numbers. For example, the successor function - which we can call `S` - simply increments any number passed into it by one:
 
-```text
+```txt
 S = λabc.b(abc)
 ```
 
 Applying this to any number, for example 1, increments it as follows:
 
-```text
+```txt
 S1 =
 (λabc.b(abc))(λab.a(b)) =
 λbc.b((λab.a(b))bc) =
@@ -321,7 +321,7 @@ Noting that, while the letters used to represent the placeholders in the final f
 
 As numbers apply their fist argument to their second argument that number of times, we can use this successor function `S` for addition. For example, adding 1 and 2 results can be carried out as follows:
 
-```text
+```txt
 1S2 =
 (λab.a(b))(λabc.b(abc))(λab.a(a(b))) =
 (λabc.b(abc))(λab.a(a(b))) =
@@ -333,7 +333,7 @@ As numbers apply their fist argument to their second argument that number of tim
 
 In the same way, we can define functions for things like multiplication, which takes the form `λxyz.x(yz)`. Here, we can see this function in action multiplying 2 and 3 together:
 
-```text
+```txt
 M = λxyz.x(yz)
 
 Now, let's try to multiply 2 and 3:
@@ -370,14 +370,14 @@ While [combinatory logic][combinatory] was actually invented before lambda calcu
 
 Combinatory logic can be seen as a subset of lambda calculus expressions, which have no free variables within them. The clever thing is that, when combined, they enable the user to create all other lambda calculus expressions. What's more, only two of these expressions are actually necessary to pull this off. They are the following:
 
-```text
+```txt
 K = λxy.x
 S = λxyz.(xz(yz))
 ```
 
 Given combinations of just these two lambda functions (or, in combinatory logic terms, combinators), we can create any other lambda function, and thus any program. For example, to recreate the result of the function `λx.x` - also known as the identity function - we combine `SKK`. Applying it to some variable `a`, results in the same output, `a`, just as the lambda function `λx.x` would do:
 
-```text
+```txt
 (SKK)a =
 SKKa =
 (λxyz.(xz(yz)))(λxy.x)(λxy.x)a =
