@@ -1,7 +1,7 @@
 +++
 title = "Web Assembly Fractal Generator"
 description = "A Web Assembly experiment to create a fast in-browser fractal generator in Rust and JavaScript using Web Workers and progressive rendering."
-order = 60
+weight = 150
 template = "project.html"
 
 [extra]

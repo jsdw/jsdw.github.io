@@ -39,7 +39,14 @@
         <section>
             <div class="top">
                 <div class="top-scene">
-                    <div class="sun">
+                    <svg class="polygon two" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421;">
+                        <polygon points="0 100, 15 40, 60 0, 100 30"/>
+                    </svg>
+                    <svg class="polygon one" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421;">
+                        <polygon points="0 40, 30 0, 80 33, 100 100"/>
+                    </svg>
+
+                    <!-- <div class="sun">
                         <div class="ray1"></div>
                         <div class="ray2"></div>
                         <div class="ray3"></div>
@@ -49,10 +56,10 @@
                         <div class="ray7"></div>
                         <div class="ray8"></div>
                         <div class="ray9"></div>
-                    </div>
-                    <div class="cloud cloud3">{{ macros::svg_cloud() }}</div>
+                    </div> -->
+                    <!-- <div class="cloud cloud3">{{ macros::svg_cloud() }}</div>
                     <div class="cloud cloud2">{{ macros::svg_cloud() }}</div>
-                    <div class="cloud cloud1">{{ macros::svg_cloud() }}</div>
+                    <div class="cloud cloud1">{{ macros::svg_cloud() }}</div> -->
                 </div>
                 <div class="top-inner">
                     {% block top %}{% endblock top %}
