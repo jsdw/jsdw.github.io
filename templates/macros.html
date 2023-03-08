@@ -16,7 +16,7 @@
 
 {% macro projects_toc(pages,limit,config) %}
     <ul class="projects toc">
-        {% for page in pages %}
+        {% for page in pages | reverse %}
         {% if limit <= 0 or loop.index0 < limit %}
         {% if not page.draft %}
             <li>

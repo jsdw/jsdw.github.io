@@ -804,7 +804,7 @@ int main()
 
 And the output of that is as follows:
 
-```text
+```txt
 # Making Stuff objects:
 Constructing
 Constructing
@@ -867,7 +867,7 @@ Stuff operator+(Stuff&& s1, Stuff&& s2)
 
 The output becomes:
 
-```text
+```txt
 # Making Stuff objects:
 Constructing
 Constructing
@@ -928,7 +928,7 @@ int main()
 
 The above outputs:
 
-```text
+```txt
 rvalue version called
 lvalue version called
 ```
@@ -982,7 +982,7 @@ double sum(First value, Rest... others)
 
 And then:
 
-```cppcpp
+```cpp
 template<typename First, typename... Rest>
 double sum(First value, Rest... others)
     {
@@ -1251,7 +1251,7 @@ int main()
 
 output:
 
-```text
+```txt
 Double: 4
 Integer: 3
 String: hello

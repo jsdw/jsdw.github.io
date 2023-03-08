@@ -6,7 +6,7 @@ date = 2013-05-15
 
 After a friend directed me to [this][golf] code golf on Stack Exchange, I thought I'd have a quick go myself at implementing a Javascript version. Here it is:
 
-```text
+```txt
 s="We'r7n6strangers@6loV3 L@h7rules>s6d6I2AJull commitment's;K@hink= of3 wTldn't?et@hisJromBny9?uy.+P4n-2AU if5Bsk m71Don'tF me58bliU t6see++PESS0QE0QP4-P.+++*PMRup/letRdown/runBrTU>desert5/makeRcry/say?oodbye/tellB lie>hurt5*,* each9Jor s6long3r heart:nBch= but38shy@6say it2Insid7w7both L;:n?o= on2W7L@he?ame>we're< play it*2I just wannaFR1Gotta makeRuUerstaU*2NH *)M, nHC2(GiV*howKJeel=2*\n*2YT*2We'V L* yT*o *e *'re@o6* other*'s bee* what*?onna*ing*BU * g* t*A* a*?iV*D*2(Ooh*@ell*G*eVr<*I* f* I'm*know*2NHC*N*O*2 *Rup)*5 *,CQE*ou*nd*ve";for(c=0;c<45;)d=s.split('*'),s=s.split(String.fromCharCode(c+43)).join(d[++c]);d[0]
 ```
 
@@ -31,7 +31,7 @@ d[0];
 
 And works by doing the following:
 
-```text
+```txt
 while C is less than 47
 	split the string S into array D using "*" as the delimiter.
 	split the string S into array TMP using the charcode C+43 as the delimiter.
@@ -42,7 +42,7 @@ evaluate D[0]
 
 which can be more simply written as:
 
-```text
+```txt
 while C is less than 47
 	split the string S into array D using "*" as the delimiter.
 	replace all instances of character with code C+43 in S with string d[C+1]
@@ -64,7 +64,7 @@ To create the rules, I implemented a quick and dirty version of the RePair algor
 
 Some basic pseudocode for RePair might look like this:
 
-```text
+```txt
 let s be our original string
 let r be our rules
 

@@ -1,7 +1,7 @@
 +++
 title = "Fractal Explorer"
 description = "Create and explore fractals from within your web browser. Allows full customization of the colours and rendering quality and downloading of fractal images to your computer. Can be configured to use multiple threads to speed up performance, and fractal parameters can be tweaked to explore novel fractals."
-order = 20
+weight = 20
 template = "project.html"
 
 [extra]

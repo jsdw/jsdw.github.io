@@ -1,14 +1,31 @@
 # The URL the site will be built for
 base_url = "https://jsdw.me"
+
 title = "jsdw"
+
+output_dir = "public"
+
+# # Generate a feed with a lang of en
+# default_language = "en"
+# generate_feed = true
+# # There's a default template to render this appropriately
+# feed_filename = "atom.xml"
 
 # Whether to automatically compile all Sass files in the sass directory
 compile_sass = true
 
-# Whether to do syntax highlighting
-# Theme can be customised by setting the `highlight_theme` variable to a theme supported by Gutenberg
+# Minify HTML
+minify_html = true
+
+[markdown]
+
 highlight_code = true
 highlight_theme = "monokai"
+render_emoji = true
 
-[extra]
-# Put all your custom variables here
+[slugify]
+
+# Whether to remove date prefixes for page path slugs.
+# For example, content/posts/2016-10-08_a-post-with-dates.md => posts/a-post-with-dates
+# When true, content/posts/2016-10-08_a-post-with-dates.md => posts/2016-10-08-a-post-with-dates
+paths_keep_dates = false

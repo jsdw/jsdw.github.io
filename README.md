@@ -4,5 +4,6 @@ Content for [jsdw.me](https://jsdw.me). Please submit a PR if you'd like to corr
 
 # Developing
 
-- Download `gutenberg` version 0.3.3 from https://github.com/getzola/zola (more recent versions are renamed to Zola), and put it in a `$PATH`.
-- Run `gutenberg serve` in this folder to watch for changes and locally serve.
+- `brew install zola` (last tried at 0.17.1).
+- `zola serve` for local dev
+- `zola build` to build.

@@ -1,5 +1,5 @@
 +++
 title = "Projects"
-sort_by = "order"
+sort_by = "weight"
 template = "projects.html"
 +++
