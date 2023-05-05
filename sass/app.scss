@@ -330,8 +330,8 @@ ul.toc {
                 overflow-y: auto;
             }
 
-            // inline code:
-            p > code {
+            // inline code only:
+            code:not(pre > code) {
                 font-size: 1.1em;
                 background-color: #e4e4e4;
                 padding: 0.1em 0.2em;
