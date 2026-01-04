@@ -44,7 +44,11 @@ From skimming the last few years of Go changelogs, the things which caught my ey
 
 I'm sure there are also many significant things that didn't catch my eyes too!
 
-The first two are quick wins: Modules basically allow you to write Go code outside of the old `GOPATH`, which is now the default way to write Go, and block scopes variables in for loops mean that writing code like this now works as you'd expect:
+The first two are quick wins. 
+
+Modules basically allow you to write Go code outside of the old `GOPATH`. This is now the default way to write Go. As somebody who hated having to put my Go projects in a separate place from everything else, this was a very welcome addition!
+
+Block scoped variables in for loops means that writing code like this now works as you'd expect:
 
 ```go
 for i := 0; i < 10; i++ {
@@ -54,13 +58,13 @@ for i := 0; i < 10; i++ {
 }
 ```
 
-Previously, this would have (probably?) printed `9` 10 times, because every goroutine captures the same variable `i`, and by the time they execute, `i` has been incremented up to 9. Now, we get all of the values from 0-9 printed (in an undefined order), as each iteration sees and captures its own instance of `i`.
+Previously, this would have (probably) printed `9` 10 times, because every goroutine captures the same variable `i`, and by the time they execute, `i` has been incremented up to 9. Now, we get all of the values from 0-9 printed (in an undefined order), as each iteration sees and captures its own instance of `i`.
 
 These were both frustrating things to run into, so it's really great to see them addressed nowadays!
 
 ## Generics
 
-Generics are a huge new language addition which bring it in line with (almost?) every other modern language. Before generics, we had done things like using `go generate` when we wanted to reuse some code but with different types (we had an example in our codebase of a cache implementation that would be generated to handle the various types we wanted caching).
+Generics are a huge new language addition which bring it in line with (almost?) every other modern language. Before generics, we used things like `go generate` to reuse some code but with different types. This essentially boils down to copy & pasting some template code multiple times, with template parameters changed (we had an example in our codebase of a cache implementation that would be generated to handle the various types we wanted caching).
 
 The main thing I find myself doing a lot in languages like `Rust` is wanting to wrap functionality up into custom data structures. For example, in Advent of Code this year I wanted a queue data structure (and was determined to not reach beyond the stdlib for anything), so I wrote myself a [double ended queue][deque] which could be used like:
 
