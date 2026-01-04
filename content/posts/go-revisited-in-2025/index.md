@@ -12,15 +12,15 @@ To begin with, I found Go a joy to use! It had a better type system than Javascr
 
 - No generics!!!! (I used this many exclamation marks on the original note). I was frustrated that built-in types got special treatment here and I was unable to create my own such types. I had also used Java before it had generics, and it felt like Go was making the same mistake by not adding them.
 - Because of the above, we also didn't get any generic functions for iterating over slices or maps, filtering values, mapping slice and maps and so on. Things that I was used to in Javascript and that worked great in Rust and Haskell.
-- Variables in for loops were instantiated once, rather than being scoped to the block of the loop. This led to an annoying footgun around reusing these variables in goroutines, for instance.
+- Variables in for loops were instantiated once, rather than being scoped to the block of the loop. This led to an annoying foot-gun around reusing these variables in goroutines, for instance.
 - Pointers and potential nil values everywhere (which felt like a step back from the `Maybe` and `Option` types of Rust/Haskell).
 - Inserting into a nil map panics, but inserting into a nil slice is ok (I thought this was a weird inconsistency, though sort of understand why).
-- Sortof related, APIs like `slice = append(slice, item)` are messy, especially coming from languages like Rust and C++ which expose apis like `vec.push(item)` and do the reallocating under the hood.
+- Sort-of related, APIs like `slice = append(slice, item)` are messy, especially coming from languages like Rust and C++ which expose apis like `vec.push(item)` and do the reallocating under the hood.
 - Things that should be warnings are hard errors, eg unused imports and variables. When I'm debugging things, I just want to see if everything compiles and don't want to be force to tidy things each time.
 - No tagged enums. Instead, we have multiple return values, making it possible to use an error or value that shouldn't be used.
 - No REPL (I must have been in my Haskell phase at the time of writing this one).
-- No way to prevent users fro mconstructing zero valued instances of your types, which means it's possible for instances to exist which aren't properly initialized.
-- Having to write all of your Go code in one place (`$GOPATH`) was a PITA. I wanted to put separate projects in different places, not have some sort of Go monorepository.
+- No way to prevent users from constructing zero valued instances of your types, which means it's possible for instances to exist which aren't properly initialized.
+- Having to write all of your Go code in one place (`$GOPATH`) was a PITA. I wanted to put separate projects in different places, not have some sort of Go mono-repository.
 
 I did also have a few "good"s, like:
 
@@ -33,7 +33,7 @@ In any case, it's fair to say that I had a love/hate relationship with Go.
 
 # So what's new in 2025
 
-I figured that I'd have a go at doing this years [Advent of Code][aoc2025] problems in Go to reacquaint myself with it, mainly because I had read a little about Generics being added to the language a while back and thoght it was about time I actually tried them out!
+I figured that I'd have a go at doing this years [Advent of Code][aoc2025] problems in Go to reacquaint myself with it, mainly because I had read a little about Generics being added to the language a while back and thought it was about time I actually tried them out!
 
 From skimming the last few years of Go changelogs, the things which caught my eye essentially boiled down to:
 
@@ -167,7 +167,7 @@ I believe this is because of issues around generic methods and interface satisfi
 
 # Iterators
 
-I hadn't even notivced that Go had adopted any sort of iterator approach, and was very pleasantly surprised to see that iterators have now been integrated much more into Go. Iterators are great when there are several intermediate steps that you'd like to apply to the items in some data structure (for instance a slice), or when you want to provide back each of the values in some data structure for users to do something with, or just when you want to stream values back to a user as they become available.
+I hadn't even noticed that Go had adopted any sort of iterator approach, and was very pleasantly surprised to see that iterators have now been integrated much more into Go. Iterators are great when there are several intermediate steps that you'd like to apply to the items in some data structure (for instance a slice), or when you want to provide back each of the values in some data structure for users to do something with, or just when you want to stream values back to a user as they become available.
 
 In Go, you've always been able to iterate over the built-in data structures:
 
@@ -257,11 +257,11 @@ for s, i := range Zip(slices.Values(strings), slices.Values(ints)) {
 
 Aside from being able to write your own iterators, we now have some handy iterators in the standard library, like `slices.Values` to iterate over the values in a slice (useful if you want to consume an iterator somewhere and have a slice), `maps.All`, `maps.Keys` and `maps.Values` for iterating over maps, things like `strings.Lines` for iterating over all of the lines in a string, and a bunch more. Some iterator functions in the stdlib end with `Seq` to differentiate themselves from the pre-existing non-iterator functions that came before.
 
-Rust iterators are generally more difficult to write, because there is not yet any public-facing `gen` keyword to write functions which can `yield` multiple values. Also, sync and async code is written and handled very differently in Rust, and so we have `Iterator` for synchronous iteration and `Stream` (in a library) for async iteration. Go has none of these issues; iterators can be synchronous or asyncronous, and we can yield values as we go without any special syntax, because the Go runtime handles swapping between coroutines and so on under the hood where needed.
+Rust iterators are generally more difficult to write, because there is not yet any public-facing `gen` keyword to write functions which can `yield` multiple values. Also, sync and async code is written and handled very differently in Rust, and so we have `Iterator` for synchronous iteration and `Stream` (in a library) for async iteration. Go has none of these issues; iterators can be synchronous or asynchronous, and we can yield values as we go without any special syntax, because the Go runtime handles swapping between coroutines and so on under the hood where needed.
 
 # Closing thoughts
 
-Go has always moved slowly and carefully as a language (which I appreciate more and more as time goes on and I see languages and software in general always pushing to evolve and change, and often messing it up), but I really love how it's evolved over the past decade. Iterators and Generics add two of the big feature that I sorely missed to the language, and makes it possible for me to write the sort of code I want to write. Whle I still have various other gripes, the same is true of most languages. 
+Go has always moved slowly and carefully as a language (which I appreciate more and more as time goes on and I see languages and software in general always pushing to evolve and change, and often messing it up), but I really love how it's evolved over the past decade. Iterators and Generics add two of the big feature that I sorely missed to the language, and makes it possible for me to write the sort of code I want to write. While I still have various other gripes, the same is true of most languages. 
 
 Now I will just hope that Go gets tagged enums and I'll be pretty chuffed!
 
