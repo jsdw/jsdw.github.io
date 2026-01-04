@@ -14,10 +14,10 @@
 
 {% block content %}
 
-    <h1 id="projects">Latest Projects <span class="see-all">(<a href="{{ projects.permalink }}">see all</a>)</span></h1>
-    {{ macros::projects_toc(pages=projects.pages,limit=3,config=config) }}
-
     <h1 id="posts">Latest Posts <span class="see-all">(<a href="{{ posts.permalink }}">see all</a>)</span></h1>
     {{ macros::posts_toc(pages=posts.pages,limit=3) }}
+
+    <h1 id="projects">Latest Projects <span class="see-all">(<a href="{{ projects.permalink }}">see all</a>)</span></h1>
+    {{ macros::projects_toc(pages=projects.pages,limit=3,config=config) }}
 
 {% endblock content %}
