@@ -1,0 +1,10 @@
+[package]
+name = "rust-futures-tokio"
+version = "0.1.0"
+authors = ["James Wilson <me@unbui.lt>"]
+edition = "2018"
+
+[dependencies]
+tokio = "0.1.13"
+futures = "0.1.20"
+bytes = "0.4.11"

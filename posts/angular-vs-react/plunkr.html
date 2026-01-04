@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+	  <script data-require="jquery@2.1.3" data-semver="2.1.3" src="http://code.jquery.com/jquery-2.1.3.js"></script>
+		<script data-require="angular.js@1.4.0-beta.6" data-semver="1.4.0-beta.6" src="https://code.angularjs.org/1.4.0-beta.6/angular.js"></script>
+		<script data-require="react-with-addons@0.12.2" data-semver="0.12.2" src="http://fb.me/react-with-addons-0.12.2.js"></script>
+		<script data-require="react-jsx@0.12.2" data-semver="0.12.2" src="//cdnjs.cloudflare.com/ajax/libs/react/0.12.2/JSXTransformer.js"></script>
+	</head>
+
+	<body>
+
+
+		<h1>Communication vertically across components</h1>
+
+		<div id="angular-talk-twoway">
+			<div ng-controller="details as ctrl">
+				{{ctrl.numbers | json}}
+				<div inner name="ctrl.name" numbers="ctrl.numbers"></div>
+			</div>
+		</div>
+		<script>
+
+		angular.module("angular-talk-twoway", [])
+				.controller("details", function($interval){
+
+					var ctrl = this;
+					var count = 1;
+
+					ctrl.name = "James";
+					ctrl.numbers = [];
+
+					//periodically change numbers array:
+					var i = $interval(function(){
+						ctrl.numbers.push(count++);
+						if(count > 10) $interval.cancel(i);
+					}, 1000);
+
+				})
+				.directive("inner", function(){
+					return {
+						scope: {
+							//= for watch:
+							name: "=",
+							//add * for watchCollection, diff name on inside:
+							inputNumbers: "=*numbers"
+						},
+						controller: function($scope){
+
+							$scope.$watchCollection("inputNumbers", function(n){
+
+								if(!angular.isArray(n)) return;
+
+								//add half increments too so it's like 1,1.5,2,2.5,3,3.5..
+								if(n.length && n[n.length-1] == Math.floor(n[n.length-1])){
+									n.push(n[n.length-1]+0.5);
+								}
+
+								$scope.numbers = n.join(", ");
+
+							});
+
+						},
+						template: "<div>{{name}}: {{numbers.length? numbers : 'No Numbers'}}</div>"
+					};
+				})
+				//
+				//if we only wanted one way comunication.......
+				//
+				.directive("innerOneWay", function(){
+					return {
+						scope: {
+							onUpdate: "&"
+						},
+						controller: function($scope,$attrs){
+
+							$scope.$parent.$watch($attrs.name, function(n){
+								$scope.name = n;
+							});
+							$scope.$parent.$watchCollection($attrs.numbers, function(n){
+
+								if(!angular.isArray(n)) return;
+
+								//add half increments too so it's like 1,1.5,2,2.5,3,3.5..
+								if(n.length && n[n.length-1] == Math.floor(n[n.length-1])){
+									n.push(n[n.length-1]+0.5);
+									$scope.onUpdate({values: n});
+								}
+
+								$scope.numbers = n.join(", ");
+
+							});
+
+						},
+						template: "<div>{{name}}: {{numbers.length? numbers : 'No Numbers'}}</div>"
+					};
+				})
+
+
+		angular.bootstrap(
+			document.getElementById("angular-talk-twoway"), 
+			['angular-talk-twoway']
+		);
+
+		</script>
+
+		<h2>React</h2>
+
+		<div id="react-talk-twoway"></div>
+		<script type="text/jsx">
+
+			var Outer = React.createClass({
+
+				getInitialState: function(){
+					return {
+						name: "James",
+						count: 1,
+						numbers: []
+					};
+				},
+
+				componentDidMount: function(){
+					var self = this;
+					self.__interval = setInterval(function(){
+
+						var n = self.state.numbers,
+						    c = self.state.count;
+
+						self.setState({
+							numbers: n.concat([c]),
+							count: c+1
+						});
+
+						if(c+1 > 10) clearInterval(self.__interval);
+
+					},1000);
+				},
+
+				updateNumbers: function(newNumbers){
+					this.setState({
+						numbers: newNumbers
+					});
+				},
+
+				componentWillUnmount: function(){
+					clearInterval(this.__interval);
+				},
+
+				render: function(){
+					var s = this.state;
+					return (
+						<div>
+							{JSON.stringify(this.state.numbers)}
+							<Inner numbers={s.numbers} name={s.name} onUpdate={this.updateNumbers} />
+						</div>
+					);
+				}
+
+			});
+
+			var Inner = React.createClass({
+
+				propTypes: {
+					numbers: React.PropTypes.array,
+					name: React.PropTypes.string,
+					onUpdate: React.PropTypes.func
+				},
+
+				getDefaultProps: function(){
+					return {
+						numbers: [],
+						name: "No Name",
+						onUpdate: function(){}
+					};
+				},
+
+				getInitialState: function(){
+					return {};
+				},
+
+				componentWillReceiveProps: function(nextProps){
+
+					var n = nextProps.numbers;
+
+					//add half increments too so it's like 1,1.5,2,2.5,3,3.5..
+					if(n.length && n[n.length-1] == Math.floor(n[n.length-1])){
+						n = n.concat([ n[n.length-1]+0.5 ]);
+						this.props.onUpdate(n);
+					}
+
+					this.setState({
+						numberString: n.join(", ")
+					});
+
+				},
+
+				render: function(){
+					return (
+						<div>{this.props.name}: {this.state.numberString || 'No Numbers'}</div>
+					);
+				}
+
+			});
+
+			React.render(
+				<Outer />,
+				document.getElementById("react-talk-twoway")
+			);
+
+		</script>
+
+
+		<h1>Communication horizontally across components</h1>
+
+		<div id="counter">
+
+			<div ng-controller="countDisplay as ctrl">
+				Count: {{ctrl.count}}
+			</div>
+			<div ng-controller="countControls as ctrl">
+				<button ng-click="ctrl.increment()">Increment</button>
+				<button ng-click="ctrl.decrement()">Decrement</button>
+			</div>
+
+
+		</div>
+		<script type="text/javascript">
+		(function(){
+
+			angular.module("angularCounter", [])
+				.factory("counter", function($rootScope){
+
+					var counter = 0;
+					return {
+						getCount: function(){ 
+							return counter; 
+						},
+						setCount: function(value){
+							counter = value;
+							$rootScope.$emit("counterChanged")
+						},
+						onChange: function($scope, fn){
+							var off = $rootScope.$on("counterChanged", fn);
+							$scope.$on("$destroy", off);
+							return off;
+						}
+					};
+
+				})
+				.controller("countDisplay", function($scope, counter){
+
+					var ctrl = this;
+					ctrl.count = counter.getCount();
+					counter.onChange($scope, function(){
+						ctrl.count = counter.getCount();
+					});
+
+				})
+				.controller("countControls", function($scope, counter){
+
+					this.increment = function(){ 
+						counter.setCount( counter.getCount()+1 ); 
+					}
+					this.decrement = function(){ 
+						counter.setCount( counter.getCount()-1 ); 
+					}
+
+				});
+
+			angular.bootstrap(
+				document.getElementById("counter"), 
+				['angularCounter']
+			);
+		
+		}());
+		</script>
+
+
+		<h2>React</h2>
+
+		<div id="react-counter-display"></div>
+		<div id="react-counter-controls"></div>
+		<script type="text/jsx">
+		(function(){
+
+			var MixinChannel = function(){
+				var subscribed = [];
+				return {
+					createMixin: function(){
+						var offs = [];
+						return {
+							onChange: function(fn){
+								subscribed.push(fn);
+								var off = function(){
+									var idx = subscribed.indexOf(cb);
+									if(idx !== -1) subscribed.splice(idx,1);
+								}
+								offs.push(off);
+								return off;
+							},
+							componentWillUnmount: function(){
+								for(var i = 0; i < offs.length; i++){
+									offs[i]();
+								}
+							}
+						};
+					},
+					fire: function(){
+						for(var i = 0; i < subscribed.length; i++){
+							subscribed[i].apply(null,arguments);
+						}		
+					}
+				}
+			}
+
+			var Counter = function(){
+				var count = 0;
+				var chan = MixinChannel();
+				var mixin = chan.createMixin("onCounterChanged");
+				return {
+					getCount: function(){ 
+						return count; 
+					},
+					setCount: function(value){
+						count = value;
+						chan.fire();
+					},
+					onCounterChanged: mixin.onChange,
+					componentWillUnmount: mixin.componentWillUnmount
+				};
+			}
+
+			var myCounter = Counter();
+
+			var CounterControls = React.createClass({
+				mixins: [myCounter],
+				incrementCount: function(){
+					this.setCount(this.getCount()+1);
+				},
+				decrementCount: function(){
+					this.setCount(this.getCount()-1);
+				},
+				render: function(){
+					return (
+						<div>
+							<button onClick={this.incrementCount}>Increment</button>
+							<button onClick={this.decrementCount}>Decrement</button>
+						</div>
+					);
+				}
+			});
+
+			var CounterDisplay = React.createClass({
+				mixins: [myCounter],
+				getInitialState: function(){
+					return {count: this.getCount()};
+				},
+				componentDidMount: function(){
+					var self = this;
+					self.onCounterChanged(function(){
+						self.setState({count: self.getCount()});
+					});
+				},
+				render: function(){
+					return (
+						<div>Count: {this.state.count}</div>
+					);
+				}
+			});
+
+			React.render(
+				<CounterDisplay/>, 
+				document.getElementById("react-counter-display")
+			);
+			React.render(
+				<CounterControls/>, 
+				document.getElementById("react-counter-controls")
+			);
+		
+		}());
+		</script>
+
+		<h1>Tree Structure</h1>
+
+		<!-- common -->
+		<script>
+			
+			window.tree = [
+				{
+					title: "Folder 1",
+					children: [
+						{
+							title: "Sub 10"
+						},
+						{
+							title: "Sub 11"
+						},
+						{
+							title: "Sub 12",
+							children: [
+								{
+									title: "Sub 100"
+								},
+								{
+									title: "Sub 200"
+								}
+							]
+						}
+					]
+				},
+				{
+					title: "Folder 2",
+					children: [
+						{
+							title: "Sub 20",
+							children: [
+								{
+									title: "Sub 200",
+									children: [
+										{
+											title: "Sub 2000",
+											children: [
+												{
+													title: "Sub 20000"  
+												}
+											]
+										}
+									]
+								}
+							]
+						}  
+					]
+				}
+				
+			]
+			
+		</script>
+		<!-- angular -->
+
+		<div id="basicTree">
+			<script type="text/ng-template" id="tree-template">
+				<div ng-repeat='item in items track by item.title'>
+					{{item.title}}
+					<button ng-show="item.children" ng-click="showChildren = !showChildren">
+						{{ (showChildren? 'Hide' : 'Show')+' Children' }}
+					</button>
+					<tree ng-if='item.children && showChildren' items='item.children'></tree>
+				</div>
+			</script>
+			<div ng-controller="treeCtrl as ctrl">
+				<tree items="ctrl.tree"></tree>
+			</div>
+		</div>
+		<script>
+		(function(){
+
+			angular.module("basicTree", [])
+
+				//general:
+				.run(function($rootScope){
+					$rootScope.$watch(function(){
+						console.log("digest!");
+					})
+				})
+
+				//list:
+				.directive("tree", function($compile,$templateCache){
+					return {
+						scope: {
+							items: "="
+						},
+						link: function(scope,elem,attrs){
+							if(!scope.items.length) return;
+							var html = $compile($templateCache.get("tree-template"))(scope);
+							elem.append(html);
+						}
+					};
+				})
+				.controller("treeCtrl", function(){
+					this.tree = window.tree;
+				});
+			
+			angular.bootstrap(
+				document.getElementById("basicTree"),
+				['basicTree']
+			);
+
+		}());
+		</script>
+
+
+		<h2>React</h2>
+
+		<!-- react -->
+		<div id="react-tree"></div>
+		<script type="text/jsx">
+		(function(){
+
+			var TreeItem = React.createClass({
+				propTypes: {
+					item: React.PropTypes.shape({
+						title: React.PropTypes.string.isRequired,
+						children: React.PropTypes.array
+					})
+				},
+				getInitialState: function(){
+					return {childrenVisible: false};
+				},
+				toggleChildren: function(){
+					this.setState({childrenVisible: !this.state.childrenVisible});
+				},
+				render: function(){
+					var item = this.props.item;
+					var visible = this.state.childrenVisible;
+					return (
+						<div>
+							{item.title}
+							{item.children?
+								<button onClick={this.toggleChildren}>
+									{(visible? 'Hide' : 'Show')+' Children'}
+								</button>
+							:false}
+							{visible? 
+								<Tree items={item.children || []} /> 
+							:false}
+						</div>
+					);
+				}
+			});
+
+			var Tree = React.createClass({
+				propTypes: {
+					items: React.PropTypes.array.isRequired
+				},
+				render: function(){
+					var items = this.props.items;
+					return (
+						<div>
+						{
+							items.map(function(item){
+								return <TreeItem key={item.title} item={item} />;
+							})
+						}
+						</div>
+					);
+				}
+			});
+
+			React.render(
+				<Tree items={window.tree} />, 
+				document.getElementById("react-tree")
+			);
+
+		}());
+		</script>
+
+
+		<h1>Transclusion for reuse</h1>
+
+
+		<div id="betterTree">
+
+			<div ng-controller="treeCtrl as ctrl">
+
+				<tree items="ctrl.tree">
+					{{item.title}}
+					<button ng-show="item.children" ng-click="showChildren = !showChildren">
+						{{ (showChildren? 'Hide' : 'Show')+' Children' }}
+					</button>
+					<tree ng-if="showChildren" children items="item.children"></tree>
+				</tree>
+
+				<tree items="ctrl.tree">
+					<button ng-show="item.children" ng-click="showChildren = !showChildren">
+						{{ (showChildren? 'Hide' : 'Show')+' Children' }}
+					</button>
+					{{item.title}}
+					<tree ng-if="showChildren" children items="item.children"></tree>
+				</tree>
+
+			</div>
+
+		</div>
+		<script type="text/javascript">
+		(function(){
+
+			angular.module("betterTree", [])
+
+				.directive("treeItem", function(){
+					return {
+						scope: {
+							item: "=treeItem"
+						},
+						controller: function($scope,$element,$attrs){
+
+							$scope.__transcludeFn = $scope.$parent.__transcludeFn;
+							if(!$scope.__transcludeFn) throw Error("Where's my transclude?");
+
+							$scope.__transcludeFn($scope, function(elem){
+								$element.append(elem);
+							});
+						},
+					};
+				})
+				.directive("tree", function(){
+					return {
+						scope: {
+							items: "="
+						},
+						transclude: true,
+						controller: function($scope,$element,$attrs,$transclude){
+							$scope.__transcludeFn = "children" in $attrs
+								? $scope.$parent.__transcludeFn 
+								: $transclude;
+							if(!$scope.__transcludeFn){
+								throw Error("'children' not beneath parent");
+							}
+						},
+						template: "<div ng-repeat='item in items' tree-item='item'></div>"
+					};
+				})
+				.controller("treeCtrl", function(){
+					this.tree = window.tree;
+				});
+
+			angular.bootstrap(
+				document.getElementById("betterTree"), 
+				['betterTree']
+			);
+
+		}());
+		</script>
+
+		<!--
+		//
+		// Render a tree structure using the HTML provided. example use:
+		//
+		// <tree items="ctrl.tree" key="id" ref="item" no-watch>
+		// 	{{item.title}}
+		// 	<button ng-show="item.children" ng-click="showChildren = !showChildren">
+		// 		{{ (showChildren? 'Hide' : 'Show')+' Children' }}
+		// 	</button>
+		// 	<tree ng-if="showChildren" children items="item.children"></tree>
+		// </tree>
+		//
+		// where ctrl.tree looks something like:
+		//
+		// [
+		// 	{
+		// 		title: "Folder 1",
+		// 		id:1,
+		// 		children: [
+		// 			{
+		// 				title: "Sub 10",
+		// 				id:10
+		// 			},
+		// 		]
+		// 	},
+		// 	{
+		// 		title: "Folder 2",
+		// 		id:2,
+		// 		children: [
+		// 			{
+		// 				title: "Sub 20"
+		// 				id:20
+		// 			},
+		// 		]
+		// 	}
+		// ]
+		//
+		App.directive(NAME, function(){
+			return {
+				restrict: "AE",
+				scope: true,
+				transclude: true,
+				controller: ["$scope","$element","$attrs","$transclude",function($scope,$element,$attrs,$transclude){
+
+					$scope.__treeOpts = "children" in $attrs? $scope.$parent.__treeOpts : {
+						transcludeFn: $transclude,
+						noWatch: "noWatch" in $attrs? true : false,
+						class: $scope.$parent.$eval($attrs.itemClass) || "",
+						key: $attrs.key || false,
+						ref: $attrs.ref || "item"
+					};
+
+					if(!$scope.__treeOpts) {
+						throw Error(NAME+":: tree declared with 'children' attr but not a child tree.");
+					}
+
+					var noWatch = $scope.__treeOpts.noWatch;
+					var turnOffWatch = $scope.$parent.$watchCollection($attrs.items, function(n){
+						var bIsArray = n instanceof Array;
+						$scope.items = bIsArray? n : [];
+						if(bIsArray && noWatch) turnOffWatch();
+					});
+
+				}],
+				template: "<div ng-repeat='item in items track by (__treeOpts.key? item[__treeOpts.key] : $index)' ng-class='__treeOpts.class' jw-tree-item='item'></div>"
+			};
+		});
+
+		App.directive("jwTreeItem", function(){
+			return {
+				restrict: "A",
+				scope: true,
+				controller: ["$scope","$element","$attrs", function($scope,$element,$attrs){
+
+					$scope.__treeOpts = $scope.$parent.__treeOpts;
+					if(!$scope.__treeOpts) throw Error(NAME+":: TreeItem not beneath a Tree!");
+
+					var noWatch = $scope.__treeOpts.noWatch;
+					var turnOffWatch = $scope.$parent.$watch($attrs.jwTreeItem, function(n){
+						var bIsUndefined = typeof n == "undefined";
+						$scope[$scope.__treeOpts.ref] = n;
+						if(bIsUndefined && noWatch) turnOffWatch();
+					});
+
+					$scope.__treeOpts.transcludeFn($scope, function(elem){
+						$element.append(elem);
+					});
+				}],
+			};
+		});
+		-->
+
+		<h2>React</h2>
+
+		<!-- react -->
+		<div id="react-better-tree"></div>
+		<div id="react-better-tree2"></div>
+		<script type="text/jsx">
+		(function(){
+
+			//our first custom tree item:
+			var TreeItem = React.createClass({
+				propTypes: {
+					item: React.PropTypes.shape({
+						title: React.PropTypes.string.isRequired,
+						children: React.PropTypes.array
+					})
+				},
+				getInitialState: function(){
+					return {childrenVisible: false};
+				},
+				toggleChildren: function(){
+					this.setState({childrenVisible: !this.state.childrenVisible});
+				},
+				render: function(){
+					var item = this.props.item;
+					var visible = this.state.childrenVisible;
+					return (
+						<div>
+							{item.title}
+							{item.children?
+								<button onClick={this.toggleChildren}>
+									{(visible? 'Hide' : 'Show')+' Children'}
+								</button>
+							:false}
+							{visible? 
+								<Tree items={item.children || []} keyProp="title" template={TreeItem} /> 
+							:false}
+						</div>
+					);
+				}
+
+			});
+
+			var Tree = React.createClass({
+				propTypes: {
+					items: React.PropTypes.array.isRequired,
+					template: React.PropTypes.func.isRequired,
+					keyProp: React.PropTypes.string.isRequired
+				},
+				render: function(){
+					var keyProp = this.props.keyProp;
+					var items = this.props.items;
+					var Child = this.props.template;
+					return (
+						<div>
+						{
+							items.map(function(item){
+								return <Child key={item[keyProp]} item={item} />;
+							})
+						}
+						</div>
+					);
+				}
+			});
+
+			React.render(
+				<Tree items={window.tree} keyProp="title" template={TreeItem}/>, 
+				document.getElementById("react-better-tree")
+			);
+
+		}());
+		</script>
+
+		<h1>Multiple Transclusion for more Complex Components</h1>
+
+
+		<div id="fancyWidget">
+			<div ng-controller="fancyWidgetCtrl as ctrl">
+
+				<fancy-widget>
+					<span part="title-part">
+						Hello There <em>{{ctrl.name}}</em>
+					</span>
+					<span part="content-part">
+						This is a {{ctrl.verb}} widget!
+					</span>
+				</fancy-widget>
+
+			</div>
+		</div>
+		<script type="text/javascript">
+		(function(){
+
+			angular.module("fancyWidget", [])
+
+				.directive("fancyWidget", function(){
+					return {
+						scope: {},
+						transclude: true,
+						controller: function($scope,$element,$transclude){
+
+							//just use the scope the content was pulled from.
+							$transclude(function(el){
+								$element.find("title-part").replaceWith(el.filter("[part=title-part]"));
+								$element.find("content-part").replaceWith(el.filter("[part=content-part]"));
+							});
+
+						},
+						template: "<h3>Title: <title-part/></h3><div>Content: <content-part/></div>"
+					};
+				})
+				.controller("fancyWidgetCtrl", function(){
+					this.name = "James";
+					this.verb = "fancy";
+				});
+
+			angular.bootstrap(
+				document.getElementById("fancyWidget"), 
+				['fancyWidget']
+			);
+
+		}());
+		</script>
+
+
+		<h2>React</h2>
+
+		<!-- react -->
+		<div id="react-fancy-widget"></div>
+		<script type="text/jsx">
+		(function(){
+
+		var FancyWidget = React.createClass({
+			render: function(){
+
+				//find the chldren we want to use:
+				var title = false, content = false;
+				React.Children.forEach(this.props.children, function(child){
+					if(child.props.part == "title") title = child;
+					else if(child.props.part == "content") content = child;
+				});
+
+				return (
+					<div>
+						<h3>Title: {title}</h3>
+						<div>Content: {content}</div>
+					</div>
+				);
+
+			}
+		});
+
+		var App = React.createClass({
+			getDefaultProps: function(){
+				return {
+					name: "James",
+					verb: "fancy"
+				}
+			},
+			render: function(){
+				return (
+					<FancyWidget>
+						<span part="title">Hello there <em>{this.props.name}</em></span>
+						<span part="content">This is a {this.props.verb} widget!</span>
+					</FancyWidget>
+				);
+			}
+		})
+
+		React.render(
+			<App />,
+			document.getElementById("react-fancy-widget")
+		);
+
+		}());
+		</script>
+
+
+	</body>
+
+</html>

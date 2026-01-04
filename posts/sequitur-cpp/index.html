@@ -1,0 +1,87 @@
+<!doctype html><html><head><meta charset=utf-8><meta content="width=device-width,initial-scale=1" name=viewport><title>
+    jsdw - Sequitur: a templated C++ implementation
+</title><link href="https://fonts.googleapis.com/css?family=IBM+Plex+Serif|Open+Sans" rel=stylesheet><link href=https://jsdw.me/app.css rel=stylesheet><link href=https://jsdw.me/apple-touch-icon.png rel=apple-touch-icon sizes=180x180><link href=https://jsdw.me/favicon-32x32.png rel=icon sizes=32x32 type=image/png><link href=https://jsdw.me/favicon-16x16.png rel=icon sizes=16x16 type=image/png><link href=https://jsdw.me/site.webmanifest rel=manifest><link color=#5bbad5 href=https://jsdw.me/safari-pinned-tab.svg rel=mask-icon><meta content=#f9409c name=msapplication-TileColor><meta content=#ffffff name=theme-color><body><div class="body post"><header><div class=title-inner><div class=jsdw><a href=https://jsdw.me>JSDW</a></div><nav><a href=https://jsdw.me/posts/>posts</a><a href=https://jsdw.me/projects/>projects</a></nav></div></header><section><div class=top><div class=top-scene><svg class="polygon two" viewbox="0 0 100 100" height=100% style=fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421 version=1.1 width=100% xml:space=preserve xmlns=http://www.w3.org/2000/svg xmlns:serif=http://www.serif.com/ xmlns:xlink=http://www.w3.org/1999/xlink><polygon points="0 100, 15 40, 60 0, 100 30"/></svg><svg class="polygon one" viewbox="0 0 100 100" height=100% style=fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421 version=1.1 width=100% xml:space=preserve xmlns=http://www.w3.org/2000/svg xmlns:serif=http://www.serif.com/ xmlns:xlink=http://www.w3.org/1999/xlink><polygon points="0 40, 30 0, 80 33, 100 100"/></svg></div><div class=top-inner><h1 class=title>Sequitur: a templated C++ implementation <span class=date>2013-05-15</span></h1></div></div><div class=content-inner><div class=post><p>Recently, on getting back into C++, I decided to have a go at reimplementing the Sequitur algorithm, which I had originally implemented in Javascript for use in my <a href=https://jsdw.github.io/js-compression-machine/>compression application</a>. Despite the inherent advantages of Javascript as a dynamic language, it was never an ideal choice for an algorithm that requires lower level optimisation to perform at its best.<p>My C++ implementation therefore has a few advantages:<ul><li>It's significantly faster (somewhere around 10x).<li>It's templated, and so can be used on any arbitrary type.<li>Due to its similarity to STL containers, it is also easy to use.</ul><p>I have put some effort into optimising it speed-wise, although I'm sure it could be taken further. To this end, I have implemented my own doubly linked list (in the form of an invisible inheritable base class which provides the relevant functionality), and a custom memory pool for mitigating the slowdown caused by the frequent creation and deletion of <code>Symbols</code> as the algorithm reorganises things.<p>The template nature of this implementation means that it can be applied to any primitive type and any class that implements an equality (==) operator for equality testing. Running it with the <code>char</code> type, it can process binary data in the region of 800KB-1MB/sec, and works roughly in linear time (in other words, time taken is proportional to the number of inputs it receives). Memory consumption, while still better than that in my Javascript implementation by a fair degree, is still rather high, as between 32 and 48 bytes are required per symbol (for the <code>char</code> version, and on a 64 bit machine). That said, there is not a lot of room for improvement here if we are to preserve linear time.<p>Anyway, it is available for download from <a href=https://github.com/jsdw/cpp-sequitur>github</a> and can be freely used for any purpose you like.<h1 id=basic-usage>Basic Usage</h1><p>The download includes a <code>main.cpp</code>, which creates a simple program that can be passed a filename to work on, and will process it and then print out some details.<p>To put to use in a custom project, just add <code>sequitur.hpp</code> and all of the files in <code>sequitur</code> to your project. Additionally, add <code>main.cpp</code> to compile a simple example. I have omitted unit tests in the download for simplicity.<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=color:#75715e>//include the namespace:
+</span><span style=color:#f92672>using namespace</span><span> jw;
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>() {
+</span><span>	</span><span style=color:#75715e>//create a new sequitur instance:
+</span><span>	Sequitur<</span><span style=font-style:italic;color:#66d9ef>char</span><span>> s;
+</span><span>
+</span><span>	</span><span style=color:#75715e>//add elements to it:
+</span><span>	s.push_back(</span><span style=color:#e6db74>'l'</span><span>);
+</span><span>	s.push_back(</span><span style=color:#e6db74>'d'</span><span>);
+</span><span>
+</span><span>	</span><span style=color:#75715e>//print how many elements have been added (2):
+</span><span>	cout </span><span style=color:#f92672><<</span><span> s.size() </span><span style=color:#f92672><<</span><span> endl;
+</span><span>
+</span><span>	</span><span style=color:#75715e>//iterate over elements, printing them:
+</span><span>	Sequitur<</span><span style=font-style:italic;color:#66d9ef>char</span><span>>::const_iterator it </span><span style=color:#f92672>=</span><span> s.begin();
+</span><span>	</span><span style=color:#f92672>while</span><span>(it </span><span style=color:#f92672>!=</span><span> s.end()) {
+</span><span>		cout </span><span style=color:#f92672><< *</span><span>it </span><span style=color:#f92672><<</span><span> endl;
+</span><span>		</span><span style=color:#f92672>++</span><span>it;
+</span><span>	}
+</span><span>
+</span><span>	</span><span style=color:#75715e>//reverse iterators are also implemented:
+</span><span>	Sequitur<</span><span style=font-style:italic;color:#66d9ef>char</span><span>>::const_reverse_iterator rit;
+</span><span>	</span><span style=color:#f92672>while</span><span>(rit </span><span style=color:#f92672>!=</span><span> s.rend()) {
+</span><span>		cout </span><span style=color:#f92672><< *</span><span>rit </span><span style=color:#f92672><<</span><span> endl;
+</span><span>		</span><span style=color:#f92672>++</span><span>rit;
+</span><span>	}
+</span><span>
+</span><span>	</span><span style=color:#f92672>return </span><span style=color:#ae81ff>0</span><span>;
+</span><span>}
+</span></code></pre><p>Internally, <code>s</code> will be creating rules to represent any repetition, whereby rule 0 is the original string. The main print functions are as follows, and allow for visualisation of what is happening internally:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=color:#75715e>//print all rules and digram index:
+</span><span>s.printAll();
+</span><span>
+</span><span style=color:#75715e>//print rules:
+</span><span>s.printRules();
+</span><span>
+</span><span style=color:#75715e>//print digram index:
+</span><span>s.printDigramIndex();
+</span><span>
+</span></code></pre><h1 id=advanced-usage>Advanced Usage</h1><p>For more complex tasks, you'll need to manually work with the rule index, which can be obtained as follows:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=color:#75715e>//get rules (of type std::unordered_map&LTunsigned, Symbol*>):
+</span><span style=font-style:italic;color:#66d9ef>auto</span><span> rules </span><span style=color:#f92672>=</span><span> s.getRules();
+</span></code></pre><p><code>Symbol</code> is an abstract type from which various symbols (<code>RuleSymbol</code>, <code>RuleHead</code>, <code>RuleTail</code>, and <code>ValueSymbol&LTtype></code>) are derived. <code>ValueSymbol</code> contains the value of whatever type we are working with (<code>char</code> in the above). The other symbols are used for internal rule manipulation and creation; notably, <code>RuleSymbol</code> is a symbol which points to a <code>RuleHead</code> in the sequence, and <code>RuleHead</code> is positioned at the start of a rule, which itself is a list of Symbols.<p><code>Symbol</code> itself inherits from my <code>BaseList</code> implementation, which endows any inheriting class doubly linked list properties, so that they can be chained together/navigated over etc. It does this transparently by being passed the inheriting type as a template parameter, and outputting a pointer to this type in any functions that require a <code>BaseList*</code> type back.<p>Thus, to navigate through symbols, you'll need to inspect the BaseList implementation for details. Iterating over list elements can be done as follows, using the <code>next()</code> function to obtain a pointer to the next rule (or a nullptr if one does not exist):<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>auto</span><span> rules </span><span style=color:#f92672>=</span><span> s.getRules();
+</span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>auto</span><span> rule </span><span style=color:#f92672>:</span><span> rules) {
+</span><span>	</span><span style=color:#75715e>//rule is of type &LTunsigned,Symbol*>
+</span><span>
+</span><span>	</span><span style=color:#75715e>//print rule ID:
+</span><span>	cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"rule ID: " </span><span style=color:#f92672><<</span><span> rule.first </span><span style=color:#f92672><<</span><span> endl;
+</span><span>
+</span><span>	</span><span style=color:#75715e>//get first rule symbol:
+</span><span>	</span><span style=font-style:italic;color:#66d9ef>auto</span><span> current </span><span style=color:#f92672>=</span><span> rule.second;
+</span><span>	</span><span style=color:#f92672>while</span><span>(current) {
+</span><span>		</span><span style=color:#75715e>//print the type of the symbol:
+</span><span>		cout </span><span style=color:#f92672><< typeid</span><span>(</span><span style=color:#f92672>*</span><span>current).name() </span><span style=color:#f92672><<</span><span> endl;
+</span><span>
+</span><span>		</span><span style=color:#75715e>//get the next symbol:
+</span><span>		current </span><span style=color:#f92672>=</span><span> current->next();
+</span><span>	}
+</span><span>}
+</span></code></pre><p>From <code>RuleSymbol</code>s and <code>RuleHead</code>s, you can get the number of times the rule occurs, and the rule ID. From <code>ValueSymbol</code>s, you can get the value stored at that location, as illustrated (expanding on the previous example):<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>auto</span><span> rules </span><span style=color:#f92672>=</span><span> s.getRules();
+</span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>auto</span><span> rule </span><span style=color:#f92672>:</span><span> rules) {
+</span><span>	</span><span style=color:#75715e>//rule is of type &LTunsigned,Symbol*>
+</span><span>
+</span><span>	</span><span style=color:#75715e>//print rule ID:
+</span><span>	cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"rule ID: " </span><span style=color:#f92672><<</span><span> rule.first </span><span style=color:#f92672><<</span><span> endl;
+</span><span>
+</span><span>	</span><span style=color:#75715e>//get first rule symbol:
+</span><span>	</span><span style=font-style:italic;color:#66d9ef>auto</span><span> current </span><span style=color:#f92672>=</span><span> rule.second;
+</span><span>	</span><span style=color:#f92672>while</span><span>(current) {
+</span><span>		</span><span style=color:#f92672>if</span><span>(</span><span style=color:#f92672>typeid</span><span>(</span><span style=color:#f92672>*</span><span>current) </span><span style=color:#f92672>==</span><span> s.RuleHeadType) {
+</span><span>			</span><span style=font-style:italic;color:#66d9ef>auto</span><span> head </span><span style=color:#f92672>= static_cast</span><span>&LTRuleHead</span><span style=color:#f92672>*</span><span>>(current);
+</span><span>			cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"Rule Head" </span><span style=color:#f92672><<</span><span>endl;
+</span><span>			cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"- count: " </span><span style=color:#f92672><<</span><span> head->getCount() </span><span style=color:#f92672><<</span><span> endl;
+</span><span>			cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"- ID: " </span><span style=color:#f92672><<</span><span> head->getID() </span><span style=color:#f92672><<</span><span> endl;
+</span><span>		} </span><span style=color:#f92672>else if</span><span>(</span><span style=color:#f92672>typeid</span><span>(</span><span style=color:#f92672>*</span><span>current) </span><span style=color:#f92672>==</span><span> s.RuleSymbolType) {
+</span><span>			</span><span style=font-style:italic;color:#66d9ef>auto</span><span> rule </span><span style=color:#f92672>= static_cast</span><span>&LTRuleSymbol</span><span style=color:#f92672>*</span><span>>(current);
+</span><span>			cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"Pointer to rule: " </span><span style=color:#f92672><<</span><span> rule->getID() </span><span style=color:#f92672><<</span><span> endl;
+</span><span>		} </span><span style=color:#f92672>else if</span><span>(</span><span style=color:#f92672>typeid</span><span>(</span><span style=color:#f92672>*</span><span>current) </span><span style=color:#f92672>==</span><span> s.ValueType) {
+</span><span>			</span><span style=font-style:italic;color:#66d9ef>auto</span><span> value </span><span style=color:#f92672>= static_cast</span><span>&LTValueSymbol<</span><span style=font-style:italic;color:#66d9ef>char</span><span>></span><span style=color:#f92672>*</span><span>>(current);
+</span><span>			cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"Value: " </span><span style=color:#f92672><<</span><span> value->getValue() </span><span style=color:#f92672><<</span><span> endl;
+</span><span>		} </span><span style=color:#f92672>else </span><span>{
+</span><span>			cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"Rule Tail" </span><span style=color:#f92672><<</span><span> endl;
+</span><span>		}
+</span><span>	}
+</span><span>}
+</span></code></pre><p>As each symbol has a different interface (they are used for different purposes), we must establish which symbol we are looking at. We can then perform a cast to the correct type, and interact with it.<p>A compression algorithm that wished to use sequitur would need to work through the rules in this manner in order that it can form some form of binary representation of them.<p>Any other functionality is left for the intrepid user to explore. Let me know however if you are interested in implementing this code in your project, and I'll help you out wherever I can!<p>Once again, <a href=https://github.com/jsdw/cpp-sequitur>here</a> is the source code!</div></div></section><footer></footer></div><script src=https://jsdw.me/page.js></script>

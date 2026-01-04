@@ -1,0 +1,371 @@
+<!doctype html><html><head><meta charset=utf-8><meta content="width=device-width,initial-scale=1" name=viewport><title>
+    jsdw - AngularJS: Demystifying Services and Dependency Injection
+</title><link href="https://fonts.googleapis.com/css?family=IBM+Plex+Serif|Open+Sans" rel=stylesheet><link href=https://jsdw.me/app.css rel=stylesheet><link href=https://jsdw.me/apple-touch-icon.png rel=apple-touch-icon sizes=180x180><link href=https://jsdw.me/favicon-32x32.png rel=icon sizes=32x32 type=image/png><link href=https://jsdw.me/favicon-16x16.png rel=icon sizes=16x16 type=image/png><link href=https://jsdw.me/site.webmanifest rel=manifest><link color=#5bbad5 href=https://jsdw.me/safari-pinned-tab.svg rel=mask-icon><meta content=#f9409c name=msapplication-TileColor><meta content=#ffffff name=theme-color><body><div class="body post"><header><div class=title-inner><div class=jsdw><a href=https://jsdw.me>JSDW</a></div><nav><a href=https://jsdw.me/posts/>posts</a><a href=https://jsdw.me/projects/>projects</a></nav></div></header><section><div class=top><div class=top-scene><svg class="polygon two" viewbox="0 0 100 100" height=100% style=fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421 version=1.1 width=100% xml:space=preserve xmlns=http://www.w3.org/2000/svg xmlns:serif=http://www.serif.com/ xmlns:xlink=http://www.w3.org/1999/xlink><polygon points="0 100, 15 40, 60 0, 100 30"/></svg><svg class="polygon one" viewbox="0 0 100 100" height=100% style=fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421 version=1.1 width=100% xml:space=preserve xmlns=http://www.w3.org/2000/svg xmlns:serif=http://www.serif.com/ xmlns:xlink=http://www.w3.org/1999/xlink><polygon points="0 40, 30 0, 80 33, 100 100"/></svg></div><div class=top-inner><h1 class=title>AngularJS: Demystifying Services and Dependency Injection <span class=date>2014-02-23</span></h1></div></div><div class=content-inner><div class=post><p>For the last few months, I have been working with AngularJS to build web applications. This website itself is a simple example of that, but at work we are building far more complex single-page applications, and it is there that Angular really starts to shine.<p>In this post, I want to demystify <em>services</em> in Angular, and show how they relate to providers, controllers, filters and directives. I'll then go on to talk about <em>Dependency Injection</em> - the means by which services (and providers) are passed about in Angular, running through how you might implement the same functionality yourself and make use of that provided in Angular.<p>Let's get started!<h1 id=services-in-angular>Services in Angular</h1><p>A service is the main currency in angular; it is something that can be configured, created, and then handed to (almost) any function that supports <em>Dependency Injection</em>, which I'll get onto. The methods to create services are exposed on the <code>$provide</code> service provider, and also made available on the <em>module</em> object created when you make a new app, for convenience.<p>There are various different ways to create a service, but the end result is basically the same; a constructor function is registered with the application <em>injector</em>. When the service is asked for, this constructor function is called in order to create a service instance. That same instance is then given to anything that has asked for it.<p>Here are some different ways to create the same service, working from simplest but least flexible to most complete:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span style=color:#75715e>//first, we create a new angular module:
+</span><span style=font-style:italic;color:#66d9ef>var </span><span>App </span><span style=color:#f92672>= </span><span>angular.</span><span style=color:#a6e22e>module</span><span>(</span><span style=color:#e6db74>"myApp"</span><span>, []);
+</span><span>
+</span><span style=color:#75715e>//the below all create a service called myService that
+</span><span style=color:#75715e>//returns the object { hello: "hi" }
+</span><span>
+</span><span style=color:#75715e>//declare is as a value; can't inject anything in
+</span><span style=color:#75715e>//this way, and cant configure via a provider,
+</span><span style=color:#75715e>//but very concise:
+</span><span>App.</span><span style=color:#a6e22e>value</span><span>(</span><span style=color:#e6db74>"myService"</span><span>, {
+</span><span>	hello: </span><span style=color:#e6db74>"hi"
+</span><span>});
+</span><span>
+</span><span style=color:#75715e>//As above, but can't be intercepted by a decorator
+</span><span style=color:#75715e>//either:
+</span><span>App.</span><span style=color:#a6e22e>constant</span><span>(</span><span style=color:#e6db74>"myService"</span><span>, {
+</span><span>	hello: </span><span style=color:#e6db74>"hi"
+</span><span>})
+</span><span>
+</span><span style=color:#75715e>//provide a function that can have things injected
+</span><span style=color:#75715e>//into, which returns the result of calling it
+</span><span style=color:#75715e>//with 'new':
+</span><span>App.</span><span style=color:#a6e22e>service</span><span>(</span><span style=color:#e6db74>"myService"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>
+</span><span>	this.hello </span><span style=color:#f92672>= </span><span style=color:#e6db74>"hi"</span><span>;
+</span><span>
+</span><span>});
+</span><span>
+</span><span style=color:#75715e>//as above, but the service instance is whatever
+</span><span style=color:#75715e>//the function provided returns:
+</span><span>App.</span><span style=color:#a6e22e>factory</span><span>(</span><span style=color:#e6db74>"myService"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>
+</span><span>	</span><span style=color:#f92672>return </span><span>{
+</span><span>		hello: </span><span style=color:#e6db74>"hi"
+</span><span>	};
+</span><span>
+</span><span>});
+</span><span>
+</span><span style=color:#75715e>//create a provider, which allows pre-run
+</span><span style=color:#75715e>//configuration of the service, and returns
+</span><span style=color:#75715e>//the above factory function as this.$get:
+</span><span>App.</span><span style=color:#a6e22e>provider</span><span>(</span><span style=color:#e6db74>"myService"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>
+</span><span>	this.</span><span style=color:#a6e22e>$get </span><span style=color:#f92672>= </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		</span><span style=color:#f92672>return </span><span>{ hello: </span><span style=color:#e6db74>"hi" </span><span>};
+</span><span>	}
+</span><span>
+</span><span>});
+</span><span>
+</span><span style=color:#75715e>//any of the above can also be done using
+</span><span style=color:#75715e>//the $provide provider directly, rather
+</span><span style=color:#75715e>//than the above shortcuts:
+</span><span>App.</span><span style=color:#a6e22e>config</span><span>(</span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$provide</span><span>){
+</span><span>
+</span><span>	$provide.</span><span style=color:#a6e22e>service</span><span>(</span><span style=color:#e6db74>"myService"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		this.hello </span><span style=color:#f92672>= </span><span style=color:#e6db74>"hi"</span><span>;
+</span><span>	})
+</span><span>
+</span><span>	$provide.</span><span style=color:#a6e22e>factory</span><span>(</span><span style=color:#e6db74>"myService"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		</span><span style=color:#f92672>return </span><span>{ hello: </span><span style=color:#e6db74>"hi" </span><span>};
+</span><span>	});
+</span><span>
+</span><span>	</span><span style=color:#75715e>//... and so on.
+</span><span>
+</span><span>});
+</span><span>
+</span><span style=color:#75715e>//Now, we can use the service somewhere, for example:
+</span><span>
+</span><span>App.</span><span style=color:#a6e22e>controller</span><span>(</span><span style=color:#e6db74>"main"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>myService</span><span>){
+</span><span>
+</span><span>	</span><span style=color:#75715e>//set var hi to "hi":
+</span><span>	</span><span style=font-style:italic;color:#66d9ef>var </span><span>hi </span><span style=color:#f92672>= </span><span>myService.hello;
+</span><span>
+</span><span>});
+</span><span>
+</span><span>App.</span><span style=color:#a6e22e>run</span><span>(</span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>myService</span><span>, </span><span style=font-style:italic;color:#fd971f>$rootScope</span><span>){
+</span><span>
+</span><span>	</span><span style=color:#75715e>//set a value on the rootscope:
+</span><span>	$rootScope.hi </span><span style=color:#f92672>= </span><span>myService.hello;
+</span><span>
+</span><span>});
+</span><span>
+</span></code></pre><p>Some notes on the above:<ul><li><code>App.value</code> and <code>App.constant</code> are shortcut methods for directly assigning a value to an instance of <code>myService</code>. The former can be <em>decorated</em>, while the latter can't. More on decorators later!<li><code>App.service</code> and <code>App.factory</code> both ask for functions (that other services can be injected into). The former is called with <em>new</em> to instantiate the service, whereas the latter returns the service.<li><code>App.provider</code> is the most complete method. It defines a service provider, which is itself instantiated with <em>new</em>, and then expected to return a function the same as <code>App.factory</code> is passed as <code>this.$get</code>; the result of which instantiates the service itself.</ul><p>In each case, once a service is instantiated, that same instance is passed to everything that asks for it. In other words, services are <em>singletons</em>. Only one instance of each service ever exists in your app (well, strictly speaking, only one instance exists per <em>injector</em>).<p>The advantage of using the <code>provider</code> method seen above is that the provider can expose methods which can be used to configure the service before it is instantiated. The configuration phase of an application occurs before it kicks off, and thus provides an opportunity to configure services to suit our needs before they are created.<p>Here is a simple example:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span style=font-style:italic;color:#66d9ef>var </span><span>App </span><span style=color:#f92672>= </span><span>angular.</span><span style=color:#a6e22e>module</span><span>(</span><span style=color:#e6db74>"myApp"</span><span>, []);
+</span><span>
+</span><span style=color:#75715e>//create a provider, which will
+</span><span style=color:#75715e>//provide us a service called myService:
+</span><span>App.</span><span style=color:#a6e22e>provider</span><span>(</span><span style=color:#e6db74>"myService"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>
+</span><span>	</span><span style=font-style:italic;color:#66d9ef>var </span><span>back </span><span style=color:#f92672>= </span><span>{ output: </span><span style=color:#e6db74>"hi" </span><span>};
+</span><span>
+</span><span>	</span><span style=color:#75715e>//expose a method on this provider
+</span><span>	</span><span style=color:#75715e>//which alters what will be returned
+</span><span>	</span><span style=color:#75715e>//when this service is asked for:
+</span><span>	this.</span><span style=color:#a6e22e>setOutput </span><span style=color:#f92672>= </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>val</span><span>){
+</span><span>		back.output </span><span style=color:#f92672>= </span><span>val;
+</span><span>	}
+</span><span>
+</span><span>	</span><span style=color:#75715e>//this is the function that returns the
+</span><span>	</span><span style=color:#75715e>//service instance that is passed around.
+</span><span>	</span><span style=color:#75715e>//in this case, the service instance is
+</span><span>	</span><span style=color:#75715e>//just the "back" object:
+</span><span>	this.</span><span style=color:#a6e22e>$get </span><span style=color:#f92672>= </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){ </span><span style=color:#f92672>return </span><span>back; };
+</span><span>});
+</span><span>
+</span><span style=color:#75715e>//given the above, we can configure myService
+</span><span style=color:#75715e>//before the App starts. Only providers
+</span><span style=color:#75715e>//can be passed in at this stage, as no
+</span><span style=color:#75715e>//services have been instantiated yet.
+</span><span style=color:#75715e>//
+</span><span style=color:#75715e>//notice that we append the word Provider
+</span><span style=color:#75715e>//to our service name to get the services
+</span><span style=color:#75715e>//provider:
+</span><span>App.</span><span style=color:#a6e22e>config</span><span>(</span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>myServiceProvider</span><span>){
+</span><span>	myServiceProvider.</span><span style=color:#a6e22e>setOutput</span><span>(</span><span style=color:#e6db74>"bye"</span><span>);
+</span><span>});
+</span><span>
+</span><span style=color:#75715e>//now, when we run the app, the service will
+</span><span style=color:#75715e>//have a different value:
+</span><span>App.</span><span style=color:#a6e22e>run</span><span>(</span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>myService</span><span>){
+</span><span>	</span><span style=font-style:italic;color:#66d9ef>console</span><span>.</span><span style=color:#66d9ef>log</span><span>(myService.output);
+</span><span>	</span><span style=color:#75715e>//outputs "bye".
+</span><span>});
+</span><span>
+</span></code></pre><p>In this example, a provider for <code>myService</code> is created, which is then configured in the Angular <code>config</code> phase before the app kicks off. This configuration stage allows you to create more flexible, reusable services which can be configured according to the needs of the application before runtime. Notice that at config time, service instances have not been created, and so only providers can be passed in. At run time, the tables turn and only services can be injected (values and constants are themselves just services too).<h2 id=where-do-controllers-filters-and-directives-fit-in>Where do Controllers, Filters and Directives fit in?</h2><p>Controllers, filters and directives are not services themselves, and so can't be injected into things. They are actually created from functions that are registered to the relevant service providers before the app kicks off (<code>$controllerProvider</code>, <code>$filterProvider</code> and <code>$compileProvider</code>). As an example, one can create a controller one of these two ways:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span style=font-style:italic;color:#66d9ef>var </span><span>App </span><span style=color:#f92672>= </span><span>angular.</span><span style=color:#a6e22e>module</span><span>(</span><span style=color:#e6db74>"myApp"</span><span>, []);
+</span><span>
+</span><span style=color:#75715e>//1. construct a controller using the provided shortcut
+</span><span style=color:#75715e>//   function:
+</span><span>App.</span><span style=color:#a6e22e>controller</span><span>(</span><span style=color:#e6db74>"myController"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$scope</span><span>){
+</span><span>	</span><span style=color:#75715e>/* controller logic here */
+</span><span>});
+</span><span>
+</span><span style=color:#75715e>//2. construct a controller by registering its conatructor with the
+</span><span style=color:#75715e>//   controllerProvider at app config time:
+</span><span>App.</span><span style=color:#a6e22e>config</span><span>(</span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$controllerProvider</span><span>){
+</span><span>
+</span><span>	$controllerProvider.</span><span style=color:#a6e22e>register</span><span>(</span><span style=color:#e6db74>"myController"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$scope</span><span>){
+</span><span>		</span><span style=color:#75715e>/* controller logic here */
+</span><span>	});
+</span><span>
+</span><span>});
+</span><span>
+</span></code></pre><p>The <code>App.controller</code> function is just a useful shortcut for registering a controller with the relevant provider. The same is true of filter functions and directives. Angular provides shortcut methods as these are constructed fairly often, but the end result is the same.<h2 id=decorating-services>Decorating Services</h2><p>Services in angular can be intercepted before the app kicks off, and modified to better suit your needs. This is useful if you're using third party code for instance, and want to augment it without touching their code.<p>As well as providing functions to create services, the $provide service provider also exposes a method to decorate services, but as this is less commonly used, a shortcut to it is not exposed on the angular object itself:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span style=font-style:italic;color:#66d9ef>var </span><span>App </span><span style=color:#f92672>= </span><span>angular.</span><span style=color:#a6e22e>module</span><span>(</span><span style=color:#e6db74>"myApp"</span><span>, []);
+</span><span>
+</span><span style=color:#75715e>//create a very simple service (or assume
+</span><span style=color:#75715e>//that it has been created by a third party):
+</span><span>App.</span><span style=color:#a6e22e>factory</span><span>(</span><span style=color:#e6db74>"myService"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>	</span><span style=color:#f92672>return </span><span>{ hello: </span><span style=color:#e6db74>"hi!" </span><span>};
+</span><span>});
+</span><span>
+</span><span style=color:#75715e>//decorate it to suit your needs during the app config
+</span><span style=color:#75715e>//phase:
+</span><span>App.</span><span style=color:#a6e22e>config</span><span>(</span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$provide</span><span>){
+</span><span>
+</span><span>	$provide.</span><span style=color:#a6e22e>decorator</span><span>(</span><span style=color:#e6db74>"myService"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$delegate</span><span>){
+</span><span>
+</span><span>		</span><span style=color:#75715e>//$delegate is a special local which is an instance
+</span><span>		</span><span style=color:#75715e>//of the original service:
+</span><span>		$delegate.bye </span><span style=color:#f92672>= </span><span style=color:#e6db74>"bye!"</span><span>;
+</span><span>
+</span><span>		</span><span style=color:#75715e>//when someone asks for the service myService,
+</span><span>		</span><span style=color:#75715e>//they now get whatever you return here. You can
+</span><span>		</span><span style=color:#75715e>//return whatever you want, even something entirely
+</span><span>		</span><span style=color:#75715e>//different:
+</span><span>		</span><span style=color:#f92672>return </span><span>$delegate;
+</span><span>
+</span><span>	});
+</span><span>
+</span><span>});
+</span><span>
+</span><span style=color:#75715e>//use the service somewhere:
+</span><span>App.</span><span style=color:#a6e22e>controller</span><span>(</span><span style=color:#e6db74>"myCtrl"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>myService</span><span>){
+</span><span>
+</span><span>	</span><span style=font-style:italic;color:#66d9ef>console</span><span>.</span><span style=color:#66d9ef>log</span><span>(myService.hello);
+</span><span>	</span><span style=color:#75715e>//outputs: "hi!"
+</span><span>
+</span><span>	</span><span style=font-style:italic;color:#66d9ef>console</span><span>.</span><span style=color:#66d9ef>log</span><span>(myService.bye);
+</span><span>	</span><span style=color:#75715e>//outputs: "bye!"
+</span><span>
+</span><span>});
+</span><span>
+</span></code></pre><p>This is a very simple example of a very powerful feature. Not only can services be configured before runtime during the application config phase if they have been created with a configurable service provider, but they can be modified or simply replaced entirely in the config phase as a result of decoration.<h1 id=dependency-injection>Dependency Injection</h1><p>Thus far, you have seen many examples of dependency injection. It is the process that occurs every time you ask for an instance of a service in a function which is going to be invoked by angular (which includes those used to create directives, controllers, and other services). Here's an example involving injecting a service and scope object in to a controller constructor function:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span style=color:#75715e>//create a new Angular app:
+</span><span style=font-style:italic;color:#66d9ef>var </span><span>App </span><span style=color:#f92672>= </span><span>angular.</span><span style=color:#a6e22e>module</span><span>(</span><span style=color:#e6db74>"myApp"</span><span>, [</span><span style=color:#e6db74>"ng"</span><span>]);
+</span><span>
+</span><span style=color:#75715e>//register a controller on it. The $scope and $interval
+</span><span style=color:#75715e>//services are "injected" into the controller:
+</span><span>App.</span><span style=color:#a6e22e>controller</span><span>(</span><span style=color:#e6db74>"test"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$scope</span><span>, </span><span style=font-style:italic;color:#fd971f>$interval</span><span>){
+</span><span>
+</span><span>	</span><span style=color:#75715e>//do things with $scope and $interval..
+</span><span>	$scope.counter </span><span style=color:#f92672>= </span><span style=color:#ae81ff>0</span><span>;
+</span><span>	</span><span style=color:#a6e22e>$interval</span><span>(</span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		$scope.counter</span><span style=color:#f92672>++</span><span>;
+</span><span>	}, </span><span style=color:#ae81ff>1000</span><span>)
+</span><span>
+</span><span>});
+</span><span>
+</span><span style=color:#75715e>//Despite the parameter names being reversed, this
+</span><span style=color:#75715e>//declaration is equivalent to the above:
+</span><span>App.</span><span style=color:#a6e22e>controller</span><span>(</span><span style=color:#e6db74>"test"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$interval</span><span>, </span><span style=font-style:italic;color:#fd971f>$scope</span><span>){
+</span><span>
+</span><span>	$scope.counter </span><span style=color:#f92672>= </span><span style=color:#ae81ff>0</span><span>;
+</span><span>	</span><span style=color:#a6e22e>$interval</span><span>(</span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		$scope.counter</span><span style=color:#f92672>++</span><span>;
+</span><span>	}, </span><span style=color:#ae81ff>1000</span><span>)
+</span><span>
+</span><span>});
+</span></code></pre><p>In the above controller declarations, parameters are being passed in by name rather than by argument position. This is the magic of Dependency Injection (DI) in Angular, and it makes it possible to ask for service instances by name when you define a function in any place that Angular supports DI. But how does Angular do this?<p>The answer lies in the <code>toString()</code> method. Applied to a function, we get a printout of it as a string, like so:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span style=color:#75715e>//declare a simple function:
+</span><span style=font-style:italic;color:#66d9ef>function </span><span style=color:#a6e22e>hello</span><span>(</span><span style=font-style:italic;color:#fd971f>one</span><span>, </span><span style=font-style:italic;color:#fd971f>two</span><span>){
+</span><span>	</span><span style=font-style:italic;color:#66d9ef>console</span><span>.</span><span style=color:#66d9ef>log</span><span>(</span><span style=color:#e6db74>"passed in:"</span><span>, one, two);
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>//print it in string form:
+</span><span style=font-style:italic;color:#66d9ef>console</span><span>.</span><span style=color:#66d9ef>log</span><span>(hello.</span><span style=color:#66d9ef>toString</span><span>());
+</span><span>
+</span><span style=color:#75715e>//outputs:
+</span><span style=color:#75715e>// 'function hello(one, two){ console.log("passed in:", one, two); }'
+</span></code></pre><p>With this, it becomes quite easy all of a sudden to extract the variable names out of a given function with a regular expression:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span style=color:#75715e>//print an array of variable names passed to a provided function:
+</span><span style=font-style:italic;color:#66d9ef>function </span><span style=color:#a6e22e>annotate</span><span>(</span><span style=font-style:italic;color:#fd971f>fn</span><span>){
+</span><span>
+</span><span>	</span><span style=color:#75715e>//use a RegExp to match the arguments passed in:
+</span><span>	</span><span style=font-style:italic;color:#66d9ef>var </span><span>strArgs </span><span style=color:#f92672>= </span><span>fn.</span><span style=color:#66d9ef>toString</span><span>().</span><span style=color:#66d9ef>match</span><span>(</span><span style=color:#e6db74>/function </span><span style=color:#ae81ff>[</span><span style=color:#f92672>^</span><span style=color:#ae81ff>(]</span><span style=color:#f92672>*</span><span style=color:#ae81ff>\(</span><span style=color:#e6db74>(</span><span style=color:#ae81ff>[</span><span style=color:#f92672>^</span><span style=color:#ae81ff>)]</span><span style=color:#f92672>*</span><span style=color:#e6db74>)</span><span style=color:#ae81ff>\)</span><span style=color:#e6db74>/</span><span>)[</span><span style=color:#ae81ff>1</span><span>];
+</span><span>
+</span><span>	</span><span style=color:#75715e>//if no args passed, return an empty array:
+</span><span>	</span><span style=color:#f92672>if</span><span>(</span><span style=color:#f92672>!</span><span>strArgs) </span><span style=color:#f92672>return </span><span>[];
+</span><span>
+</span><span>	</span><span style=color:#75715e>//else, split the args string into an array and return that:
+</span><span>	</span><span style=color:#f92672>return </span><span>strArgs.</span><span style=color:#66d9ef>split</span><span>(</span><span style=color:#e6db74>/</span><span style=color:#ae81ff>\s</span><span style=color:#f92672>*</span><span style=color:#e6db74>,</span><span style=color:#ae81ff>\s</span><span style=color:#f92672>*</span><span style=color:#e6db74>/</span><span>);
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>//example usage:
+</span><span style=color:#a6e22e>annotate</span><span>(</span><span style=font-style:italic;color:#66d9ef>function </span><span style=color:#a6e22e>hello</span><span>(</span><span style=font-style:italic;color:#fd971f>one </span><span>,</span><span style=font-style:italic;color:#fd971f>two</span><span>){}); </span><span style=color:#75715e>//returns: ["one", "two"]
+</span><span>
+</span></code></pre><p>Given that we know the names of variables passed in to a function, we can produce a wrapper which takes a function, context and object containing values to pass in, and have the correct values provided to the function depending on its parameters:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span style=color:#75715e>//invokes a function fn, with an args object to pass in values:
+</span><span style=font-style:italic;color:#66d9ef>function </span><span style=color:#a6e22e>invoke</span><span>(</span><span style=font-style:italic;color:#fd971f>fn</span><span>, </span><span style=font-style:italic;color:#fd971f>context</span><span>, </span><span style=font-style:italic;color:#fd971f>args</span><span>){
+</span><span>
+</span><span>	</span><span style=color:#75715e>//use the annotate function above to get the param names:
+</span><span>	</span><span style=font-style:italic;color:#66d9ef>var </span><span>fnParams </span><span style=color:#f92672>= </span><span style=color:#a6e22e>annotate</span><span>(fn);
+</span><span>
+</span><span>	</span><span style=color:#75715e>//convert the param names to values from the args object:
+</span><span>	</span><span style=font-style:italic;color:#66d9ef>var </span><span>fnArgs </span><span style=color:#f92672>= </span><span>fnParams.</span><span style=color:#a6e22e>map</span><span>(</span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>param</span><span>){
+</span><span>		</span><span style=color:#f92672>return </span><span>args[param];
+</span><span>	});
+</span><span>
+</span><span>	</span><span style=color:#75715e>//call the function where params are now provided by the "args" object:
+</span><span>	</span><span style=color:#f92672>return </span><span>fn.</span><span style=color:#66d9ef>apply</span><span>(context, fnArgs);
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>//example usage:
+</span><span style=font-style:italic;color:#66d9ef>function </span><span style=color:#a6e22e>invokeMe</span><span>(</span><span style=font-style:italic;color:#fd971f>one</span><span>, </span><span style=font-style:italic;color:#fd971f>two</span><span>){ </span><span style=font-style:italic;color:#66d9ef>console</span><span>.</span><span style=color:#66d9ef>log</span><span>(</span><span style=color:#e6db74>"back:"</span><span>,one,two); }
+</span><span>
+</span><span style=color:#a6e22e>invoke</span><span>(invokeMe, </span><span style=color:#ae81ff>null</span><span>, { one: </span><span style=color:#ae81ff>1</span><span>, two: </span><span style=color:#ae81ff>2 </span><span>});
+</span><span style=color:#75715e>//outputs: "back: 1 2"
+</span><span>
+</span><span style=color:#a6e22e>invoke</span><span>(invokeMe, </span><span style=color:#ae81ff>null</span><span>, { two: </span><span style=color:#ae81ff>100</span><span>, one: </span><span style=color:#ae81ff>40 </span><span>});
+</span><span style=color:#75715e>//outputs: "back: 40 100"
+</span><span>
+</span></code></pre><p>All of a sudden, we have a function that can invoke another function with whatever arguments we supply from an object, mapping function parameter names to object keys. The order that parameters are passed in is no longer relevant; instead the names of the parameters are.<p>In many places within Angular, functions are <em>invoked</em> in much the same way, although in Angular you have a few options for specifying the list of services you'd like passed in to an invokable function besides just using function parameter names:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span style=color:#75715e>//these are all the same:
+</span><span>
+</span><span style=color:#75715e>//1. get parameter names from function params as above:
+</span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>one</span><span>, </span><span style=font-style:italic;color:#fd971f>two</span><span>){ </span><span style=color:#75715e>/*...*/ </span><span>}
+</span><span>
+</span><span style=color:#75715e>//2. get parameter names from a property on the function.
+</span><span style=color:#75715e>//   params a and b become the result of getting services
+</span><span style=color:#75715e>//   called 'one' and 'two':
+</span><span style=font-style:italic;color:#66d9ef>function </span><span style=color:#a6e22e>invokable</span><span>(</span><span style=font-style:italic;color:#fd971f>a</span><span>,</span><span style=font-style:italic;color:#fd971f>b</span><span>){ </span><span style=color:#75715e>/*...*/ </span><span>}
+</span><span>invokable.$inject </span><span style=color:#f92672>= </span><span>[</span><span style=color:#e6db74>"one"</span><span>, </span><span style=color:#e6db74>"two"</span><span>];
+</span><span>
+</span><span style=color:#75715e>//3. an inline version of the above:
+</span><span style=font-style:italic;color:#66d9ef>var </span><span>invokableFunc </span><span style=color:#f92672>= </span><span>[</span><span style=color:#e6db74>"one"</span><span>, </span><span style=color:#e6db74>"two"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>a</span><span>, </span><span style=font-style:italic;color:#fd971f>b</span><span>){ </span><span style=color:#75715e>/*...*/ </span><span>}];
+</span><span>
+</span></code></pre><p>The first method is obviously most concise, but Javascript minification can screw with variable names. As such, 2 and 3 are more robust solutions, and ensure that your code will always work as it should, even when minified.<p>By applying the above, we can define something like a controller in angular any one of these three ways:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span style=color:#75715e>// 1.
+</span><span>App.</span><span style=color:#a6e22e>controller</span><span>(</span><span style=color:#e6db74>"test"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$interval</span><span>, </span><span style=font-style:italic;color:#fd971f>$scope</span><span>){
+</span><span>	</span><span style=color:#75715e>/*...*/
+</span><span>});
+</span><span>
+</span><span style=color:#75715e>// 2.
+</span><span style=font-style:italic;color:#66d9ef>function </span><span style=color:#a6e22e>testCtrl</span><span>(</span><span style=font-style:italic;color:#fd971f>$interval</span><span>, </span><span style=font-style:italic;color:#fd971f>$scope</span><span>){ </span><span style=color:#75715e>/*...*/ </span><span>}
+</span><span>testCtrl.$inject </span><span style=color:#f92672>= </span><span>[</span><span style=color:#e6db74>"$interval"</span><span>, </span><span style=color:#e6db74>"$scope"</span><span>];
+</span><span>App.</span><span style=color:#a6e22e>controller</span><span>(</span><span style=color:#e6db74>"test"</span><span>, testCtrl);
+</span><span>
+</span><span style=color:#75715e>//3.
+</span><span>App.</span><span style=color:#a6e22e>controller</span><span>(</span><span style=color:#e6db74>"test"</span><span>, [
+</span><span>	</span><span style=color:#e6db74>"$interval"</span><span>,
+</span><span>	</span><span style=color:#e6db74>"$scope"</span><span>,
+</span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$interval</span><span>, </span><span style=font-style:italic;color:#fd971f>$scope</span><span>){
+</span><span>	</span><span style=color:#75715e>/*...*/
+</span><span>}])
+</span><span>
+</span></code></pre><p>Internally, angular uses a function called <code>invoke</code> defined on the injector to do this. If an array is provided in place of a function, it knows that we are trying to use method 3. Otherwise, it looks to see if the function has an <code>$inject</code> property attached to it, and if so can use method 2. Finally, it will fall back to using method 1.<p>One of the great things about Angular is that it exposes the bits you need to pull this off yourself. The <code>$inject</code> service in angular is an instance of the injector being used in the application, so you can point it at your own functions to harness the power of service injection for yourself.<p>Below, we use <code>invoke</code> on a custom function to get hold of angular services inside of it:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span style=font-style:italic;color:#66d9ef>var </span><span>App </span><span style=color:#f92672>= </span><span>angular.</span><span style=color:#a6e22e>module</span><span>(</span><span style=color:#e6db74>"myApp"</span><span>, []);
+</span><span>
+</span><span>App.</span><span style=color:#a6e22e>run</span><span>(</span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$injector</span><span>){
+</span><span>
+</span><span>	</span><span style=color:#75715e>//a custom function that we want to inject
+</span><span>	</span><span style=color:#75715e>//angular goodness into:
+</span><span>	</span><span style=font-style:italic;color:#66d9ef>var </span><span style=color:#a6e22e>fn </span><span style=color:#f92672>= </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$interval</span><span>){
+</span><span>		</span><span style=font-style:italic;color:#66d9ef>var </span><span>count </span><span style=color:#f92672>= </span><span style=color:#ae81ff>0</span><span>;
+</span><span>		</span><span style=color:#a6e22e>$interval</span><span>(
+</span><span>			</span><span style=font-style:italic;color:#66d9ef>function</span><span>(){ </span><span style=font-style:italic;color:#66d9ef>console</span><span>.</span><span style=color:#66d9ef>log</span><span>(count); count</span><span style=color:#f92672>++ </span><span>},
+</span><span>			</span><span style=color:#ae81ff>1000
+</span><span>		);
+</span><span>	}
+</span><span>
+</span><span>	</span><span style=color:#75715e>//invoke the custom function, pulling in the
+</span><span>	</span><span style=color:#75715e>//relevant angular service(s):
+</span><span>	$injector.</span><span style=color:#a6e22e>invoke</span><span>(fn);
+</span><span>
+</span><span>	</span><span style=color:#75715e>//..causes an incrementing counter to fire every 1000ms
+</span><span>});
+</span><span>
+</span></code></pre><p>Taken one step further however, we can pass in an object whose keys are available to be used as parameters in the function being invoked, much like the custom <code>invoke</code> function we created ourselves above:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span style=font-style:italic;color:#66d9ef>var </span><span>App </span><span style=color:#f92672>= </span><span>angular.</span><span style=color:#a6e22e>module</span><span>(</span><span style=color:#e6db74>"myApp"</span><span>, []);
+</span><span>
+</span><span>App.</span><span style=color:#a6e22e>run</span><span>(</span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$injector</span><span>){
+</span><span>
+</span><span>	</span><span style=color:#75715e>//a custom function to inject custom things into
+</span><span>	</span><span style=color:#75715e>//as well as angular services:
+</span><span>	</span><span style=font-style:italic;color:#66d9ef>function </span><span style=color:#a6e22e>fn</span><span>(</span><span style=font-style:italic;color:#fd971f>a</span><span>, </span><span style=font-style:italic;color:#fd971f>b</span><span>, </span><span style=font-style:italic;color:#fd971f>to</span><span>){
+</span><span>		</span><span style=color:#a6e22e>to</span><span>(
+</span><span>			</span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>				</span><span style=font-style:italic;color:#66d9ef>console</span><span>.</span><span style=color:#66d9ef>log</span><span>(</span><span style=color:#e6db74>"back:"</span><span>, a, b);
+</span><span>			},
+</span><span>			</span><span style=color:#ae81ff>2000
+</span><span>		);
+</span><span>	}
+</span><span>
+</span><span>	</span><span style=color:#75715e>//all methods of annotating functions are supported.
+</span><span>	</span><span style=color:#75715e>//The below requests one, two and timeout as the
+</span><span>	</span><span style=color:#75715e>//three args of fn:
+</span><span>	fn.$inject </span><span style=color:#f92672>= </span><span>[</span><span style=color:#e6db74>"one"</span><span>, </span><span style=color:#e6db74>"two"</span><span>, </span><span style=color:#e6db74>"$timeout"</span><span>];
+</span><span>
+</span><span>	</span><span style=color:#75715e>//invoke the custom function, supplying 'locals'
+</span><span>	</span><span style=color:#75715e>//as a third parameter. These override any services
+</span><span>	</span><span style=color:#75715e>//that might exist with the same name, and are provided
+</span><span>	</span><span style=color:#75715e>//should the function ask for them:
+</span><span>	$injector.</span><span style=color:#a6e22e>invoke</span><span>(fn, </span><span style=color:#ae81ff>null</span><span>, {one: </span><span style=color:#ae81ff>1</span><span>, two: </span><span style=color:#ae81ff>2</span><span>});
+</span><span>
+</span><span>	</span><span style=color:#75715e>//..logs: "back 1 2"
+</span><span>});
+</span></code></pre><p>Using the <code>annotate</code> function, we can shape this injection process to work however we wish, by finding out what things a function wants injected into itself and then working with that information to provide it whatever we like.<p>The below example injects values only from our predefined "pool", and sets anything else asked for to <code>null</code>:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span style=font-style:italic;color:#66d9ef>var </span><span>App </span><span style=color:#f92672>= </span><span>angular.</span><span style=color:#a6e22e>module</span><span>(</span><span style=color:#e6db74>"myApp"</span><span>, []);
+</span><span>
+</span><span>App.</span><span style=color:#a6e22e>run</span><span>(</span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$injector</span><span>){
+</span><span>
+</span><span>	</span><span style=color:#75715e>//custom arg pool to use:
+</span><span>	</span><span style=font-style:italic;color:#66d9ef>var </span><span>pool </span><span style=color:#f92672>= </span><span>{
+</span><span>		one: </span><span style=color:#ae81ff>1</span><span>,
+</span><span>		two: </span><span style=color:#ae81ff>2
+</span><span>	};
+</span><span>
+</span><span>	</span><span style=color:#75715e>//a function requesting args one,two,three:
+</span><span>	</span><span style=font-style:italic;color:#66d9ef>function </span><span style=color:#a6e22e>fn</span><span>(</span><span style=font-style:italic;color:#fd971f>one</span><span>, </span><span style=font-style:italic;color:#fd971f>two</span><span>, </span><span style=font-style:italic;color:#fd971f>three</span><span>){
+</span><span>		</span><span style=font-style:italic;color:#66d9ef>console</span><span>.</span><span style=color:#66d9ef>log</span><span>(one, two, three);
+</span><span>	}
+</span><span>
+</span><span>	</span><span style=color:#75715e>//find out what args the function wants:
+</span><span>	</span><span style=font-style:italic;color:#66d9ef>var </span><span>argsArr </span><span style=color:#f92672>= </span><span>$injector.</span><span style=color:#a6e22e>annotate</span><span>(fn);
+</span><span>
+</span><span>	</span><span style=color:#75715e>//build locals to pass to function, getting their values
+</span><span>	</span><span style=color:#75715e>//from the pool or null otherwise:
+</span><span>	</span><span style=font-style:italic;color:#66d9ef>var </span><span>locals </span><span style=color:#f92672>= </span><span>{};
+</span><span>	strArgs.</span><span style=color:#66d9ef>forEach</span><span>(</span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>arg</span><span>){
+</span><span>		</span><span style=color:#f92672>if</span><span>(pool[arg]) locals[arg] </span><span style=color:#f92672>= </span><span>pool[arg];
+</span><span>		</span><span style=color:#f92672>else </span><span>locals[arg] </span><span style=color:#f92672>= </span><span style=color:#ae81ff>null</span><span>;
+</span><span>	});
+</span><span>
+</span><span>	</span><span style=color:#75715e>//pass them in:
+</span><span>	$injector.</span><span style=color:#a6e22e>invoke</span><span>(fn, </span><span style=color:#ae81ff>null</span><span>, locals);
+</span><span>
+</span><span>	</span><span style=color:#75715e>//logs: 1 2 null
+</span><span>
+</span><span>});
+</span></code></pre><p>Pretty neat, huh? By using <code>invoke</code>, one can make any function injectable just like many native angular ones. This is particularly useful if you expose functionality on a service provider which requires callback functions; the callbacks can be passed custom variables that may be of relevance, as well as other angular services to make use of.<p>Anyway, that's enough for one post! I hope that things are a little clearer now. Stay tuned for more on Angular!</div></div></section><footer></footer></div><script src=https://jsdw.me/page.js></script>
