@@ -48,23 +48,23 @@ Here's an example:
 // Interface representing something
 // that creates IDs:
 type IdMaker[Id comparable] interface {
-	NextId() Id
+    NextId() Id
 }
 
 // Create int IDs:
 type IntIdMaker int
 
 func (this *IntIdMaker) NextId() int {
-	*this += 1
-	return int(*this)
+    *this += 1
+    return int(*this)
 }
 
 // Create string IDs:
 type StringIdMaker int
 
 func (this *StringIdMaker) NextId() string {
-	*this += 1
-	return "s:" + strconv.Itoa(int(*this))
+    *this += 1
+    return "s:" + strconv.Itoa(int(*this))
 }
 ```
 
@@ -74,11 +74,11 @@ Functions also accept generic arguments, so we can create one which uses this `I
 
 ```go
 func CreateIds[Ids IdMaker[Id], Id comparable](idMaker Ids, n int) []Id {
-	ids := []Id{}
-	for range n {
-		ids = append(ids, idMaker.NextId())
-	}
-	return ids
+    ids := []Id{}
+    for range n {
+        ids = append(ids, idMaker.NextId())
+    }
+    return ids
 }
 
 // Usage:
@@ -93,21 +93,21 @@ Structs also accept generic arguments in a similar way. Here's a dumb cache type
 
 ```go
 type Cache[Ids IdMaker[Id], Id comparable, T any] struct {
-	ids    IdMaker[Id]
-	values map[Id]T
+    ids    IdMaker[Id]
+    values map[Id]T
 }
 
 func NewCache[Ids IdMaker[Id], Id comparable, T any](idMaker IdMaker[Id]) Cache[Ids, Id, T] {
-	return Cache[Ids, Id, T]{
-		ids:    idMaker,
-		values: map[Id]T{},
-	}
+    return Cache[Ids, Id, T]{
+        ids:    idMaker,
+        values: map[Id]T{},
+    }
 }
 
 func (this *Cache[Ids, Id, T]) Insert(val T) Id {
-	thisId := this.ids.NextId()
-	this.values[thisId] = val
-	return thisId
+    thisId := this.ids.NextId()
+    this.values[thisId] = val
+    return thisId
 }
 
 // Usage:
@@ -149,11 +149,11 @@ However, you can write a freestanding function to do this instead, which loses s
 
 ```go
 func Map[T any, R any](d MyDataStructure[T], f func(T) R) MyDataStructure[R] {
-	out := NewMyDataStructure[R]()
-	for value := range d.Values() {
-		out.Push(f(value))
-	}
-	return out
+    out := NewMyDataStructure[R]()
+    for value := range d.Values() {
+        out.Push(f(value))
+    }
+    return out
 }
 
 // usage:
@@ -181,19 +181,19 @@ What I can do is use a generic parameter on the interface though, like this:
 
 ```go
 type Comparable[Other any] interface {
-	Eq(other Other) bool
+    Eq(other Other) bool
 }
 
 // MyInt will implement Comparable[MyInt]:
 type MyInt int
 
 func (this MyInt) Eq(other MyInt) bool {
-	return int(other) == int(this)
+    return int(other) == int(this)
 }
 
 // We can now use this in custom data types like this:
 type MyDataType[T Comparable[T]] struct {
-	vals []T
+    vals []T
 }
 ints := MyDataType[MyInt]{}
 ```
@@ -204,7 +204,7 @@ I suppose this is actually similar to how Rust implements such traits, except th
 type FromComparable[C comparable] struct{ c C }
 
 func (this FromComparable[C]) Eq(other FromComparable[C]) bool {
-	return this.c == other.c
+    return this.c == other.c
 }
 
 // These are Comparable now:
@@ -225,12 +225,12 @@ type MyType int
 
 // Implements Comparable[int]
 func (this MyType) Eq(other int) bool {
-	return int(this) == other
+    return int(this) == other
 }
 
 // Implements Comparable[MyType]
 func (this MyType) Eq(other MyType) bool {
-	return int(this) == int(other)
+    return int(this) == int(other)
 }
 ```
 
@@ -238,20 +238,20 @@ given this limitation, it's probably best to define `Comparable` without a gener
 
 ```go
 type Comparable interface {
-	Eq(other any) bool
+    Eq(other any) bool
 }
 
 type MyType int
 
 // Implements Comparable
 func (this MyType) Eq(other any) bool {
-	switch v := other.(type) {
-	case int:
-		return int(this) == v
-	case MyType:
-		return this == v
-	}
-	return false
+    switch v := other.(type) {
+    case int:
+        return int(this) == v
+    case MyType:
+        return this == v
+    }
+    return false
 }
 ```
 
@@ -354,13 +354,13 @@ At first glance, Rust style iterators are pull based and Go style iterators are 
 
 ```go
 func Range(n int) iter.Seq[int] {
-	return func(yield func(int) bool) {
-		for v := range n {
-			if !yield(v) {
-				return
-			}
-		}
-	}
+    return func(yield func(int) bool) {
+        for v := range n {
+            if !yield(v) {
+                return
+            }
+        }
+    }
 }
 ```
 
@@ -372,29 +372,29 @@ Here's how we can use this function to "zip" two iterators together, returning a
 
 ```go
 func Zip[A any, B any](as iter.Seq[A], bs iter.Seq[B]) iter.Seq2[A, B] {
-	return func(yield func(A, B) bool) {
+    return func(yield func(A, B) bool) {
         // Convert the first iterator to be pull based:
-		nextA, stopA := iter.Pull(as)
-		defer stopA()
+        nextA, stopA := iter.Pull(as)
+        defer stopA()
         // Convert the second iterator to be pull based:
-		nextB, stopB := iter.Pull(bs)
-		defer stopB()
+        nextB, stopB := iter.Pull(bs)
+        defer stopB()
 
-		for {
+        for {
             // Now, we can ask for one value from each at a
             // time, and yield them both together:
-			a, aIsOk := nextA()
-			b, bIsOk := nextB()
+            a, aIsOk := nextA()
+            b, bIsOk := nextB()
 
-			if aIsOk && bIsOk {
-				if !yield(a, b) {
-					return
-				}
-			} else {
-				return
-			}
-		}
-	}
+            if aIsOk && bIsOk {
+                if !yield(a, b) {
+                    return
+                }
+            } else {
+                return
+            }
+        }
+    }
 }
 
 // usage:
@@ -411,38 +411,39 @@ This ability to convert push based iterators into pull based ones is magical, in
 
 ```go
 func Pull[V any](it iter.Seq[V]) (next func() (V, bool), stop func()) {
-	valueChan := make(chan V)
-	stopChan := make(chan struct{})
+    valueChan := make(chan V)
+    stopChan := make(chan struct{})
 
     // Call the iterator with our yield callback in a
     // goroutine. This blocks each time it is handed back a
-    // value unti lthe next() fn is called to receive it.
-	go func() {
-		it(func(val V) bool {
-			select {
-			case <-stopChan:
-				return false
-			case valueChan <- val:
-				return true
-			}
-		})
-	}()
+    // value until the next() fn is called to receive it.
+    go func() {
+        it(func(val V) bool {
+            select {
+            case <-stopChan:
+                return false
+            case valueChan <- val:
+                return true
+            }
+        })
+        close(valueChan)
+    }()
 
     // Each time next is called, pull another value
     // from our yield function, unblocking it until it
     // yields another value.
-	next = func() (V, bool) {
-		val, ok := <-valueChan
-		return val, ok
-	}
+    next = func() (V, bool) {
+        val, ok := <-valueChan
+        return val, ok
+    }
 
     // Closing the stopChan signals that we should
     // return false from our yield fn, ending iteration.
-	stop = func() {
-		close(stopChan)
-	}
+    stop = func() {
+        close(stopChan)
+    }
 
-	return
+    return
 }
 ```
 
@@ -452,7 +453,7 @@ The asynchronous runtime in Go really shines here, enabling powerful, flexible i
 
 # Closing thoughts
 
-Go has always moved slowly and carefully as a language, which I appreciate more and more as time goes on and I see languages and software in general always pushing to evolve and change, and often messing it up. That said, I really appreciate these recent evolutions to the language. Iterators and Generics add two of the big feature that I sorely missed to the language, and makes it possible for me to write the sort of code I want to write. While I still have various other gripes, the same is true of most languages. 
+Go has always moved slowly and carefully as a language, which I appreciate more and more as time goes on. That said, I really enjoy these recent evolutions to the language. Iterators and Generics add two of the big feature that I sorely missed, and makes it possible for me to write the sort of code I want to write. While I still have various other gripes, the same is true of most languages. 
 
 Now I will just hope that Go gets tagged enums at some point :)
 
