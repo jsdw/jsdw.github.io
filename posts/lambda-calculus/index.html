@@ -1,0 +1,185 @@
+<!doctype html><html><head><meta charset=utf-8><meta content="width=device-width,initial-scale=1" name=viewport><title>
+    jsdw - An Introduction to Lambda Calculus
+</title><link href="https://fonts.googleapis.com/css?family=IBM+Plex+Serif|Open+Sans" rel=stylesheet><link href=https://jsdw.me/app.css rel=stylesheet><link href=https://jsdw.me/apple-touch-icon.png rel=apple-touch-icon sizes=180x180><link href=https://jsdw.me/favicon-32x32.png rel=icon sizes=32x32 type=image/png><link href=https://jsdw.me/favicon-16x16.png rel=icon sizes=16x16 type=image/png><link href=https://jsdw.me/site.webmanifest rel=manifest><link color=#5bbad5 href=https://jsdw.me/safari-pinned-tab.svg rel=mask-icon><meta content=#f9409c name=msapplication-TileColor><meta content=#ffffff name=theme-color><body><div class="body post"><header><div class=title-inner><div class=jsdw><a href=https://jsdw.me>JSDW</a></div><nav><a href=https://jsdw.me/posts/>posts</a><a href=https://jsdw.me/projects/>projects</a></nav></div></header><section><div class=top><div class=top-scene><svg class="polygon two" viewbox="0 0 100 100" height=100% style=fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421 version=1.1 width=100% xml:space=preserve xmlns=http://www.w3.org/2000/svg xmlns:serif=http://www.serif.com/ xmlns:xlink=http://www.w3.org/1999/xlink><polygon points="0 100, 15 40, 60 0, 100 30"/></svg><svg class="polygon one" viewbox="0 0 100 100" height=100% style=fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421 version=1.1 width=100% xml:space=preserve xmlns=http://www.w3.org/2000/svg xmlns:serif=http://www.serif.com/ xmlns:xlink=http://www.w3.org/1999/xlink><polygon points="0 40, 30 0, 80 33, 100 100"/></svg></div><div class=top-inner><h1 class=title>An Introduction to Lambda Calculus <span class=date>2013-03-17</span></h1></div></div><div class=content-inner><div class=post><p>Recently, I've written about a couple of compression algorithms <a href=https://jsdw.me/posts/lambda-calculus/./posts/sequitur/index.md>here</a> and <a href=https://jsdw.me/posts/lambda-calculus/./posts/huffman-coding/index.md>here</a>, and a few more in my release <a href=https://jsdw.github.io/js-compression-machine/>here</a>. Soo, time for something different! Step in Lambda Calculus, first formulated by Alonzo Church.<h1 id=why-should-i-care>Why should I care?</h1><p>Lambda calculus has been called <em>the smallest universal programming language in the world</em>. Why? because there is only a single way to define a function, and a single scheme which dictates how functions are applied to variables (called variable substitution). There are no operators, like <code>+</code> or <code>-</code>, no types, or numbers, or strings.<p>But, from this simple scheme, we can represent numbers, create recursive functions, and, well, do everything we need to construct anything we want. Lambda calculus is <em>Turing equivalent</em>, which basically means you can use it to recreate any computer program which takes in some input and produces some output as a result. Which I think is really cool.<p>Most of what I have learned was taken from <a href=http://www.utdallas.edu/~gupta/courses/apl/lambda.pdf>this very helpful tutorial</a>, which I fully encourage you to look at for more detail and examples. I'm going to have a shot at writing my own introduction to lambda calculus below. I'll also mention Combinatory Logic, which, seen in terms of lambda calculus, can reduce this already simple programming language to just 2 symbols (and parantheses)!<h1 id=so-how-does-it-work>So, how does it work?</h1><p>First off, it's worth abandoning many existing ideas you may have in mind regarding a programming language, so here are some basic differences between lambda calculus and mostly any programming language you'll have used:<ul><li>There are no numbers, or strings, or mathematical operators in lambda calculus.<li>Applying functions to expressions (in other words, some input), is the only operation that occurs in lambda calculus.<li>Accordingly, everything must be represented in terms of functions, and functions that modify other functions.</ul><p>So, the only thing that <em>does</em> anything in lambda calculus is the <em>function</em>. This is what a few different functions may look like in lambda calculus:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>λx.x
+</span><span>λy.yz
+</span><span>λy.(λa.ay)
+</span></code></pre><p>The lambda symbol (λ) is used to mark the beginning of a function. The symbol following the λ is the variable which is used as a placeholder in the subsequent function definition (this variable is also termed <em>bound</em> to the function). This is then followed by a dot, which in turn is followed by the function definition.<p>Written in the style of a more conventional programming language, the above might look something like:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>x</span><span>) {
+</span><span>	</span><span style=color:#f92672>return </span><span>x
+</span><span>}
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>y</span><span>) {
+</span><span>	</span><span style=color:#f92672>return </span><span>yz
+</span><span>}
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>y</span><span>) {
+</span><span>	</span><span style=color:#f92672>return </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>a</span><span>) {
+</span><span>		</span><span style=color:#f92672>return </span><span>ay
+</span><span>	}
+</span><span>}
+</span></code></pre><p>More generally, a function in lambda calculus takes the form:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>λ&LTplaceholder>.&LTdefinition>
+</span></code></pre><p>Where the function definition can be any valid lambda <em>expression</em>; this can be either a function, a variable (a single letter), or a function being applied to one of these (which will eventually result in either a function or a variable anyway if evaluated). The placeholder is just a variable, which is a single letter.<p>What <em>is</em> a function? Well, the only thing that a function actually does is take in some expression, and substitute that in place of every instance of its placeholder (the letter written after the λ symbol) everywhere in its definition. Much like a function in most ordinary programming languages takes some input in place of a variable name.<p>Let's look at these functions in more detail.<h2 id=passing-in-variables>Passing in Variables</h2><p>In the following, we provide the variable <code>y</code> to the function <code>λx.wx</code>, using parentheses to separate the function from the variables passed in (otherwise, we wouldn't know when the function ended and the variables began). The result is obtained by substituting the placeholder <code>x</code> in the function definition with the input <code>y</code>, and then returning the result of this:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>(λx.wx)y = wy
+</span></code></pre><p>This is known as an <em>application</em>; the function <code>λx.wx</code> is applied to the thing to the right of it, in this case the variable <code>y</code>. Here are some more examples of some lambda functions being applied to expressions, and the consequent results (don't worry if you can't follow what's going on in all of these yet!):<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>(λx.xx)y = yy
+</span><span>(λx.xx)xy = xxy
+</span><span>(λx.xx)(xy) = xyxy
+</span><span>(λx.xx)(λy.y) = (λy.y)(λy.y) = (λy.y)
+</span><span>(λx.x(λy.y))z = z(λy.y)
+</span></code></pre><p>In each case, we take the expression to the immediate right of the first function we come across, working from left to right, and pass it in to the function. How?<ul><li>First we find out what the placeholder is for that function by looking to see what follows the λ sign.<li>Next, we substitute every occurrence of that placeholder in the function definition, with the expression that we have passed in.<li>We then return everything after the dot, having done this substitution.<li>Finally, we replace the original function and expression that we evaluated with this returned expression. In the forth example listed above, we can see that performing this step leads to something else which in turn can be evaluated in the same way.</ul><p>Taking an example from above, these steps are carried out as follows:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>(λx.wx)y
+</span><span>       ^
+</span><span>       this is our input variable.
+</span><span>
+</span><span>(λx.wx)y
+</span><span> ^^^^^
+</span><span> this is the function we are applying to it.
+</span><span>
+</span><span>(λx.wx)y
+</span><span>  ^
+</span><span>  we find the placeholder, which is x.
+</span><span>
+</span><span>(λx.wx)y
+</span><span>    ^^
+</span><span>    this is the function definition.
+</span><span>
+</span><span>(λx.wy)
+</span><span>     ^
+</span><span>     swap any instances of placeholder in it for our input.
+</span><span>
+</span><span>wy
+</span><span>^^
+</span><span>return the transformed definition in place of "(λx.wx)y"
+</span></code></pre><p>We always work from left to right, however anything surrounded by parentheses is grouped together and treated as one <em>thing</em>. Expressions within parentheses can be evaluated immediately by following the above, or at some later stage; it doesn't matter. Evaluation continues until we cannot do anything else (in other words, there are no functions left, or there is a function left but nothing to the right of it to apply it to).<p>It is important to note that variables are either <em>bound</em> or <em>free</em> in a given function. Bound variables are the variables that are used as placeholders in a function. In programming terminology, the placeholder for a given function is the same as an argument to a function. So, in the function definition following <code>λx</code>, all instances of <code>x</code> are bound; they are placeholders, ready to be substituted for whatever is going to be passed in to the function.<p>In expressions such as <code>(λy.y)(λx.y)</code>, the <code>y</code> in the first function expression is bound, but the <code>y</code> in the second function expression is free.<p>In addition, it is worth noting that variables are bound to the nearest instance of themselves following a λ sign. For example, in the expression <code>λx.x(λx.x)</code>, the placeholder <code>x</code> used in the inner function definition is not related to that used in the outer definition. So:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>Correct:
+</span><span>(λx.x(λx.x))a = a(λx.x)
+</span><span>
+</span><span>Wrong:
+</span><span>(λx.x(λx.x))a = a(λx.a)
+</span><span>
+</span></code></pre><p>One way of looking at this is in terms of variable scope. The placeholder used in the innermost function defines a separate scope inside that function for that placeholder. Any subsequent instances of that placeholder inside the innermost function definition are tied to that scope, and are not related to any placeholders used in containing functions. Thus, the following is true:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>(λx.x(λx.x))a = (λx.x(λy.y))a = (λx.x(λt.t))a
+</span></code></pre><p>The innermost <code>λx</code> defines a new scope, which the following occurrence of <code>x</code> is tied too. It is entirely separate from the preceding <code>x</code>, and thus can be renamed without affecting the function.<p>One way to avoid this potential confusion is to rename any placeholder variables if they are passed in to a function which uses the same variables. You'll see that I do this when working through some examples to avoid confusing myself!<p>As we have established, it does not matter which symbol is used for placeholders, since as soon as the function is applied to some expression, each placeholder is swapped for an instance of that expression anyway. So, to expand on the above, the following is also true:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>Function 1:
+</span><span>λy.yz = λa.az = λt.tz
+</span><span>
+</span><span>Applications:
+</span><span>(λy.yz)a = az
+</span><span>(λa.az)a = az
+</span><span>(λt.tz)a = az
+</span><span>
+</span><span>Function 2:
+</span><span>λx.(λy.wxy) = λz.(λy.wzy) = λz.(λt.wzt)
+</span><span>
+</span><span>Applications:
+</span><span>λx.(λy.wxy)ab = (λy.way)b = wab
+</span><span>λz.(λy.wzy)ab = (λy.way)b = wab
+</span><span>λz.(λt.wzt)ab = (λt.wat)b = wab
+</span></code></pre><p>Free variables, on the other hand, are not substituted for anything else. Unlike variables in other programming languages, we do not assign them to values or anything like that. In fact, you'll find that they don't crop up very much, and in things such as combinatory logic (we'll mention that later), you'll see that they are not actually required at all in order to reproduce the result of any lambda function.<p>It's important to avoid confusing the symbols used as placeholders in functions (those that are going to be swapped out) with any free variables. The symbol used to represent a given placeholder is irrelevant, but the symbols used for free variables do matter. Thus, in any case whereby some confusion may be caused due to the variables used to represent placeholders, we simply rename the placeholders (bound variables). This can be summarized as:<blockquote><p>Where a function is applied to an expression: if the same symbols are used at any point in the function and the expression being passed in, and in one of these cases they are just placeholders, we replace the placeholders with different symbols in order to avoid confusing them with the free variables.</blockquote><p>For example:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>Correct:
+</span><span>(λx.(λy.xy))y = (λx.(λt.xt))y = λt.yt
+</span><span>
+</span><span>Wrong:
+</span><span>(λx.(λy.xy))y = λy.yy
+</span></code></pre><p>As we can see above, we are passing the variable <code>y</code> into a function which will substitute all occurrences of <code>x</code> for it. However, in the inner function contained within the outer function's definition, <code>y</code> is also being used as a placeholder. To avoid mixing the free variable <code>y</code> with the placeholder <code>y</code>, we rename the placeholder <code>y</code> in the inner function to something different. If we do not, we end up confusing free and bound variables, and consequently turning the free variable <code>y</code> into a placeholder, which it is not.<h2 id=evaluation-order>Evaluation Order</h2><p>As I mentioned earlier, it is important to note that the order in which things are evaluated, by convention, runs from left to right. Failing to do so will lead to errors, as in the following example:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>Correct:
+</span><span>(λa.(λb.ba))(λx.x)(λy.y) =
+</span><span>(λb.b(λx.x))(λy.y) =
+</span><span>(λy.y)(λx.x) =
+</span><span>λx.x
+</span><span>
+</span><span>Wrong (evaluating from the right first):
+</span><span>(λa.(λb.ba))(λx.x)(λy.y) =
+</span><span>(λa.(λb.ba))(λy.y) =
+</span><span>λb.b(λy.y)
+</span></code></pre><p>If we wish to be explicit in the order that things must be evaluated in, we can use parentheses to group things, leading to a different result:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>Correct (additional brackets group arguments into one):
+</span><span>(λa.(λb.ba))((λx.x)(λy.y)) =
+</span><span>λb.b((λx.x)(λy.y)) =
+</span><span>λb.b(λy.y)
+</span><span>
+</span><span>Correct (you can evaluate expressions within brackets at any point):
+</span><span>(λa.(λb.ba))((λx.x)(λy.y)) =
+</span><span>(λa.(λb.ba))(λy.y) =
+</span><span>λb.b(λy.y)
+</span><span>
+</span><span>Wrong (we're just ignoring brackets here):
+</span><span>(λa.(λb.ba))((λx.x)(λy.y)) =
+</span><span>(λb.b(λx.x))(λy.y) =
+</span><span>(λy.y)(λx.x) =
+</span><span>λx.x
+</span></code></pre><p>The use of brackets groups expressions together. As such, they are treated as one <em>thing</em> outside the brackets. Inside the brackets, you must still evaluate from left to right, but you can hold off evaluating inside the brackets, or evaluate inside them straight away; the result is the same regardless. Here is an example:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>Let's evaluate this function application:
+</span><span>(λa.((λb.ab)a))((λb.ab)c))
+</span><span>
+</span><span>Evaluating innermost parentheses first:
+</span><span>(λa.((λb.ab)a))((λb.ab)c)) =
+</span><span>(λa.aa)((λb.ab)c)) =
+</span><span>(λa.aa)(ac) =
+</span><span>(ac)(ac)
+</span><span>
+</span><span>Evaluating outermost parentheses first:
+</span><span>(λa.((λb.ab)a))((λb.ab)c)) =
+</span><span>(λa.((λb.ab)a))((λt.at)c)) =
+</span><span>(λb.((λt.at)c))b)((λt.at)c) =
+</span><span>((λt.at)c))((λt.at)c)) =
+</span><span>((λt.at)c))(ac) =
+</span><span>(ac)(ac)
+</span></code></pre><p>As we can see, it doesn't matter when things inside parentheses are evaluted, although some routes may take longer than others. As such, various evaluation strategies exist, but that is outside the scope of this introduction. Personally, I tend to evaluate anything inside parentheses as soon as possible in the examples I have worked through here.<h2 id=functions-with-multiple-inputs>Functions with Multiple Inputs</h2><p>One of the things that you may have noticed thus far is that functions can only take in one input. While strictly true, using a method known as <em>currying</em>, we can in fact emulate functions that can take in as many variables as we need. We do this by returning a function when a function is applied to something. This function can then take in another variable. Here is an example:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>Function designed to take in two variables:
+</span><span>λx.(λy.yx)
+</span><span>
+</span><span>Application involving two variables a and b:
+</span><span>(λx.(λy.yx))ab = (λy.ya)b = ba
+</span><span>
+</span><span>Written in shorthand:
+</span><span>λxy.yx
+</span><span>
+</span><span>Application using shorthand:
+</span><span>(λxy.yx)ab = ba
+</span><span>
+</span></code></pre><p>As we can see above, we can emulate functions with as many variables as we want by returning a function ready to accept the next variable each time one variable is passed in, and repeating this as much as needed. This can be represented using the above shorthand, which makes things easier to follow (but is functionally identical).<p>Some random examples of functions which work with multiple variables, and their shorthand abbreviations:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>λw.(λx.(λy.yxw)) = λwxy.yxw
+</span><span>λa.(λb.a(λy.yb)) = λab.a(λy.yb)
+</span></code></pre><p>So, now we (hopefully) have a grasp on how to use functions in lambda calculus, how do we put it all to use? I mean, we don't have numbers or strings or anything right?<h1 id=right-so-how-do-i-make-use-of-this>Right! So How do I Make Use of This?</h1><h2 id=representing-numbers>Representing Numbers</h2><p>Well, given that we don't have things like numbers in this language, one of the most important things to do is to come up with a way to represent them. One such means to represent numbers is known as <a href=http://en.wikipedia.org/wiki/Church_encoding>Church encoding</a>. Under this, our numbers, known as <em>Church numerals</em>, are represented in terms of lambda functions, as follows:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>0 = λab.a
+</span><span>1 = λab.a(b)
+</span><span>2 = λab.a(a(b))
+</span><span>3 = λab.a(a(a(b)))
+</span><span>...
+</span></code></pre><p>Each number, as represented above, is supposed to work by taking in two arguments, a function <code>a</code>, and something to apply it to: <code>b</code>. It then applies the function <code>a</code> that number of times to a second thing we pass in, <code>b</code>. For example, applying the function <code>λx.xx</code> to <code>y</code> 3 times would double the number of occurrences of <code>y</code> 3 times:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>3(λx.xx)y =
+</span><span>(λab.a(a(a(b))))(λx.xx)y =
+</span><span>(λb.(λx.xx)((λx.xx)((λx.xx)b)))y =
+</span><span>(λx.xx)((λx.xx)((λx.xx)y)) =
+</span><span>(λx.xx)((λx.xx)(yy)) =
+</span><span>(λx.xx)(yyyy) =
+</span><span>yyyyyyyy
+</span></code></pre><p>So, the church numerals represent numbers in a very fundamental form; the application of some function that number of times. In the above, the church numeral 3 means simply to apply the function <code>λx.xx</code> to <code>y</code> 3 times.<h2 id=basic-arithmetic>Basic Arithmetic</h2><p>Next up, we can define functions which work with these numbers. For example, the successor function - which we can call <code>S</code> - simply increments any number passed into it by one:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>S = λabc.b(abc)
+</span></code></pre><p>Applying this to any number, for example 1, increments it as follows:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>S1 =
+</span><span>(λabc.b(abc))(λab.a(b)) =
+</span><span>λbc.b((λab.a(b))bc) =
+</span><span>λbc.b(b(c)) =
+</span><span>2
+</span></code></pre><p>Noting that, while the letters used to represent the placeholders in the final function differ from those used to represent the number 2 earlier (<code>a</code> and <code>b</code>), the function itself is identical, as it does exactly the same thing.<p>As numbers apply their fist argument to their second argument that number of times, we can use this successor function <code>S</code> for addition. For example, adding 1 and 2 results can be carried out as follows:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>1S2 =
+</span><span>(λab.a(b))(λabc.b(abc))(λab.a(a(b))) =
+</span><span>(λabc.b(abc))(λab.a(a(b))) =
+</span><span>(λabc.b(abc))(λat.a(a(t))) =
+</span><span>λbc.b((λat.a(a(t)))bc) =
+</span><span>λbc.b(b(b(c))) =
+</span><span>3
+</span></code></pre><p>In the same way, we can define functions for things like multiplication, which takes the form <code>λxyz.x(yz)</code>. Here, we can see this function in action multiplying 2 and 3 together:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>M = λxyz.x(yz)
+</span><span>
+</span><span>Now, let's try to multiply 2 and 3:
+</span><span>
+</span><span>M23 =
+</span><span>(λxyz.x(yz))23 =
+</span><span>(λyz.2(yz))3 =
+</span><span>λz.2(3z)
+</span><span>
+</span><span>let's swap 2 and 3 with the functions they represent to finish the job:
+</span><span>
+</span><span>λz.2(3z) =
+</span><span>λz.(λab.a(a(b)))((λab.a(a(a(b))))z) =
+</span><span>λz.(λab.a(a(b)))(λb.z(z(z(b)))) =
+</span><span>λz.(λab.a(a(b)))(λt.z(z(z(t)))) =
+</span><span>λz.(λb.(λt.z(z(z(t))))((λt.z(z(z(t))))b)) =
+</span><span>λz.(λb.(λt.z(z(z(t))))(z(z(z(b))))) =
+</span><span>λz.(λb.z(z(z(z(z(z(b))))))) =
+</span><span>λzb.z(z(z(z(z(z(b)))))) =
+</span><span>6
+</span></code></pre><p>Noting that I choose to rename the placeholder <code>b</code> to <code>t</code> to avoid later confusion, although stricly speaking it was not necessary.<h2 id=more-lambda-calculus>More Lambda Calculus</h2><p>All in all, things can get pretty complex. From here, we can go on to define logical operators, recursion, and far more complex things as required, but for me, the beauty of lambda calculus lies in the very simple foundation it begins with, and the expressive power of this basic core.<p>For a more in depth tutorial, I'll refer you <a href=http://www.utdallas.edu/~gupta/courses/apl/lambda.pdf>here</a>; it covers basically everything you need to start building more advanced expressions in lambda calculus.<h1 id=combinatory-logic-and-lambda-calculus>Combinatory Logic and Lambda Calculus</h1><p>While <a href=http://en.wikipedia.org/wiki/Combinatory_logic>combinatory logic</a> was actually invented before lambda calculus, to me it feels like lambda calculus is more foundational, and combinatory logic can be seen as an application of it. Lambda calculus is burdened by the need for free variables, which can be numerous and can cause confusion if placeholder variables are not appropriately renamed when applying functions.<p>Combinatory logic can be seen as a subset of lambda calculus expressions, which have no free variables within them. The clever thing is that, when combined, they enable the user to create all other lambda calculus expressions. What's more, only two of these expressions are actually necessary to pull this off. They are the following:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>K = λxy.x
+</span><span>S = λxyz.(xz(yz))
+</span></code></pre><p>Given combinations of just these two lambda functions (or, in combinatory logic terms, combinators), we can create any other lambda function, and thus any program. For example, to recreate the result of the function <code>λx.x</code> - also known as the identity function - we combine <code>SKK</code>. Applying it to some variable <code>a</code>, results in the same output, <code>a</code>, just as the lambda function <code>λx.x</code> would do:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>(SKK)a =
+</span><span>SKKa =
+</span><span>(λxyz.(xz(yz)))(λxy.x)(λxy.x)a =
+</span><span>(λxy.x)a((λxy.x)a) =
+</span><span>(λxy.x)a(λy.a) =
+</span><span>(λy.a)(λy.a) =
+</span><span>a
+</span></code></pre><p>In the same way, any lambda function can be translated into its equivalent representation using only <code>S</code> and <code>K</code> combinators. This has led to the development of several <em>esoteric</em> programming languages (defined as programming languages which push the boundaries of computer programming language design in one way or another) which use very few symbols, such as <a href=http://www.madore.org/~david/programs/unlambda/>unlambda</a>, <a href=http://semarch.linguistics.fas.nyu.edu/barker/Iota/>Iota and Jot</a>. The latter use only 2 symbols in the entire language!<h1 id=conclusion>Conclusion</h1><p>Once you understand it, lambda calculus is a very simple foundation from which very complex things can be built. Given that you only have functions to work with, you must decide on a way in order to represent everything in terms of functions. Once your representation is built up, you'll find that anything is possible (although some things can get rather complicated).<p>One of the things I like about the idea is that it provides a way of representing things without explicit symbols, for example numbers. While numbers are an arbitrary set of symbols that we devised, representing numbers in terms of functions as has been done with church numerals feels a little bit special, and really gets to the core of what a number is.<p>Lambda calculus, or the idea behind it, has also spawned or influenced various languages, from those like LISP to more esoteric ones formed from combinatory logic operators. One of the reasons I got into it was by coming across some of these languages, in which code is simply strings of 2 characters, and wondering how easy it would be to evolve useful programs from them using Genetic Algorithms.<p>Anyway, thanks for reading! Got any questions or comments? Get in touch below.</div></div></section><footer></footer></div><script src=https://jsdw.me/page.js></script>

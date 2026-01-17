@@ -1,0 +1,214 @@
+<!doctype html><html><head><meta charset=utf-8><meta content="width=device-width,initial-scale=1" name=viewport><title>
+    jsdw - Rust: Getting started with nightly async/await support
+</title><link href="https://fonts.googleapis.com/css?family=IBM+Plex+Serif|Open+Sans" rel=stylesheet><link href=https://jsdw.me/app.css rel=stylesheet><link href=https://jsdw.me/apple-touch-icon.png rel=apple-touch-icon sizes=180x180><link href=https://jsdw.me/favicon-32x32.png rel=icon sizes=32x32 type=image/png><link href=https://jsdw.me/favicon-16x16.png rel=icon sizes=16x16 type=image/png><link href=https://jsdw.me/site.webmanifest rel=manifest><link color=#5bbad5 href=https://jsdw.me/safari-pinned-tab.svg rel=mask-icon><meta content=#f9409c name=msapplication-TileColor><meta content=#ffffff name=theme-color><body><div class="body post"><header><div class=title-inner><div class=jsdw><a href=https://jsdw.me>JSDW</a></div><nav><a href=https://jsdw.me/posts/>posts</a><a href=https://jsdw.me/projects/>projects</a></nav></div></header><section><div class=top><div class=top-scene><svg class="polygon two" viewbox="0 0 100 100" height=100% style=fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421 version=1.1 width=100% xml:space=preserve xmlns=http://www.w3.org/2000/svg xmlns:serif=http://www.serif.com/ xmlns:xlink=http://www.w3.org/1999/xlink><polygon points="0 100, 15 40, 60 0, 100 30"/></svg><svg class="polygon one" viewbox="0 0 100 100" height=100% style=fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421 version=1.1 width=100% xml:space=preserve xmlns=http://www.w3.org/2000/svg xmlns:serif=http://www.serif.com/ xmlns:xlink=http://www.w3.org/1999/xlink><polygon points="0 40, 30 0, 80 33, 100 100"/></svg></div><div class=top-inner><h1 class=title>Rust: Getting started with nightly async/await support <span class=date>2018-11-26</span></h1></div></div><div class=content-inner><div class=post><div class=table-of-contents><ul><li><a href=https://jsdw.me/posts/rust-asyncawait-preview/#prerequisites>Prerequisites</a><li><a href=https://jsdw.me/posts/rust-asyncawait-preview/#std-future-future>std::future::Future</a><li><a href=https://jsdw.me/posts/rust-asyncawait-preview/#converting-new-style-futures-to-old-style-futures>Converting new style Futures to old style Futures</a><li><a href=https://jsdw.me/posts/rust-asyncawait-preview/#converting-old-style-futures-into-new-style-futures>Converting old style Futures into new style Futures</a><li><a href=https://jsdw.me/posts/rust-asyncawait-preview/#fun-with-new-style-futures>Fun with new style Futures</a><li><a href=https://jsdw.me/posts/rust-asyncawait-preview/#writing-new-style-streams-to-work-with-old-style-asyncreaders>Writing new style streams to work with old-style AsyncReaders</a><li><a href=https://jsdw.me/posts/rust-asyncawait-preview/#writing-new-style-sinks-to-work-with-old-style-asyncwriters>Writing new style sinks to work with old-style AsyncWriters</a><li><a href=https://jsdw.me/posts/rust-asyncawait-preview/#spawning-new-style-futures-to-run-concurrently>Spawning new style futures to run concurrently</a><li><a href=https://jsdw.me/posts/rust-asyncawait-preview/#conclusion>Conclusion</a></ul></div><p>Following on from my <a href=https://jsdw.me/posts/rust-asyncawait-preview/./posts/rust-futures-tokio/index.md>last post</a>, I thought I would look at async/await support in Rust.<p>The async/await support coming to Rust brings with it a much more ergonomic way to work with asynchronous computations. In this post I'll introduce <code>std::future::Future</code>, and run through how to make use of them, and how to interoperate with the current ecosystem which is built around version 0.1 of the <code>futures</code> package.<p>I'll refer to Futures from the 0.1 <code>futures</code> package as "0.1 Futures" or "old style Futures", and the <code>Future</code> trait exposed in the nightly standard library that is the backbone of the async/await syntax as "std Futures" or "new style Futures" (or something along those lines!).<p>All of the example code used below can be <a href=https://github.com/jsdw/jsdw.me/blob/master/content/posts/rust-asyncawait-preview/src/main.rs>found here</a><h1 id=prerequisites>Prerequisites</h1><p>To use the new async/await syntax, you'll need to be using a relatively recent Rust nightly (as of November 26th 2018). An appropriate <code>Cargo.toml</code> looks like this:<pre class=language-toml data-lang=toml style=background:#272822;color:#f8f8f2><code class=language-toml data-lang=toml><span>[package]
+</span><span style=color:#f92672>name </span><span>= </span><span style=color:#e6db74>"My Package"
+</span><span style=color:#f92672>version </span><span>= </span><span style=color:#e6db74>"0.1.0"
+</span><span style=color:#f92672>authors </span><span>= [</span><span style=color:#e6db74>"You"</span><span>]
+</span><span style=color:#f92672>edition </span><span>= </span><span style=color:#e6db74>"2018"
+</span><span>
+</span><span>[dependencies]
+</span><span>
+</span><span style=color:#f92672>futures </span><span>= </span><span style=color:#e6db74>"0.1.25"
+</span><span>
+</span><span style=color:#75715e># enable the async-await stuff using a feature flag:
+</span><span style=color:#f92672>tokio </span><span>= { </span><span style=color:#f92672>version </span><span>= </span><span style=color:#e6db74>"0.1.13"</span><span>, </span><span style=color:#f92672>features </span><span>= [</span><span style=color:#e6db74>"async-await-preview"</span><span>] }
+</span><span>
+</span><span style=color:#75715e># Only needs to be explicitly imported if you want to make use of
+</span><span style=color:#75715e># the machinery to convert promises back and forth between 0.1 and 0.3
+</span><span style=color:#75715e># (which is built into the provided await! macro only otherwise):
+</span><span style=color:#f92672>tokio-async-await </span><span>= </span><span style=color:#e6db74>"0.1.4"
+</span></code></pre><p>For most normal things you'll just need to use <code>tokio</code> with the <code>async-await-preview</code> feature flag, though the <code>tokio-async-await</code> package (parts of which are reexported by <code>tokio</code> with said feature enabled) provides a couple of useful bits on its own, including compatibility shims to convert between old and new style Futures.<p>In the root of your crate you'll need to opt in to some features as well to get the new syntax. The first ones are a must, but I use the others in my example code for a couple of things:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=color:#75715e>// enable the await! macro, async support, and the new std::Futures api.
+</span><span>#![feature(await_macro, async_await, futures_api)]
+</span><span style=color:#75715e>// only needed if we want to manually write a method to go forward from 0.1 to 0.3 future,
+</span><span style=color:#75715e>// or manually implement a std future (it provides Pin and Unpin):
+</span><span>#![feature(pin)]
+</span><span style=color:#75715e>// only needed to manually implement a std future:
+</span><span>#![feature(arbitrary_self_types)]
+</span></code></pre><p>The <code>await_macro</code> feature defines an <code>await!</code> macro that is the main way to wait for Futures to resolve. Tokio exports it's own shim on top of this which works in the same way but is also compatible with 0.1 Futures. This isn't necessary if you avoid ever needing to call <code>await!</code> on an old Future, but is useful for interop. We can bring it into scope across our entire crate with:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span>#[macro_use]
+</span><span style=color:#f92672>extern crate</span><span> tokio;
+</span></code></pre><p>Or bring it into scope in only the modules we want using the standard import syntax in each module we want it:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=color:#f92672>use </span><span>tokio::await;
+</span></code></pre><p>We'll also want to import the <code>tokio::prelude</code>, which is beefed up with some additional async/await helper functions when the <code>tokio-async-await</code> feature flag is used:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=color:#f92672>use </span><span>tokio::prelude::</span><span style=color:#f92672>*</span><span>;
+</span></code></pre><p>In total, we gain access to these additional methods (I hope I haven't missed any):<pre style=background:#272822;color:#f8f8f2><code><span>Stream.next()
+</span><span>Sink.send_async(value)
+</span><span>AsyncRead.read_async(buf)
+</span><span>AsyncRead.read_exact_async(buf)
+</span><span>AsyncWrite.write_async(buf)
+</span><span>AsyncWrite.write_all_async(buf)
+</span><span>AsyncWrite.flush_async()
+</span><span>tokio::run_async(new_future)
+</span><span>tokio::spawn_async(new_future)
+</span></code></pre><p>I'll cover almost all of these in the following examples.<h1 id=std-future-future>std::future::Future</h1><p>With that out of the way, we can make new style futures by using the <code>async</code> keyword.<p>This function returns a <code>Future&LTOutput=&'static str></code> when called:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span>async </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>hello_world</span><span>() -> </span><span style=color:#f92672>&'static </span><span style=font-style:italic;color:#66d9ef>str </span><span>{
+</span><span>    </span><span style=color:#e6db74>"Hello World"
+</span><span>}
+</span></code></pre><p>And this block returns the same:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=font-style:italic;color:#66d9ef>let</span><span> hello_world_fut </span><span style=color:#f92672>=</span><span> async { </span><span style=color:#e6db74>"Hello World" </span><span>};
+</span></code></pre><p>Worth noting straight away is that new Futures only have a single <code>Output</code>, whereas old style Futures have separate <code>Item</code> and <code>Error</code> types for handling possible failure. If you want to handle errors with new style Futures, you just return a <code>Result</code> as that output, which plays nice with things like <code>?</code> and so on.<p>Inside an <code>async</code> function, closure or block, you can use the <code>await!</code> macro to wait for other futures to resolve. The next example counts to three, one per second:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=color:#75715e>// use Delay from the tokio::timer module to sleep the task:
+</span><span>async </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>sleep</span><span>(</span><span style=font-style:italic;color:#fd971f>n</span><span>: </span><span style=font-style:italic;color:#66d9ef>u64</span><span>) {
+</span><span>    </span><span style=color:#f92672>use </span><span>tokio::timer::Delay;
+</span><span>    </span><span style=color:#f92672>use </span><span>std::time::{Duration, Instant};
+</span><span>    await!(Delay::new(Instant::now() </span><span style=color:#f92672>+ </span><span>Duration::from_secs(n))).</span><span style=color:#66d9ef>unwrap</span><span>();
+</span><span>};
+</span><span>
+</span><span style=color:#75715e>// sleep a second before each line is printed:
+</span><span>tokio::run_async(async {
+</span><span>    await!(</span><span style=color:#66d9ef>sleep</span><span>(</span><span style=color:#ae81ff>1</span><span>));
+</span><span>    println!(</span><span style=color:#e6db74>"One"</span><span>);
+</span><span>    await!(</span><span style=color:#66d9ef>sleep</span><span>(</span><span style=color:#ae81ff>1</span><span>));
+</span><span>    println!(</span><span style=color:#e6db74>"Two"</span><span>);
+</span><span>    await!(</span><span style=color:#66d9ef>sleep</span><span>(</span><span style=color:#ae81ff>1</span><span>));
+</span><span>    println!(</span><span style=color:#e6db74>"Three"</span><span>);
+</span><span>});
+</span></code></pre><p><code>await</code> is non-blocking, so the Runtime is happy to go and work on progressing other Futures (if there are any) while waiting on any given <code>await</code> call.<p>I'll show more examples as we go, but hopefully you have already been given a feel for how ergonomically superior async/await syntax is to chaining futures together.<h1 id=converting-new-style-futures-to-old-style-futures>Converting new style Futures to old style Futures</h1><p>To make use of new style Futures alongside the various combinators and such exposed on old style Futures, you'll need to convert them. Although not explicitly exposed, you can make use of the machinery in the <code>tokio-async-await</code> crate to make quick work of it (This is correct as of <code>tokio-async-await</code> 0.1.4 but may change at any time):<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=color:#f92672>use </span><span>std::future::Future </span><span style=color:#f92672>as</span><span> NewFuture;
+</span><span style=color:#f92672>use </span><span>futures::Future </span><span style=color:#f92672>as</span><span> OldFuture;
+</span><span>
+</span><span style=color:#75715e>// converts from a new style Future to an old style one:
+</span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>backward</span><span>&LTI,E>(</span><span style=font-style:italic;color:#fd971f>f</span><span>: impl NewFuture&LTOutput=</span><span style=font-style:italic;color:#66d9ef>Result</span><span>&LTI,E>>) -> impl OldFuture&LTItem=I, Error=E> {
+</span><span>    </span><span style=color:#f92672>use </span><span>tokio_async_await::compat::backward;
+</span><span>    backward::Compat::new(f)
+</span><span>};
+</span></code></pre><p>The only caveat here is that the new style future needs to output a <code>Result</code>, so that we can map to the <code>Item</code> and <code>Error</code> associated types needed for old style futures. With this in hand, we can use a new Future (made by an async thing) as if it was an old one:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=color:#75715e>// Map our hello_world() future to return a Result<&str,()> rather
+</span><span style=color:#75715e>// than just &'str, so that we can convert it to an old style one:
+</span><span style=font-style:italic;color:#66d9ef>let</span><span> hello_world_result </span><span style=color:#f92672>=</span><span> async {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>let</span><span> s </span><span style=color:#f92672>= </span><span>await!(</span><span style=color:#66d9ef>hello_world</span><span>());
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>Ok</span><span>::<</span><span style=color:#f92672>_</span><span>,()>(s)
+</span><span>};
+</span><span>
+</span><span style=color:#75715e>// use the above function to convert back:
+</span><span style=font-style:italic;color:#66d9ef>let</span><span> hello_world_old </span><span style=color:#f92672>= </span><span style=color:#66d9ef>backward</span><span>(hello_world_result);
+</span><span>
+</span><span style=color:#75715e>// We can then run it like any old style future, allowing to to use any
+</span><span style=color:#75715e>// of the machinery currently available for 0.1 style futures:
+</span><span>tokio::run(
+</span><span>    hello_world_old.</span><span style=color:#66d9ef>map</span><span>(|</span><span style=font-style:italic;color:#fd971f>val</span><span>| println!(</span><span style=color:#e6db74>"Running as 0.1 future: </span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>"</span><span>, val))
+</span><span>);
+</span></code></pre><p>The main use case for this that I can see is making use of combinators like <code>select</code> and <code>join</code> from the land of old Futures, rather than having to reimplement them to work alongside new Futures.<h1 id=converting-old-style-futures-into-new-style-futures>Converting old style Futures into new style Futures</h1><p>The easiest way to convert an old style Future into a new one is simply by using the <code>await!</code> macro that Tokio gives us (rather than <code>std::await</code>), since it will convert old style Futures for us. We've already seen this above when using the <code>tokio::timer::Delay</code> future in a new style <code>async</code> block.<p>If we want, we can use the same approach to write ourselves a function to manually convert them for us:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=color:#f92672>use </span><span>std::future::Future </span><span style=color:#f92672>as</span><span> NewFuture;
+</span><span style=color:#f92672>use </span><span>futures::Future </span><span style=color:#f92672>as</span><span> OldFuture;
+</span><span>
+</span><span style=color:#75715e>// converts from an old style Future to a new style one:
+</span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>forward</span><span>&LTI,E>(</span><span style=font-style:italic;color:#fd971f>f</span><span>: impl OldFuture&LTItem=I, Error=E> + Unpin) -> impl NewFuture&LTOutput=</span><span style=font-style:italic;color:#66d9ef>Result</span><span>&LTI,E>> {
+</span><span>    </span><span style=color:#f92672>use </span><span>tokio_async_await::compat::forward::IntoAwaitable;
+</span><span>    f.</span><span style=color:#66d9ef>into_awaitable</span><span>()
+</span><span>}
+</span></code></pre><p>We can test that it works by using the <code>std::await</code> macro on a converted Future instead of the Tokio version:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span>tokio::run_async(async {
+</span><span>    </span><span style=color:#75715e>// Create some old style Future:
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>let</span><span> old_future </span><span style=color:#f92672>= </span><span>futures::future::ok::<</span><span style=color:#f92672>_</span><span>,()>(</span><span style=color:#e6db74>"Awaiting a manually converted 0.1 future!"</span><span>);
+</span><span>    </span><span style=color:#75715e>// Convert to a new style one:
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>let</span><span> new_future </span><span style=color:#f92672>= </span><span style=color:#66d9ef>forward</span><span>(old_future);
+</span><span>    </span><span style=color:#75715e>// `await` the result and print it:
+</span><span>    println!(</span><span style=color:#e6db74>"</span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>"</span><span>, std::await</span><span style=color:#f92672>!</span><span>(new_future).</span><span style=color:#66d9ef>unwrap</span><span>());
+</span><span>});
+</span></code></pre><p>I'm not really sure if this is super useful, but it's nice to know that you can easily go back and forth between new and old style Futures.<h1 id=fun-with-new-style-futures>Fun with new style Futures</h1><h2 id=manually-implementing-a-new-style-future-on-top-of-tokio-poll-x-methods>Manually implementing a new style Future on top of Tokio poll_x methods</h2><p>In my <a href=https://jsdw.me/posts/rust-asyncawait-preview/./posts/rust-futures-tokio/index.md>last post</a>, I manually implemented an old style <code>Future</code> which reads one byte at a time from some <code>AsyncRead</code> type. Let's do the same again here, but with new style Futures.<p>Implementing a new style Future isn't significantly more difficult; the main challenges are understanding <code>Pin</code>, and converting between the <code>Async</code> type Tokio uses and the <code>std::task::Poll</code> type that new Futures hand back.<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=color:#75715e>// expose the std types we need to work with:
+</span><span style=color:#f92672>use </span><span>std::task::{ Poll </span><span style=color:#f92672>as</span><span> StdPoll, LocalWaker};
+</span><span style=color:#f92672>use </span><span>std::future::Future </span><span style=color:#f92672>as</span><span> StdFuture;
+</span><span style=color:#f92672>use </span><span>std::pin::{ Pin, Unpin };
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>struct </span><span>ByteFuture&LTR>(R);
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>&LTR: AsyncRead </span><span style=color:#f92672>+</span><span> Unpin> StdFuture </span><span style=color:#f92672>for </span><span>ByteFuture&LTR> {
+</span><span>
+</span><span>    </span><span style=color:#75715e>// std futures have just one output, but it can be a Result to signal errors:
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>type </span><span>Output </span><span style=color:#f92672>= </span><span style=font-style:italic;color:#66d9ef>Result</span><span><</span><span style=font-style:italic;color:#66d9ef>u8</span><span>, tokio::io::Error>;
+</span><span>
+</span><span>    </span><span style=color:#75715e>// poll takes a Pin thing now. By requiring that Self is Unpin (which it is
+</span><span>    </span><span style=color:#75715e>// so long as the reader thing it contains is), we are allowed mutable access
+</span><span>    </span><span style=color:#75715e>// to it (which we need to poll the AsyncReader):
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>poll</span><span>(</span><span style=color:#f92672>mut </span><span style=font-style:italic;color:#fd971f>self</span><span>: Pin<</span><span style=color:#f92672>&mut </span><span style=font-style:italic;color:#66d9ef>Self</span><span>>, </span><span style=font-style:italic;color:#fd971f>_lw</span><span>: </span><span style=color:#f92672>&</span><span>LocalWaker) -> StdPoll<</span><span style=font-style:italic;color:#66d9ef>Self::</span><span>Output> {
+</span><span>
+</span><span>        </span><span style=font-style:italic;color:#66d9ef>let </span><span style=color:#f92672>mut</span><span> buf </span><span style=color:#f92672>= </span><span>[</span><span style=color:#ae81ff>0</span><span>;</span><span style=color:#ae81ff>1</span><span>];
+</span><span>
+</span><span>        </span><span style=color:#75715e>// we need to convert from the Async type returned from the poll_x method
+</span><span>        </span><span style=color:#75715e>// to the return type expected from the std Future (it's either Ready
+</span><span>        </span><span style=color:#75715e>// or Pending now, since there is no separate Error item any more):
+</span><span>        </span><span style=color:#f92672>match </span><span>self.</span><span style=color:#ae81ff>0.</span><span style=color:#66d9ef>poll_read</span><span>(</span><span style=color:#f92672>&mut</span><span> buf) {
+</span><span>            </span><span style=font-style:italic;color:#66d9ef>Ok</span><span>(Async::Ready(_num_bytes_read)) </span><span style=color:#f92672>=> </span><span>StdPoll::Ready(</span><span style=font-style:italic;color:#66d9ef>Ok</span><span>(buf[</span><span style=color:#ae81ff>0</span><span>])),
+</span><span>            </span><span style=font-style:italic;color:#66d9ef>Ok</span><span>(Async::NotReady) </span><span style=color:#f92672>=> </span><span>StdPoll::Pending,
+</span><span>            </span><span style=font-style:italic;color:#66d9ef>Err</span><span>(e) </span><span style=color:#f92672>=> </span><span>StdPoll::Ready(</span><span style=font-style:italic;color:#66d9ef>Err</span><span>(e))
+</span><span>        }
+</span><span>    }
+</span><span>
+</span><span>}
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>let</span><span> byte_future </span><span style=color:#f92672>=</span><span> ByteFuture(tokio::io::stdin());
+</span></code></pre><p><code>byte_future</code> is now a new style Future that yields one byte of input from <code>stdin</code>.<p><code>Pin</code> is a type that is used to guarantee that we can't move <code>Self</code>. This is necessary because new style futures can contain self referential variables (which allows references working across <code>await</code> points). If <code>Self</code> could be moved, those references would be invalidated.<p><code>Unpin</code> is a marker trait that means it is safe to move a thing. If this is true, it is safe to mutably access the thing (which lets you move it, eg with <code>mem::replace</code>). We need mutable access, so we demand that the <code>AsyncRead</code> type we accept is also <code>Unpin</code>. Almost everything implements <code>Unpin</code>. I imagine that <code>async</code> blocks with references that are used across <code>await</code> points would not be <code>Unpin</code>, since they are no longer safe to move around.<p>We can achieve exactly the same and avoid implementing our own <code>Future</code> by making use of the <code>read_async</code> method provided on <code>AsyncRead</code>:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=font-style:italic;color:#66d9ef>let</span><span> byte_future2 </span><span style=color:#f92672>=</span><span> async {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>let </span><span style=color:#f92672>mut</span><span> buf </span><span style=color:#f92672>= </span><span>[</span><span style=color:#ae81ff>0</span><span>;</span><span style=color:#ae81ff>1</span><span>];
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>let </span><span style=color:#f92672>mut</span><span> stdin </span><span style=color:#f92672>= </span><span>tokio::io::stdin();
+</span><span>    await!(stdin.</span><span style=color:#66d9ef>read_async</span><span>(</span><span style=color:#f92672>&mut</span><span> buf))</span><span style=color:#f92672>?</span><span>;
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>Ok</span><span>::<</span><span style=font-style:italic;color:#66d9ef>u8</span><span>,tokio::io::Error>(buf[</span><span style=color:#ae81ff>0</span><span>])
+</span><span>};
+</span></code></pre><p>This returns a <code>Future&LTOutput=Result&LTu8,tokio::io::Error>></code> just like our Future implementation above. We also use <code>?</code> to bail out early if <code>read_async</code> returns with an error. It's great to see that async/await plays well with existing operators and control flow like this.<h1 id=writing-new-style-streams-to-work-with-old-style-asyncreaders>Writing new style streams to work with old-style AsyncReaders</h1><p>It's probably worth noting that there is (currently at least) no such thing as a new style Stream or Sink. Instead, helper methods are added to each which return new style Futures that we can <code>await</code> in order to send and receive input from them.<p>The simplest way to stream bytes from an <code>AsyncRead</code> type is probably to just use the <code>.read_async</code> method again, but in a while loop (this would be easy to add better buffering to if we wanted):<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=font-style:italic;color:#66d9ef>let</span><span> stream_bytes </span><span style=color:#f92672>=</span><span> async {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>let </span><span style=color:#f92672>mut</span><span> buf </span><span style=color:#f92672>= </span><span>[</span><span style=color:#ae81ff>0</span><span>;</span><span style=color:#ae81ff>1</span><span>];
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>let </span><span style=color:#f92672>mut</span><span> stdin </span><span style=color:#f92672>= </span><span>tokio::io::stdin();
+</span><span>
+</span><span>    </span><span style=color:#75715e>// While read_async returns a number of bytes
+</span><span>    </span><span style=color:#75715e>// read and not an error:
+</span><span>    </span><span style=color:#f92672>while </span><span style=font-style:italic;color:#66d9ef>let Ok</span><span>(n) </span><span style=color:#f92672>= </span><span>await!(stdin.</span><span style=color:#66d9ef>read_async</span><span>(</span><span style=color:#f92672>&mut</span><span> buf)) {
+</span><span>        </span><span style=color:#75715e>// bail if we've read everything:
+</span><span>        </span><span style=color:#f92672>if</span><span> n </span><span style=color:#f92672>== </span><span style=color:#ae81ff>0 </span><span>{ </span><span style=color:#f92672>break </span><span>};
+</span><span>        </span><span style=color:#75715e>// stop if the byte we read is a newline:
+</span><span>        </span><span style=color:#f92672>if</span><span> buf[</span><span style=color:#ae81ff>0</span><span>] </span><span style=color:#f92672>== </span><span style=font-style:italic;color:#66d9ef>b</span><span style=color:#e6db74>'</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>' </span><span>{ </span><span style=color:#f92672>break </span><span>};
+</span><span>        </span><span style=color:#75715e>// print each byte we read up to a newline/error:
+</span><span>        println!(</span><span style=color:#e6db74>"Streamed: </span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>"</span><span>, buf[</span><span style=color:#ae81ff>0</span><span>] </span><span style=color:#f92672>as </span><span style=font-style:italic;color:#66d9ef>char</span><span>);
+</span><span>    }
+</span><span>};
+</span></code></pre><p>This Future will stream bytes one at a time from <code>stdin</code> until it hits a newline, or stdin is closed, printing each byte as a <code>char</code> each time one comes through.<p>If we already have a <code>Stream</code>, we can use the <code>next()</code> method which has been added to it to pluck items out of it in a standard while loop:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=font-style:italic;color:#66d9ef>let </span><span style=color:#f92672>mut</span><span> byte_stream </span><span style=color:#f92672>= </span><span>stream::iter_ok::<</span><span style=color:#f92672>_</span><span>,()>(</span><span style=color:#e6db74>"from an old style stream</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>"</span><span>.</span><span style=color:#66d9ef>chars</span><span>());
+</span><span style=font-style:italic;color:#66d9ef>let</span><span> stream_bytes2 </span><span style=color:#f92672>=</span><span> async </span><span style=color:#f92672>move </span><span>{
+</span><span>    </span><span style=color:#75715e>// Some(Output), where Output is Result&LTchar, ()>. We bail
+</span><span>    </span><span style=color:#75715e>// if the stream ends (None) or the result indicates an error:
+</span><span>    </span><span style=color:#f92672>while </span><span style=font-style:italic;color:#66d9ef>let Some</span><span>(</span><span style=font-style:italic;color:#66d9ef>Ok</span><span>(c)) </span><span style=color:#f92672>= </span><span>await!(byte_stream.</span><span style=color:#66d9ef>next</span><span>()) {
+</span><span>        println!(</span><span style=color:#e6db74>"Streamed 2: </span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>"</span><span>, c);
+</span><span>    }
+</span><span>};
+</span></code></pre><p>Using <code>while</code> loops in this way replaces using stream combinators like <code>for_each</code>, as well as error handling combinators like <code>map_err</code>; we can just use normal Rust syntax to deal with everything. Lovely stuff!<h1 id=writing-new-style-sinks-to-work-with-old-style-asyncwriters>Writing new style sinks to work with old-style AsyncWriters</h1><p>If you don't yet have a <code>Sink</code>, Tokio adds <code>write_async</code>, <code>write_all_async</code> and <code>flush_async</code> methods to <code>AsyncWriter</code> types, so it becomes easy to put bytes into them without any extra machinery:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=font-style:italic;color:#66d9ef>let</span><span> sink_message </span><span style=color:#f92672>=</span><span> async {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>let</span><span> message </span><span style=color:#f92672>= </span><span style=color:#e6db74>"writing to stdout, one byte at a time</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>"</span><span>;
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>let </span><span style=color:#f92672>mut</span><span> stdout </span><span style=color:#f92672>= </span><span>tokio::io::stdout();
+</span><span>
+</span><span>    </span><span style=color:#f92672>for</span><span> byte </span><span style=color:#f92672>in</span><span> message.</span><span style=color:#66d9ef>bytes</span><span>() {
+</span><span>        </span><span style=font-style:italic;color:#66d9ef>let</span><span> buf </span><span style=color:#f92672>= &</span><span>[byte];
+</span><span>        </span><span style=color:#f92672>if </span><span style=font-style:italic;color:#66d9ef>let Err</span><span>(e) </span><span style=color:#f92672>= </span><span>await!(stdout.</span><span style=color:#66d9ef>write_all_async</span><span>(buf)) {
+</span><span>            println!(</span><span style=color:#e6db74>"Error writing out: </span><span style=color:#ae81ff>{:?}</span><span style=color:#e6db74>"</span><span>, e);
+</span><span>        }
+</span><span>    }
+</span><span>
+</span><span>    await!(stdout.</span><span style=color:#66d9ef>flush_async</span><span>()).</span><span style=color:#66d9ef>unwrap</span><span>();
+</span><span>}
+</span></code></pre><p>This time, we loop over some bytes we want to output, and send each one to <code>stdout</code> using <code>write_all_async</code>. We could probably improve the performance here by writing more bytes at a time. We need to remember to <code>flush_async</code> at the end to ensure bytes have been written out completely.<p>If you already have a <code>Sink</code>, you get a new <code>send_async</code> method on it, which makes it easy to send things into it without the messy ownership transferring stuff you have to do with <code>send</code>. In this example I forward bytes from a Stream to a Sink:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=color:#75715e>// Create a quick stream of bytes:
+</span><span style=font-style:italic;color:#66d9ef>let </span><span style=color:#f92672>mut</span><span> byte_stream </span><span style=color:#f92672>= </span><span>stream::iter_ok::<</span><span style=color:#f92672>_</span><span>,()>(</span><span style=color:#e6db74>"From a Stream to a Sink</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>"</span><span>.</span><span style=color:#66d9ef>bytes</span><span>());
+</span><span>
+</span><span style=color:#75715e>// Use `FramedWrite` to build ourselves a one-byte-at-a-time Sink to stdout:
+</span><span style=font-style:italic;color:#66d9ef>let </span><span style=color:#f92672>mut</span><span> byte_sink </span><span style=color:#f92672>= </span><span>FramedWrite::new(tokio::io::stdout(), BytesCodec::new())
+</span><span>    .</span><span style=color:#66d9ef>with</span><span>(|</span><span style=font-style:italic;color:#fd971f>byte</span><span>| {
+</span><span>        </span><span style=color:#75715e>// convert an incoming byte into the Bytes type expected by the codec:
+</span><span>        </span><span style=font-style:italic;color:#66d9ef>Ok</span><span>::<</span><span style=color:#f92672>_</span><span>, tokio::io::Error>([byte][</span><span style=color:#f92672>..</span><span>].</span><span style=color:#66d9ef>into</span><span>())
+</span><span>    });
+</span><span>
+</span><span style=color:#75715e>// Running this Future will lead to bytes being forwarded from Stream to Sink:
+</span><span style=font-style:italic;color:#66d9ef>let</span><span> forward_bytes </span><span style=color:#f92672>=</span><span> async </span><span style=color:#f92672>move </span><span>{
+</span><span>    </span><span style=color:#f92672>while </span><span style=font-style:italic;color:#66d9ef>let Some</span><span>(</span><span style=font-style:italic;color:#66d9ef>Ok</span><span>(byte)) </span><span style=color:#f92672>= </span><span>await!(byte_stream.</span><span style=color:#66d9ef>next</span><span>()) {
+</span><span>        </span><span style=color:#f92672>if </span><span style=font-style:italic;color:#66d9ef>let Err</span><span>(e) </span><span style=color:#f92672>= </span><span>await!(byte_sink.</span><span style=color:#66d9ef>send_async</span><span>(byte)) {
+</span><span>            println!(</span><span style=color:#e6db74>"Error: </span><span style=color:#ae81ff>{:?}</span><span style=color:#e6db74>"</span><span>, e);
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre><h1 id=spawning-new-style-futures-to-run-concurrently>Spawning new style futures to run concurrently</h1><p>Just like <code>tokio::spawn</code> did for old style Futures, <code>tokio::spawn_async</code> allows spawning into the background of new style futures, allowing multiple jobs to run concurrently. Remember, we can always convert our new style Futures back into old style ones if we want to use other methods to spawn and run Futures.<p>Here, we concurrently write the same text to <code>stdout</code> multiple times, leaving a good chance (but not a guarantee) that it'll be garbled together:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span>tokio::run_async(async {
+</span><span>
+</span><span>    async </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>write_to_stdout</span><span>() {
+</span><span>        </span><span style=font-style:italic;color:#66d9ef>let </span><span style=color:#f92672>mut</span><span> stdout </span><span style=color:#f92672>= </span><span>tokio::io::stdout();
+</span><span>        </span><span style=font-style:italic;color:#66d9ef>let</span><span> message </span><span style=color:#f92672>= </span><span style=color:#e6db74>"Concurrently Writing This Message"</span><span>;
+</span><span>
+</span><span>        </span><span style=color:#f92672>for</span><span> byte </span><span style=color:#f92672>in</span><span> message.</span><span style=color:#66d9ef>bytes</span><span>() {
+</span><span>            </span><span style=font-style:italic;color:#66d9ef>let</span><span> buf </span><span style=color:#f92672>= &</span><span>[byte];
+</span><span>            await!(stdout.</span><span style=color:#66d9ef>write_all_async</span><span>(buf)).</span><span style=color:#66d9ef>unwrap</span><span>();
+</span><span>            await!(stdout.</span><span style=color:#66d9ef>flush_async</span><span>()).</span><span style=color:#66d9ef>unwrap</span><span>();
+</span><span>        }
+</span><span>    }
+</span><span>
+</span><span>    </span><span style=color:#75715e>// execute this future-returning fn multiple times
+</span><span>    </span><span style=color:#75715e>// concurrently:
+</span><span>    tokio::spawn_async(</span><span style=color:#66d9ef>write_to_stdout</span><span>());
+</span><span>    tokio::spawn_async(</span><span style=color:#66d9ef>write_to_stdout</span><span>());
+</span><span>    tokio::spawn_async(</span><span style=color:#66d9ef>write_to_stdout</span><span>());
+</span><span>    tokio::spawn_async(</span><span style=color:#66d9ef>write_to_stdout</span><span>());
+</span><span>    tokio::spawn_async(</span><span style=color:#66d9ef>write_to_stdout</span><span>());
+</span><span>    tokio::spawn_async(</span><span style=color:#66d9ef>write_to_stdout</span><span>());
+</span><span>
+</span><span>});
+</span></code></pre><h1 id=conclusion>Conclusion</h1><p>I'm really very excited about async/await syntax; it makes writing and composing Futures much, much nicer. This post has discussed how to make use of all of this new stuff alongside the current Futures 0.1 ecosystem, so that you can start playing with and benefitting from it straight away.<p>You can find all of the example code <a href=https://github.com/jsdw/jsdw.me/blob/master/content/posts/rust-asyncawait-preview/src/main.rs>here</a>.</div></div></section><footer></footer></div><script src=https://jsdw.me/page.js></script>

@@ -1,0 +1,14 @@
+[package]
+name = "rust-asyncawait-preview"
+version = "0.1.0"
+authors = ["James Wilson <me@jsdw.me>"]
+edition = "2018"
+
+[dependencies]
+tokio = { version = "0.1.13", features = ["async-await-preview"] }
+futures = "0.1.25"
+
+# Only needs to be explicitly imported if you want to make use of
+# the machinery to convert promises back and forth between 0.1 and 0.3
+# (which is built into the provided await! macro only otherwise):
+tokio-async-await = "0.1.4"

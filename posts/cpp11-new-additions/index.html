@@ -1,0 +1,888 @@
+<!doctype html><html><head><meta charset=utf-8><meta content="width=device-width,initial-scale=1" name=viewport><title>
+    jsdw - C++11: An Introduction to Some of the Fun New Additions
+</title><link href="https://fonts.googleapis.com/css?family=IBM+Plex+Serif|Open+Sans" rel=stylesheet><link href=https://jsdw.me/app.css rel=stylesheet><link href=https://jsdw.me/apple-touch-icon.png rel=apple-touch-icon sizes=180x180><link href=https://jsdw.me/favicon-32x32.png rel=icon sizes=32x32 type=image/png><link href=https://jsdw.me/favicon-16x16.png rel=icon sizes=16x16 type=image/png><link href=https://jsdw.me/site.webmanifest rel=manifest><link color=#5bbad5 href=https://jsdw.me/safari-pinned-tab.svg rel=mask-icon><meta content=#f9409c name=msapplication-TileColor><meta content=#ffffff name=theme-color><body><div class="body post"><header><div class=title-inner><div class=jsdw><a href=https://jsdw.me>JSDW</a></div><nav><a href=https://jsdw.me/posts/>posts</a><a href=https://jsdw.me/projects/>projects</a></nav></div></header><section><div class=top><div class=top-scene><svg class="polygon two" viewbox="0 0 100 100" height=100% style=fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421 version=1.1 width=100% xml:space=preserve xmlns=http://www.w3.org/2000/svg xmlns:serif=http://www.serif.com/ xmlns:xlink=http://www.w3.org/1999/xlink><polygon points="0 100, 15 40, 60 0, 100 30"/></svg><svg class="polygon one" viewbox="0 0 100 100" height=100% style=fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421 version=1.1 width=100% xml:space=preserve xmlns=http://www.w3.org/2000/svg xmlns:serif=http://www.serif.com/ xmlns:xlink=http://www.w3.org/1999/xlink><polygon points="0 40, 30 0, 80 33, 100 100"/></svg></div><div class=top-inner><h1 class=title>C++11: An Introduction to Some of the Fun New Additions <span class=date>2013-04-11</span></h1></div></div><div class=content-inner><div class=post><div class=table-of-contents><ul><li><a href=https://jsdw.me/posts/cpp11-new-additions/#the-auto-keyword>The auto Keyword</a> <ul><li><a href=https://jsdw.me/posts/cpp11-new-additions/#decltype>decltype()</a></ul><li><a href=https://jsdw.me/posts/cpp11-new-additions/#range-for-loops>Range for loops</a><li><a href=https://jsdw.me/posts/cpp11-new-additions/#the-using-keyword-for-aliases>The using keyword for aliases</a> <ul><li><a href=https://jsdw.me/posts/cpp11-new-additions/#template-using>Template using</a></ul><li><a href=https://jsdw.me/posts/cpp11-new-additions/#lambda-functions>Lambda Functions</a> <ul><li><a href=https://jsdw.me/posts/cpp11-new-additions/#passing-local-variables-in-to-a-lambda-function>Passing local variables in to a lambda function</a></ul><li><a href=https://jsdw.me/posts/cpp11-new-additions/#multi-threading>Multi-threading</a> <ul><li><a href=https://jsdw.me/posts/cpp11-new-additions/#std-thread>std::thread</a><li><a href=https://jsdw.me/posts/cpp11-new-additions/#std-mutex-and-std-lock-guard>std::mutex and std::lock_guard</a><li><a href=https://jsdw.me/posts/cpp11-new-additions/#std-async-for-higher-level-multi-threading>std::async for higher level multi-threading</a></ul><li><a href=https://jsdw.me/posts/cpp11-new-additions/#hash-tables>Hash tables</a><li><a href=https://jsdw.me/posts/cpp11-new-additions/#new-smart-pointers>New Smart Pointers</a><li><a href=https://jsdw.me/posts/cpp11-new-additions/#rvalue-references>rvalue references</a> <ul><li><a href=https://jsdw.me/posts/cpp11-new-additions/#std-move>std::move</a><li><a href=https://jsdw.me/posts/cpp11-new-additions/#std-forward>std::forward</a></ul><li><a href=https://jsdw.me/posts/cpp11-new-additions/#variadic-templates>Variadic templates</a> <ul><li><a href=https://jsdw.me/posts/cpp11-new-additions/#perfect-forwarding>Perfect Forwarding</a></ul><li><a href=https://jsdw.me/posts/cpp11-new-additions/#tuples>Tuples</a><li><a href=https://jsdw.me/posts/cpp11-new-additions/#summary>Summary</a></ul></div><p>The new standard in C++ - known as C++11 - has bought a host of cool new improvements to the language. I've spent the last week or two getting back into the language myself, which has included a lot of reading about and playing with the new additions. As such, I thought I'd write up everything I learned along the way.<p>This post turned out a lot longer than I was planning, and still does not cover everything, but I reckon I have hit on most of the more fun additions at the very least. It's worth noting that all of the following examples compile just fine on gcc 4.7.2. For a more complete rundown of the new additions, <a href=http://en.wikipedia.org/wiki/C%2B%2B11>this</a> article seems to cover everything.<h1 id=the-auto-keyword>The <code>auto</code> Keyword</h1><p>A lifesaver when long variable types are used. When a variable is first initialized, you can now forgo explicitly telling the compiler what type it is, and let it deduce the type itself by using the <code>auto</code> keyword instead. Here is a standard loop using iterators:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=color:#75715e>//create a new vector (using the new list initialization):
+</span><span>std::vector<</span><span style=font-style:italic;color:#66d9ef>double</span><span>> vec{</span><span style=color:#ae81ff>10.0</span><span>, </span><span style=color:#ae81ff>20.0</span><span>, </span><span style=color:#ae81ff>30.0</span><span>, </span><span style=color:#ae81ff>40.0</span><span>};
+</span><span>
+</span><span style=color:#75715e>//iterate over it:
+</span><span style=color:#f92672>for</span><span>(std::vector<</span><span style=font-style:italic;color:#66d9ef>double</span><span>>::iterator it </span><span style=color:#f92672>=</span><span> vec.begin();
+</span><span>	it </span><span style=color:#f92672>!=</span><span> vec.end(); it</span><span style=color:#f92672>++</span><span>)
+</span><span>	{
+</span><span>	std::cout </span><span style=color:#f92672><< *</span><span>it </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>	}
+</span></code></pre><p>Typing out long variable types leads to a potential source of error, and can also diminish readbility. Utilising the <code>auto</code> keyword:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=color:#75715e>//create a new vector (using the new list initialization):
+</span><span>std::vector<</span><span style=font-style:italic;color:#66d9ef>double</span><span>> vec{</span><span style=color:#ae81ff>10.0</span><span>, </span><span style=color:#ae81ff>20.0</span><span>, </span><span style=color:#ae81ff>30.0</span><span>, </span><span style=color:#ae81ff>40.0</span><span>};
+</span><span>
+</span><span style=color:#75715e>//iterate over it:
+</span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>auto</span><span> it </span><span style=color:#f92672>=</span><span> vec.begin(); it </span><span style=color:#f92672>!=</span><span> vec.end(); it</span><span style=color:#f92672>++</span><span>)
+</span><span>	{
+</span><span>	std::cout </span><span style=color:#f92672><< *</span><span>it </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>	}
+</span></code></pre><p>Much cleaner!<h2 id=decltype><code>decltype()</code></h2><p>The <code>decltype()</code> function returns the resulting type of the expression passed in to it. It can thus be used in place of the type in some expression. It is useful when the type is otherwise not known, for example when template parameters are involved. A couple of simple examples first:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=color:#75715e>//set type of i to result of the expression 5+3 (int):
+</span><span style=font-style:italic;color:#66d9ef>decltype</span><span>(</span><span style=color:#ae81ff>5</span><span style=color:#f92672>+</span><span style=color:#ae81ff>3</span><span>) i </span><span style=color:#f92672>= </span><span style=color:#ae81ff>5</span><span style=color:#f92672>+</span><span style=color:#ae81ff>3</span><span>;
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>auto</span><span> t1 </span><span style=color:#f92672>= </span><span>makeSomeObject1();
+</span><span style=font-style:italic;color:#66d9ef>auto</span><span> t2 </span><span style=color:#f92672>= </span><span>makeSomeObject2();
+</span><span style=color:#75715e>//set type of t3 to whatever the type of t1+t2 is:
+</span><span style=font-style:italic;color:#66d9ef>decltype</span><span>(t1</span><span style=color:#f92672>+</span><span>t2) t3 </span><span style=color:#f92672>=</span><span> t1</span><span style=color:#f92672>+</span><span>t2;
+</span></code></pre><p>This becomes far more useful when dealing with template functions in which the return type depends on the input types, and is unknown beforehand. Previously, the return type may have had to be explicitly declared as a template parameter. However, using the new alternative function syntax provided in c++11, we can overcome this problem:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=color:#75715e>//old syntax:
+</span><span style=font-style:italic;color:#66d9ef>template</span><span><</span><span style=font-style:italic;color:#66d9ef>typename</span><span> R, </span><span style=font-style:italic;color:#66d9ef>typename</span><span> T, </span><span style=font-style:italic;color:#66d9ef>typename</span><span> U>
+</span><span>R </span><span style=color:#a6e22e>doSomething</span><span>(T </span><span style=font-style:italic;color:#fd971f>a</span><span>, U </span><span style=font-style:italic;color:#fd971f>b</span><span>)
+</span><span>	{
+</span><span>	</span><span style=color:#f92672>return</span><span> a</span><span style=color:#f92672>+</span><span>b;
+</span><span>	}
+</span><span style=color:#f92672>...
+</span><span>doSomething<</span><span style=font-style:italic;color:#66d9ef>double</span><span>>(</span><span style=color:#ae81ff>3.0</span><span>, </span><span style=color:#ae81ff>5</span><span>);
+</span><span>
+</span><span style=color:#75715e>//new syntax:
+</span><span style=font-style:italic;color:#66d9ef>template</span><span><</span><span style=font-style:italic;color:#66d9ef>typename</span><span> T, </span><span style=font-style:italic;color:#66d9ef>typename</span><span> U>
+</span><span style=font-style:italic;color:#66d9ef>auto </span><span style=color:#a6e22e>doSomethingBetter</span><span>(T </span><span style=font-style:italic;color:#fd971f>a</span><span>, U </span><span style=font-style:italic;color:#fd971f>b</span><span>) -> </span><span style=font-style:italic;color:#66d9ef>decltype</span><span>(a</span><span style=color:#f92672>+</span><span>b)
+</span><span>	{
+</span><span>	</span><span style=color:#f92672>return</span><span> a</span><span style=color:#f92672>+</span><span>b;
+</span><span>	}
+</span><span style=color:#f92672>...
+</span><span>doSomethingBetter(</span><span style=color:#ae81ff>3.0</span><span>, </span><span style=color:#ae81ff>5</span><span>);
+</span><span>
+</span></code></pre><p>Note that the <code>auto</code> keyword, in this format, has a different meaning from that described above; it basically tells the compiler that the return type will be stated after the input. This allows us to take the input variable types into account, as by the time the return type is provided, they are known. As such, the following won't work, as the input variables are not known about at the point that we attempt to use them to calculate the return type:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=color:#75715e>//error, as a and b aren't known when the return type is given:
+</span><span style=font-style:italic;color:#66d9ef>template</span><span><</span><span style=font-style:italic;color:#66d9ef>typename</span><span> T, </span><span style=font-style:italic;color:#66d9ef>typename</span><span> U>
+</span><span style=font-style:italic;color:#66d9ef>decltype</span><span>(a</span><span style=color:#f92672>+</span><span>b) </span><span style=color:#a6e22e>doSomethingBetter</span><span>(T </span><span style=font-style:italic;color:#fd971f>a</span><span>, U </span><span style=font-style:italic;color:#fd971f>b</span><span>)
+</span><span>	{
+</span><span>	</span><span style=color:#f92672>return</span><span> a</span><span style=color:#f92672>+</span><span>b;
+</span><span>	}
+</span></code></pre><h1 id=range-for-loops>Range for loops</h1><p>Even using the auto keyword, standard for loops are more verbose than they need to be when we want to iterate over an entire collection, which is often the case.<p>Present in most other languages, range for loops are a welcome addition to c++11. Taking our earlier iterator example, we can see the difference here:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=color:#75715e>//old way to iterate over a container (called vec):
+</span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>auto</span><span> it </span><span style=color:#f92672>=</span><span> vec.begin(); it </span><span style=color:#f92672>!=</span><span> vec.end(); it</span><span style=color:#f92672>++</span><span>)
+</span><span>	{
+</span><span>	</span><span style=color:#75715e>//print each value in vec:
+</span><span>	std::cout </span><span style=color:#f92672><< *</span><span>it </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>	}
+</span><span>
+</span><span style=color:#75715e>//new way, using a range for loop:
+</span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>auto</span><span> i </span><span style=color:#f92672>:</span><span> vec)
+</span><span>	{
+</span><span>	std::cout </span><span style=color:#f92672><<</span><span> i </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>	}
+</span><span>
+</span><span style=color:#75715e>//get a reference to i if we want to change the value:
+</span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>auto </span><span style=color:#f92672>&</span><span> i </span><span style=color:#f92672>:</span><span> vec)
+</span><span>	{
+</span><span>	</span><span style=color:#75715e>//add 10 to each item in the vector:
+</span><span>	i </span><span style=color:#f92672>+= </span><span style=color:#ae81ff>10</span><span>;
+</span><span>	}
+</span></code></pre><p>As a bonus, these range based for loops also work with standard arrays:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=color:#75715e>//declare array of 5 values:
+</span><span style=font-style:italic;color:#66d9ef>int</span><span> a[</span><span style=color:#ae81ff>5</span><span>]{</span><span style=color:#ae81ff>10</span><span>,</span><span style=color:#ae81ff>20</span><span>,</span><span style=color:#ae81ff>30</span><span>,</span><span style=color:#ae81ff>40</span><span>,</span><span style=color:#ae81ff>50</span><span>};
+</span><span>
+</span><span style=color:#75715e>//add 10 to each value in array:
+</span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>auto </span><span style=color:#f92672>&</span><span> val </span><span style=color:#f92672>:</span><span> a)
+</span><span>	{
+</span><span>	val </span><span style=color:#f92672>+= </span><span style=color:#ae81ff>10</span><span>;
+</span><span>	}
+</span></code></pre><p>As an aside, c++11 also adds the standalone <code>begin()</code> and <code>end()</code> functions, which return iterators to the beginning and end of a container just as the member functions <code>.begin()</code> and <code>.end()</code> do. The advantage of the standalone functions is that they also work with arrays, allowing you to write more generic code when explicitly using iterators too.<p>Remember to explicitly ask for references to the values in the array if you wish to modify them or avoid copying.<h1 id=the-using-keyword-for-aliases>The <code>using</code> keyword for aliases</h1><p>The using keyword can replace the <code>typedef</code> keyword entirely, and provides a more readable way of defining aliases to things:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>typedef</span><span> std::vector<</span><span style=font-style:italic;color:#66d9ef>int</span><span>> vInt;
+</span><span style=color:#f92672>using </span><span>vInt </span><span style=color:#f92672>=</span><span> std::vector<</span><span style=font-style:italic;color:#66d9ef>int</span><span>>;
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>typedef unsigned int </span><span>UINT;
+</span><span style=color:#f92672>using </span><span>UINT </span><span style=color:#f92672>= </span><span style=font-style:italic;color:#66d9ef>unsigned int</span><span>;
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>typedef struct</span><span>{</span><span style=font-style:italic;color:#66d9ef>int</span><span> i </span><span style=color:#f92672>= </span><span style=color:#ae81ff>0</span><span>; </span><span style=font-style:italic;color:#66d9ef>double</span><span> d </span><span style=color:#f92672>= </span><span style=color:#ae81ff>2</span><span>;} THING;
+</span><span style=color:#f92672>using </span><span>THING </span><span style=color:#f92672>= </span><span style=font-style:italic;color:#66d9ef>struct</span><span>{</span><span style=font-style:italic;color:#66d9ef>int</span><span> i </span><span style=color:#f92672>= </span><span style=color:#ae81ff>0</span><span>; </span><span style=font-style:italic;color:#66d9ef>double</span><span> d </span><span style=color:#f92672>= </span><span style=color:#ae81ff>2</span><span>;};
+</span></code></pre><h2 id=template-using>Template <code>using</code></h2><p>The using keyword also introduces something that typedef could never do; you can alias template functions with using statements, as in the following:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=color:#f92672>#include </span><span style=color:#e6db74>&LTvector>
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>template</span><span><</span><span style=font-style:italic;color:#66d9ef>typename</span><span> T> </span><span style=color:#f92672>using </span><span>v </span><span style=color:#f92672>=</span><span> std::vector&LTT>;
+</span><span style=color:#75715e>//v&LTT> is now an alias for std::vector&LTT>
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>    v<</span><span style=font-style:italic;color:#66d9ef>int</span><span>> t1{</span><span style=color:#ae81ff>1</span><span>,</span><span style=color:#ae81ff>3</span><span>,</span><span style=color:#ae81ff>5</span><span>,</span><span style=color:#ae81ff>7</span><span>,</span><span style=color:#ae81ff>9</span><span>};
+</span><span>    }
+</span></code></pre><h1 id=lambda-functions>Lambda Functions</h1><p>Lambda functions are a very cool addition to the language. Essentially, the new syntax allows you to declare anonymous functions when needed, which can help keep related code in the same place, and save effort when you are passing functions in to other functions. Here is the usual way of sorting a vector of custom structs by some value as an example:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>struct </span><span>MyStruct
+</span><span>    {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>int</span><span> a;
+</span><span>    std::string b;
+</span><span>    };
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>compareA</span><span>(</span><span style=color:#f92672>const</span><span> MyStruct </span><span style=color:#f92672>& </span><span style=font-style:italic;color:#fd971f>s1</span><span>,</span><span style=color:#f92672>const</span><span> MyStruct </span><span style=color:#f92672>& </span><span style=font-style:italic;color:#fd971f>s2</span><span>)
+</span><span>    {
+</span><span>    </span><span style=color:#f92672>return</span><span> s1.a </span><span style=color:#f92672><</span><span> s2.a;
+</span><span>    }
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>    std::vector&LTMyStruct> vec{ {</span><span style=color:#ae81ff>10</span><span>, </span><span style=color:#e6db74>"Hello"</span><span>}, {</span><span style=color:#ae81ff>8</span><span>, </span><span style=color:#e6db74>"Yes"</span><span>}, {</span><span style=color:#ae81ff>15</span><span>, </span><span style=color:#e6db74>"No"</span><span>} };
+</span><span>    </span><span style=color:#75715e>//remember to include the algorithm header for std::sort.
+</span><span>    std::sort(vec.begin(), vec.end(), compareA);
+</span><span>    </span><span style=color:#f92672>return </span><span style=color:#ae81ff>0</span><span>;
+</span><span>    }
+</span></code></pre><p>Using lambda, we can avoid defining a compare function and do everything inline instead:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>struct </span><span>MyStruct
+</span><span>    {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>int</span><span> a;
+</span><span>    std::string b;
+</span><span>    };
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>    std::vector<</span><span style=font-style:italic;color:#66d9ef>int</span><span>> vec{</span><span style=color:#ae81ff>5</span><span>,</span><span style=color:#ae81ff>1</span><span>,</span><span style=color:#ae81ff>3</span><span>,</span><span style=color:#ae81ff>4</span><span>,</span><span style=color:#ae81ff>2</span><span>};
+</span><span>    std::sort(vec.begin(), vec.end(), [](</span><span style=color:#f92672>const</span><span> MyStruct </span><span style=color:#f92672>&</span><span> s1,</span><span style=color:#f92672>const</span><span> MyStruct </span><span style=color:#f92672>&</span><span> s2)
+</span><span>		 {
+</span><span>		 </span><span style=color:#f92672>return</span><span> s1.a </span><span style=color:#f92672><</span><span> s2.a;
+</span><span>		 });
+</span><span>	 </span><span style=color:#f92672>return </span><span style=color:#ae81ff>0</span><span>;
+</span><span>    }
+</span></code></pre><p>the square brackets <code>[]</code> denote the beginning of a lambda function. Next, we provide the arguments that it takes, and finally declare the function. Normally, the return type can be automatically deduced, though you can apply the new return syntax to be explicit:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=color:#75715e>//assign variable f to a new lambda function:
+</span><span style=font-style:italic;color:#66d9ef>auto</span><span> f </span><span style=color:#f92672>= </span><span>[](</span><span style=font-style:italic;color:#66d9ef>int</span><span> a, </span><span style=font-style:italic;color:#66d9ef>int</span><span> b)->double {</span><span style=color:#f92672>return</span><span> a</span><span style=color:#f92672>+</span><span>b;};
+</span><span>
+</span><span style=color:#75715e>//use it:
+</span><span>std::cout </span><span style=color:#f92672><< </span><span>f(</span><span style=color:#ae81ff>7</span><span>, </span><span style=color:#ae81ff>10</span><span>) </span><span style=color:#f92672><<</span><span> std::endl;
+</span></code></pre><h2 id=passing-local-variables-in-to-a-lambda-function>Passing local variables in to a lambda function</h2><p>Lambda functions cannot, by default, see any of the variables declared in the local scope. However, it is simple to <em>capture</em> the variables such that they can be used in the lambda expression:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>int</span><span> some_number </span><span style=color:#f92672>= </span><span style=color:#ae81ff>7</span><span>;
+</span><span style=font-style:italic;color:#66d9ef>int</span><span> another_number </span><span style=color:#f92672>= </span><span style=color:#ae81ff>12</span><span>;
+</span><span>
+</span><span style=color:#75715e>//won't work, as the above variables are unknown inside the lambda:
+</span><span style=font-style:italic;color:#66d9ef>auto</span><span> f </span><span style=color:#f92672>= </span><span>[]()
+</span><span>	{
+</span><span>	</span><span style=color:#f92672>return</span><span> some_number </span><span style=color:#f92672>+</span><span> another_number;
+</span><span>	};
+</span><span>
+</span><span style=color:#75715e>//captures references to all local variables:
+</span><span style=font-style:italic;color:#66d9ef>auto</span><span> f2 </span><span style=color:#f92672>= </span><span>[</span><span style=color:#f92672>&</span><span>]()
+</span><span>	{
+</span><span>	</span><span style=color:#75715e>//change value of some_number:
+</span><span>	some_number </span><span style=color:#f92672>= </span><span style=color:#ae81ff>100</span><span>;
+</span><span>	</span><span style=color:#f92672>return</span><span> some_number </span><span style=color:#f92672>+</span><span> another_number;
+</span><span>	};
+</span><span>
+</span><span style=color:#75715e>//captures copies of all local variables:
+</span><span style=font-style:italic;color:#66d9ef>auto</span><span> f2 </span><span style=color:#f92672>= </span><span>[</span><span style=color:#f92672>=</span><span>]()
+</span><span>	{
+</span><span>	</span><span style=color:#75715e>//value won't change outside lambda function now:
+</span><span>	some_number </span><span style=color:#f92672>= </span><span style=color:#ae81ff>100</span><span>;
+</span><span>	</span><span style=color:#f92672>return</span><span> some_number </span><span style=color:#f92672>+</span><span> another_number;
+</span><span>	};
+</span><span>
+</span><span style=color:#75715e>//capture copy of another number, and reference to some_number:
+</span><span style=font-style:italic;color:#66d9ef>auto</span><span> f2 </span><span style=color:#f92672>= </span><span>[another_number,</span><span style=color:#f92672>&</span><span>some_number]()
+</span><span>	{
+</span><span>	</span><span style=color:#75715e>//...
+</span><span>	};
+</span><span>
+</span><span style=color:#75715e>//capture reference to some_number and copy of everything else:
+</span><span style=font-style:italic;color:#66d9ef>auto</span><span> f2 </span><span style=color:#f92672>= </span><span>[</span><span style=color:#f92672>=</span><span>,</span><span style=color:#f92672>&</span><span>some_number]()
+</span><span>	{
+</span><span>	</span><span style=color:#75715e>//...
+</span><span>	};
+</span></code></pre><p>If you use a lambda function inside a member function of a class, you'll need to capture the <code>this</code> pointer in order to access the other member variables of that class. Doing so will give you automatic access to member variables and functions:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>struct </span><span>Simple
+</span><span>    {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>int</span><span> a </span><span style=color:#f92672>= </span><span style=color:#ae81ff>1</span><span>;
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>doSomething</span><span>()
+</span><span>        {
+</span><span>        </span><span style=font-style:italic;color:#66d9ef>auto</span><span> f </span><span style=color:#f92672>= </span><span>[this]()
+</span><span>            {
+</span><span>            </span><span style=color:#f92672>return</span><span> a </span><span style=color:#f92672>+ </span><span style=color:#ae81ff>10</span><span>;
+</span><span>            };
+</span><span>        </span><span style=color:#f92672>return </span><span>f();
+</span><span>        }
+</span><span>    };
+</span></code></pre><p>At this point, it's also worth noting that the <code>std::function</code> object can be used to easily pass around functions, whether they are lambda functions, regular functions, or classes with overloaded parentheses that act as functions:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=color:#f92672>#include </span><span style=color:#e6db74>&LTiostream>
+</span><span style=color:#f92672>#include </span><span style=color:#e6db74>&LTfunctional>
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>func</span><span>(std::string </span><span style=font-style:italic;color:#fd971f>in</span><span>) { </span><span style=color:#f92672>return</span><span> in.length(); }
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>struct </span><span>func_class
+</span><span>    {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>operator() </span><span>(std::string </span><span style=font-style:italic;color:#fd971f>a</span><span>)
+</span><span>        {
+</span><span>        </span><span style=color:#f92672>return</span><span> a.length();
+</span><span>        }
+</span><span>    };
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>    </span><span style=color:#75715e>//take in regular function:
+</span><span>    std::function<</span><span style=font-style:italic;color:#66d9ef>int</span><span>(std::string)> f(func);
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span>f(</span><span style=color:#e6db74>"hello"</span><span>) </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>
+</span><span>    </span><span style=color:#75715e>//take in lambda function:
+</span><span>    std::function<</span><span style=font-style:italic;color:#66d9ef>double</span><span>(</span><span style=font-style:italic;color:#66d9ef>int</span><span>,</span><span style=font-style:italic;color:#66d9ef>int</span><span>)> f2 </span><span style=color:#f92672>= </span><span>[](</span><span style=font-style:italic;color:#66d9ef>int</span><span> a, </span><span style=font-style:italic;color:#66d9ef>int</span><span> b)
+</span><span>        {
+</span><span>        </span><span style=color:#f92672>return</span><span> a</span><span style=color:#f92672>+</span><span>b;
+</span><span>        };
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span>f2(</span><span style=color:#ae81ff>10</span><span>, </span><span style=color:#ae81ff>30</span><span>) </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>
+</span><span>    </span><span style=color:#75715e>//take in function object:
+</span><span>    func_class temp_func;
+</span><span>    std::function<</span><span style=font-style:italic;color:#66d9ef>int</span><span>(std::string)> f3(temp_func);
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span>f3(</span><span style=color:#e6db74>"a long string"</span><span>) </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    }
+</span></code></pre><p>The template argument for <code>std::function</code> takes its parameter in the form <code>return_type(input_type, input_type..)</code>, allowing you to specify the function signature it will be used for.<p>This provides a simple, standardized way to accept functions which match the given signature as parameters to some other function, or declare lambda functions as local variables (though the auto keyword can be used here too for simplicity).<h1 id=multi-threading>Multi-threading</h1><p>C++11 finally brings in standardised support for multi-threading, which is very cool, and pretty easy to start using too. The current options are the low level <code>std::thread</code> class, and the high level wrapper <code>std::async</code>, which simplifies exception handling and return values. You'll need to include the <code>thread</code> header for these goodies.<h2 id=std-thread><code>std::thread</code></h2><p>To start a new thread, we first pass some function into the <code>std::thread</code> constructor (using lambda syntax or regular function syntax). At some point after this, we can then either <code>join()</code> the constructed thread with its calling thread, or <code>detach()</code> it. Joining it to the current thread blocks the current thread until it has finished executing. Detaching it allows it to run independent of the scope in which it was created. The main thread must be kept alive until any child threads finish; once the main thread returns, the program exits.<p>It is worth noting that using the raw <code>std::thread</code> is not advised; better to wrap it in a containing class which takes care of exception handling and thread destruction (by joining or detaching it when it goes out of scope for instance). Once you understand the basics you can figure out for yourself how best to put them to practise (something I will need to do myself). A "Hello World" example using a new thread:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=color:#f92672>#include </span><span style=color:#e6db74>&LTthread>
+</span><span style=color:#f92672>#include </span><span style=color:#e6db74>&LTiostream>
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>void </span><span style=color:#a6e22e>doSomething</span><span>()
+</span><span>    {
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"Hello World" </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    }
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>    std::thread t1(doSomething);
+</span><span>    t1.join();
+</span><span>    </span><span style=color:#f92672>return </span><span style=color:#ae81ff>0</span><span>;
+</span><span>    }
+</span></code></pre><p>This simply prints <code>Hello World!</code> in a separate thread, joins it back to the main thread (which blocks the main thread from continuing until the newly created thread finishes), and exits. We can make it more interesting by firing off multiple threads:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=color:#f92672>#include </span><span style=color:#e6db74>&LTthread>
+</span><span style=color:#f92672>#include </span><span style=color:#e6db74>&LTvector>
+</span><span style=color:#f92672>#include </span><span style=color:#e6db74>&LTiostream>
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>void </span><span style=color:#a6e22e>doSomething</span><span>()
+</span><span>    {
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"Hello World" </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    }
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>    std::vector&LTstd::thread> threads;
+</span><span>    </span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>int</span><span> i </span><span style=color:#f92672>= </span><span style=color:#ae81ff>0</span><span>; i </span><span style=color:#f92672>< </span><span style=color:#ae81ff>5</span><span>; i</span><span style=color:#f92672>++</span><span>)
+</span><span>        {
+</span><span>        threads.push_back(std::thread(doSomething));
+</span><span>        }
+</span><span>    </span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>auto</span><span style=color:#f92672>&</span><span> t </span><span style=color:#f92672>:</span><span> threads)
+</span><span>        {
+</span><span>        t.join();
+</span><span>        }
+</span><span>    </span><span style=color:#f92672>return </span><span style=color:#ae81ff>0</span><span>;
+</span><span>    }
+</span></code></pre><p>Notice that we place the threads into a vector, so that we can later call join on them all. This ensures that they all finish before the program hits the end of the main function and terminates. Any arguments that we want to pass into a function we're sending off to another thread can be added as additional arguments when the thread is created:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>void </span><span style=color:#a6e22e>doSomething</span><span>(std::string </span><span style=font-style:italic;color:#fd971f>s</span><span>, </span><span style=font-style:italic;color:#66d9ef>int </span><span style=font-style:italic;color:#fd971f>val</span><span>)
+</span><span>    {
+</span><span>    std::cout </span><span style=color:#f92672><<</span><span> s </span><span style=color:#f92672><< </span><span style=color:#e6db74>" with val: " </span><span style=color:#f92672><<</span><span> val </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    </span><span style=color:#75715e>//outputs "Boo with val: 20"
+</span><span>    }
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>    std::thread t1(doSomething, </span><span style=color:#e6db74>"Boo"</span><span>, </span><span style=color:#ae81ff>20</span><span>);
+</span><span>    t1.join();
+</span><span>    </span><span style=color:#f92672>return </span><span style=color:#ae81ff>0</span><span>;
+</span><span>    }
+</span></code></pre><p>If you output some text using multiple threads, you'll see that the order in which output is printed is often somewhat garbled. This is because there are multiple threads trying to simultaneously write to std::cout.<h2 id=std-mutex-and-std-lock-guard>std::mutex and std::lock_guard</h2><p>The solution to garbled output, and various other issues arising from multiple threads trying to work with some variable at the same time, is to force the threads to behave sequentially for parts of the function.<p>One way to force threads to behave sequentailly when necessary is to use a <code>mutex</code> (you'll need to include the mutex header for these). When a mutex lock is called in one thread, the other threads must wait until the mutex is unlocked again before they can continue past the lock:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span>std::mutex m;
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>void </span><span style=color:#a6e22e>doSomething</span><span>()
+</span><span>    {
+</span><span>    </span><span style=color:#75715e>//do things in parallel here.
+</span><span>
+</span><span>    </span><span style=color:#75715e>//now, force sequential access after the lock:
+</span><span>    m.lock();
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"Hello World" </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    </span><span style=color:#75715e>//release the lock, allowing another thread in:
+</span><span>    m.unlock();
+</span><span>    }
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>    std::vector&LTstd::thread> threads;
+</span><span>    </span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>int</span><span> i </span><span style=color:#f92672>= </span><span style=color:#ae81ff>0</span><span>; i </span><span style=color:#f92672>< </span><span style=color:#ae81ff>5</span><span>; i</span><span style=color:#f92672>++</span><span>)
+</span><span>        {
+</span><span>        threads.push_back(std::thread(doSomething));
+</span><span>        }
+</span><span>    </span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>auto</span><span style=color:#f92672>&</span><span> t </span><span style=color:#f92672>:</span><span> threads)
+</span><span>        {
+</span><span>        t.join();
+</span><span>        }
+</span><span>    </span><span style=color:#f92672>return </span><span style=color:#ae81ff>0</span><span>;
+</span><span>    }
+</span></code></pre><p>After the call to <code>m.lock()</code>, subsequent threads that hit that line must wait until <code>m.unlock()</code> is called, as which point the next thread takes ownership of the lock, and continues on. Thus, the text output is no longer garbled in the above example. As mutexes force sequential access, they should be used as little as possible to maximise the amount of concurrency that can take place and minimise the time threads are blocked.<p>If an exception is thrown after a lock has been attained, you must be careful to ensure that the lock is released, otherwise the other threads will be blocked from continuing indefinitely. The convenient <code>std::lock_guard</code> wrapper takes a mutex in its initialization and locks it, unlocking it again automatically upon its destruction. This guarantees that a mutex will be unlocked regardless of whether an error is thrown in the thread or not. An example:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span>std::mutex m;
+</span><span style=font-style:italic;color:#66d9ef>void </span><span style=color:#a6e22e>doSomething</span><span>()
+</span><span>    {
+</span><span>    </span><span style=color:#75715e>//forces sequential access for duration of scope:
+</span><span>    std::lock_guard&LTstd::mutex> lock(m);
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"Hello World" </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    </span><span style=color:#75715e>//no need to explicitly unlock anything.
+</span><span>    }
+</span></code></pre><p>Of course, in proper applications, you could enclose the lock_guard in a new scope so that it releases the lock as soon as it is no longer needed, as in:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>void </span><span style=color:#a6e22e>doSomething</span><span>()
+</span><span>    {
+</span><span>    </span><span style=color:#75715e>//do stuff in parallel here.
+</span><span>
+</span><span>    	{
+</span><span>    	</span><span style=color:#75715e>//do stuff in sequence here.
+</span><span>    	std::lock_guard&LTstd::mutex> lock(m);
+</span><span>	   std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"Hello World" </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>	   }
+</span><span>
+</span><span>	 </span><span style=color:#75715e>//more stuff in parallel.
+</span><span>    }
+</span></code></pre><p>An alternative to using locks as in the above, is to use atomics, which are atomic versions of the primitive types. What does this mean? well, even something as simple as incrementing an <code>int</code> in multiple threads can lead to an unexpected outcome, as the various threads are simultaneously reading the value of the int, modifying that value, and assigning the int to that value. Take the following:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>int</span><span> i </span><span style=color:#f92672>= </span><span style=color:#ae81ff>0</span><span>;
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>void </span><span style=color:#a6e22e>doSomething</span><span>()
+</span><span>    {
+</span><span>    </span><span style=color:#75715e>//increment i:
+</span><span>    </span><span style=color:#f92672>++</span><span>i;
+</span><span>    }
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>    std::vector&LTstd::thread> threads;
+</span><span>    </span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>int</span><span> i </span><span style=color:#f92672>= </span><span style=color:#ae81ff>0</span><span>; i </span><span style=color:#f92672>< </span><span style=color:#ae81ff>500</span><span>; i</span><span style=color:#f92672>++</span><span>)
+</span><span>        {
+</span><span>        threads.push_back(std::thread(doSomething));
+</span><span>        }
+</span><span>    </span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>auto</span><span style=color:#f92672>&</span><span> t </span><span style=color:#f92672>:</span><span> threads)
+</span><span>        {
+</span><span>        t.join();
+</span><span>        }
+</span><span>    </span><span style=color:#75715e>//print final value of i:
+</span><span>    std::cout </span><span style=color:#f92672><<</span><span> i </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    </span><span style=color:#f92672>return </span><span style=color:#ae81ff>0</span><span>;
+</span><span>    }
+</span></code></pre><p>You might expect that the value of <code>i</code> would always be 500, but it is in fact sometimes lower. By replacing <code>int i = 0;</code> above with <code>std::atomic&LTint> i(0);</code> (and including the atomic header), we remove this issue, as each operation applied to the atomic version of a variable is carried out in full by a thread before any other thread can act on it. It's a bit like applying a mutex lock around every operation you carry out on the atomic variable, but from what I gather, faster.<h2 id=std-async-for-higher-level-multi-threading><code>std::async</code> for higher level multi-threading</h2><p>The <code>std::async</code> function works much like the <code>std::thread</code> function above in that it can take in a function, and then arguments which are sent to that function. It can also optionally take in a launch policy as its first argument, which forces it to behave as either a separate thread, or not.<p>One of the nice things about async however is that, without a launch policy, it will decide how many separate threads to spawn, regardless of how many async calls you make, so you don't have to worry about spawning way too many threads for instance. Another nice thing is that the async function simplifies returning values from threads, by returning an <code>std::future</code> object upon being called. this object can be asked for the return value, which blocks the thread that asked until the value is returned from the asynchronous function. An example:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=color:#f92672>#include </span><span style=color:#e6db74>&LTiostream>
+</span><span style=color:#f92672>#include </span><span style=color:#e6db74>&LTthread>
+</span><span style=color:#f92672>#include </span><span style=color:#e6db74>&LTfuture>
+</span><span>
+</span><span>std::string </span><span style=color:#a6e22e>func</span><span>(std::string </span><span style=font-style:italic;color:#fd971f>in</span><span>)
+</span><span>	{
+</span><span>	</span><span style=color:#f92672>return</span><span> in </span><span style=color:#f92672>+ </span><span style=color:#e6db74>" returned."</span><span>;
+</span><span>	}
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>    </span><span style=color:#75715e>//create future from async call:
+</span><span>    std::future&LTstd::string> ret </span><span style=color:#f92672>= </span><span>std::async(func, </span><span style=color:#e6db74>"hello"</span><span>);
+</span><span>    </span><span style=color:#75715e>//get value from future:
+</span><span>    std::cout </span><span style=color:#f92672><<</span><span> ret.get() </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    </span><span style=color:#75715e>//outputs "hello returned."
+</span><span>    </span><span style=color:#f92672>return </span><span style=color:#ae81ff>0</span><span>;
+</span><span>    }
+</span></code></pre><h1 id=hash-tables>Hash tables</h1><p>One of the sought after additions to the standard is hash tables. These work very similarly to the existing set and map (and multiset and multimap) containers. The main advantage is that they have a better average time complexity when it comes to adding and retrieving values than the standard set and map, as they are store values by hashing them rather than inserting them into a tree. The disadvantage is that values are not stored in any particular order, whereas the standard map and set class store values ordered by their keys.<p>It is also worth pointing out that, even with constant time complexity, a complex hashing function and the more complex retrieval can lead to worse performance than the existing options, though they would likely scale better to larger numbers of inputs.<p>Here is an example of the unordered map (requiring the <code>unordered_map</code> header):<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>struct </span><span>Stuff
+</span><span>    {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>int</span><span> number;
+</span><span>    std::string word;
+</span><span>    };
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>    std::unordered_map&LTstd::string, Stuff> m;
+</span><span>
+</span><span>    </span><span style=color:#75715e>//add some entries to the map:
+</span><span>    m[</span><span style=color:#e6db74>"first"</span><span>] </span><span style=color:#f92672>= </span><span>{</span><span style=color:#ae81ff>10</span><span>, </span><span style=color:#e6db74>"first one"</span><span>};
+</span><span>    m[</span><span style=color:#e6db74>"second"</span><span>] </span><span style=color:#f92672>= </span><span>{</span><span style=color:#ae81ff>20</span><span>, </span><span style=color:#e6db74>"second one"</span><span>};
+</span><span>    </span><span style=color:#75715e>//keys are unique, so this overwrites the above:
+</span><span>    m[</span><span style=color:#e6db74>"second"</span><span>] </span><span style=color:#f92672>= </span><span>{</span><span style=color:#ae81ff>30</span><span>, </span><span style=color:#e6db74>"second one again"</span><span>};
+</span><span>
+</span><span>    </span><span style=color:#75715e>//retrieve the entries for printing:
+</span><span>    std::cout </span><span style=color:#f92672><<</span><span> m[</span><span style=color:#e6db74>"first"</span><span>].word </span><span style=color:#f92672><< </span><span style=color:#e6db74>", " </span><span style=color:#f92672><<</span><span> m[</span><span style=color:#e6db74>"first"</span><span>].number </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    std::cout </span><span style=color:#f92672><<</span><span> m[</span><span style=color:#e6db74>"second"</span><span>].word </span><span style=color:#f92672><< </span><span style=color:#e6db74>", " </span><span style=color:#f92672><<</span><span> m[</span><span style=color:#e6db74>"second"</span><span>].number </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    }
+</span></code></pre><p>Here, the key is a string, and the mapped value is a user-defined structure. The exact same thing could have been done with a regular <code>map</code>. The <code>unordered_multimap</code> allows multiple entries with the same key, and as such requires slightly different syntax to use. An example:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>struct </span><span>Stuff
+</span><span>    {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>int</span><span> number;
+</span><span>    std::string word;
+</span><span>    };
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>    std::unordered_multimap&LTstd::string, Stuff> m;
+</span><span>
+</span><span>    </span><span style=color:#75715e>//create pair on insertion:
+</span><span>    m.emplace(</span><span style=color:#e6db74>"first"</span><span>, Stuff{</span><span style=color:#ae81ff>10</span><span>, </span><span style=color:#e6db74>"first one"</span><span>});
+</span><span>    </span><span style=color:#75715e>//initializer list insertion:
+</span><span>    m.insert({ </span><span style=color:#e6db74>"second"</span><span>, {</span><span style=color:#ae81ff>20</span><span>, </span><span style=color:#e6db74>"second one"</span><span>} });
+</span><span>    </span><span style=color:#75715e>//make pair explictly and insert:
+</span><span>    std::pair&LTstd::string,Stuff> tmp </span><span style=color:#f92672>= </span><span>{</span><span style=color:#e6db74>"second"</span><span>, Stuff{</span><span style=color:#ae81ff>30</span><span>, </span><span style=color:#e6db74>"second one again"</span><span>} };
+</span><span>    m.insert(tmp);
+</span><span>
+</span><span>    </span><span style=color:#75715e>//print all values in no particular order:
+</span><span>    </span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>auto </span><span style=color:#f92672>&</span><span> val </span><span style=color:#f92672>:</span><span> m)
+</span><span>        {
+</span><span>        </span><span style=color:#75715e>//val is a std::pair containing string and Stuff:
+</span><span>        std::cout </span><span style=color:#f92672><<</span><span> val.first </span><span style=color:#f92672><< </span><span style=color:#e6db74>": "
+</span><span>                  </span><span style=color:#f92672><<</span><span> val.second.word </span><span style=color:#f92672><< </span><span style=color:#e6db74>", "
+</span><span>                  </span><span style=color:#f92672><<</span><span> val.second.number </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>        }
+</span><span>
+</span><span>    </span><span style=color:#75715e>//print all values of Stuff with the key "second":
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>auto</span><span> r </span><span style=color:#f92672>=</span><span> m.equal_range(</span><span style=color:#e6db74>"second"</span><span>);
+</span><span>    </span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>auto</span><span> it </span><span style=color:#f92672>=</span><span> r.first; it </span><span style=color:#f92672>!=</span><span> r.second; it</span><span style=color:#f92672>++</span><span>)
+</span><span>        {
+</span><span>        Stuff </span><span style=color:#f92672>&</span><span> item </span><span style=color:#f92672>=</span><span> it->second;
+</span><span>        std::cout </span><span style=color:#f92672><<</span><span> item.number </span><span style=color:#f92672><< </span><span style=color:#e6db74>", " </span><span style=color:#f92672><<</span><span> item.word </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>        }
+</span><span>    }
+</span></code></pre><p>Much like these are used like <code>map</code> and <code>multimap</code>, the <code>unordered_set</code> and <code>unordered_multiset</code> are used like <code>set</code> and <code>multiset</code>. In either case, the element that you wish to add is also the key. Elements can be added, and then iterated over or queried to see whether they exist in the set or not. In the case of multisets - as with multimaps - you can also iterate over elements with a specific key. I'll summarize them both with a quick example:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=color:#75715e>//### first, the unordered set ###:
+</span><span>std::unordered_set&LTstd::string> s;
+</span><span>
+</span><span style=color:#75715e>//insert a couple of items:
+</span><span>s.insert(</span><span style=color:#e6db74>"Hello"</span><span>);
+</span><span>s.insert(</span><span style=color:#e6db74>"No way"</span><span>);
+</span><span>
+</span><span style=color:#75715e>//get an iterator to an item (or to s.end if not present):
+</span><span style=font-style:italic;color:#66d9ef>auto</span><span> it </span><span style=color:#f92672>=</span><span> s.find(</span><span style=color:#e6db74>"Hello"</span><span>);
+</span><span style=color:#f92672>if</span><span>(it </span><span style=color:#f92672>!=</span><span> s.end())
+</span><span>  std::cout </span><span style=color:#f92672><< *</span><span>it </span><span style=color:#f92672><< </span><span style=color:#e6db74>" is in the set." </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>
+</span><span style=color:#75715e>//### now, the unordered_multiset ###:
+</span><span>std::unordered_multiset&LTstd::string> multi_s;
+</span><span>
+</span><span style=color:#75715e>//insert a couple of items:
+</span><span>multi_s.insert(</span><span style=color:#e6db74>"Hello"</span><span>);
+</span><span>multi_s.insert(</span><span style=color:#e6db74>"Hello"</span><span>);
+</span><span>multi_s.insert(</span><span style=color:#e6db74>"No way"</span><span>);
+</span><span>multi_s.insert(</span><span style=color:#e6db74>"Hello"</span><span>);
+</span><span>
+</span><span style=color:#75715e>//count number of times "Hello" was inserted:
+</span><span style=font-style:italic;color:#66d9ef>auto</span><span> it_pair </span><span style=color:#f92672>=</span><span> multi_s.equal_range(</span><span style=color:#e6db74>"Hello"</span><span>);
+</span><span>std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"Hello seen "
+</span><span>        </span><span style=color:#f92672><< </span><span>distance(it_pair.first,it_pair.second)
+</span><span>        </span><span style=color:#f92672><< </span><span style=color:#e6db74>" times."
+</span><span>        </span><span style=color:#f92672><<</span><span> std::endl;
+</span></code></pre><h1 id=new-smart-pointers>New Smart Pointers</h1><p>Managing dynamic resources solely with the <code>new</code> and <code>delete</code> operator can be a risky business; if an exception is thrown before <code>delete</code> can be called, for instance, the result is a memory leak. In addition, when pointers are returned from functions, it is not always clear whether the resource pointed too by it needs to be deleted or not (in other words, has the ownership been transferred).<p>C++11 introduces <code>unique_ptr</code>, <code>shared_ptr</code> and <code>weak_ptr</code> as tools to better deal with this memory and ownership management (from the memory header). Each works in a slightly different way:<ul><li>A <code>shared_ptr</code> can be pointed at any dynamically allocated resource, and holds a reference count which begins at 1. Each time a copy of it is made, the reference count increases, and each time one of these copies is destroyed, the count decreases. When the count hits 0, the underlying resource being pointed to is deleted.<li>A <code>unique_ptr</code> can also be pointed at any dynamically allocated resource, but cannot be copied or assigned too. Ownership can be transferred using <code>std::move</code>, which invalidates the original pointer.<li>A <code>weak_ptr</code> points to an object managed by a <code>shared_ptr</code>, but does not own it. The <code>weak_ptr</code> must be temporarily turned into a <code>shared_ptr</code> in order to be used: doing so may well reveal that the object no longer exists (the shared_ptr might have deleted it, in which case it is turned into a nullptr.</ul><p>Here are a couple of examples, starting with the <code>unique_ptr</code>:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>struct </span><span>Stuff
+</span><span>    {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>int</span><span> number;
+</span><span>    std::string word;
+</span><span>    };
+</span><span>
+</span><span>std::unique_ptr&LTStuff> </span><span style=color:#a6e22e>ptr</span><span>(</span><span style=color:#f92672>new </span><span>Stuff{</span><span style=color:#ae81ff>10</span><span>, </span><span style=color:#e6db74>"Hello"</span><span>});
+</span><span>std::cout </span><span style=color:#f92672><<</span><span> ptr->number </span><span style=color:#f92672><< </span><span style=color:#e6db74>", " </span><span style=color:#f92672><<</span><span> ptr->word </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>
+</span><span>std::unique_ptr&LTStuff> ptr2 </span><span style=color:#f92672>=</span><span> ptr; </span><span style=color:#75715e>//ERROR.
+</span><span>std::unique_ptr&LTStuff> </span><span style=color:#a6e22e>ptr2</span><span>(</span><span style=font-style:italic;color:#fd971f>ptr</span><span>); </span><span style=color:#75715e>//ERROR.
+</span><span>
+</span><span style=color:#75715e>//OK, explicitly transfer ownership of ptr, rendering it useless:
+</span><span>std::unique_ptr&LTStuff> ptr2 </span><span style=color:#f92672>= </span><span>std::move(ptr);
+</span><span>
+</span><span style=color:#75715e>//outputs true; ptr is now dead:
+</span><span>std::cout </span><span style=color:#f92672><< </span><span>(ptr </span><span style=color:#f92672>== </span><span style=color:#ae81ff>nullptr</span><span>) </span><span style=color:#f92672><<</span><span> std::endl;
+</span></code></pre><p>The <code>shared_ptr</code> is similar except it can be created using a custom function, and can be copied and assigned at will:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>struct </span><span>Stuff
+</span><span>    {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>int</span><span> number;
+</span><span>    std::string word;
+</span><span>    </span><span style=color:#a6e22e>Stuff</span><span>(</span><span style=font-style:italic;color:#66d9ef>int </span><span style=font-style:italic;color:#fd971f>n</span><span>, std::string </span><span style=font-style:italic;color:#fd971f>w</span><span>): number(n),word(w)
+</span><span>        {}
+</span><span>    };
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>        {
+</span><span>        </span><span style=font-style:italic;color:#66d9ef>auto</span><span> ptr1 </span><span style=color:#f92672>= </span><span>std::make_shared&LTStuff>(</span><span style=color:#ae81ff>10</span><span>, </span><span style=color:#e6db74>"Hello"</span><span>);
+</span><span>        </span><span style=color:#75715e>//also allowed but not as efficient:
+</span><span>        </span><span style=color:#75715e>//std::shared_ptr&LTStuff> ptr1(new Stuff{10, "Hello"});
+</span><span>
+</span><span>        </span><span style=color:#75715e>//increases reference count, but points to same object:
+</span><span>        </span><span style=font-style:italic;color:#66d9ef>auto</span><span> ptr2 </span><span style=color:#f92672>=</span><span> ptr1;
+</span><span>        </span><span style=font-style:italic;color:#66d9ef>auto </span><span>ptr3(ptr2);
+</span><span>
+</span><span>        </span><span style=color:#75715e>//two different methods to access object value:
+</span><span>        std::cout </span><span style=color:#f92672><<</span><span> ptr2->number </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>        std::cout </span><span style=color:#f92672><< </span><span>(</span><span style=color:#f92672>*</span><span>ptr3).word </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>        }
+</span><span>    </span><span style=color:#75715e>//resource deleted once all shared pointers go out of scope.
+</span><span>    </span><span style=color:#f92672>return </span><span style=color:#ae81ff>0</span><span>;
+</span><span>    }
+</span></code></pre><p>The <code>weak_ptr</code> points to resources managed by a <code>shared_ptr</code>, but has no say over when those resources go out of scope. Fortunately, it is possible to test whether the weak pointer is still pointing to a valid resource or not. To use the weak pointer, it must be converted to a <code>shared_ptr</code>. Here is an example:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>struct </span><span>Stuff
+</span><span>    {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>int</span><span> val;
+</span><span>    </span><span style=color:#a6e22e>Stuff</span><span>(</span><span style=font-style:italic;color:#66d9ef>int </span><span style=font-style:italic;color:#fd971f>a</span><span>): val(a)
+</span><span>        {std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"Stuff()" </span><span style=color:#f92672><<</span><span> std::endl;}
+</span><span>    </span><span style=color:#a6e22e>~Stuff</span><span>()
+</span><span>        {std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"~Stuff()" </span><span style=color:#f92672><<</span><span> std::endl;}
+</span><span>    };
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>void </span><span style=color:#a6e22e>check</span><span>(std::weak_ptr&LTStuff> </span><span style=font-style:italic;color:#fd971f>weakPtr</span><span>)
+</span><span>    {
+</span><span>    </span><span style=color:#f92672>if</span><span>(weakPtr.expired())
+</span><span>        std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"Not available" </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    </span><span style=color:#f92672>else
+</span><span>        std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"Available" </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    }
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>    std::weak_ptr&LTStuff> weakPtr;
+</span><span>        {
+</span><span>        </span><span style=font-style:italic;color:#66d9ef>auto </span><span>sPtr </span><span style=color:#f92672>= </span><span>std::make_shared&LTStuff>(</span><span style=color:#ae81ff>50</span><span>);
+</span><span>        weakPtr </span><span style=color:#f92672>= </span><span>sPtr;
+</span><span>        </span><span style=color:#75715e>//weak pointer available here:
+</span><span>        check(weakPtr);
+</span><span>        </span><span style=color:#75715e>//output value using weak_ptr:
+</span><span>        </span><span style=font-style:italic;color:#66d9ef>auto </span><span>sPtr2 </span><span style=color:#f92672>=</span><span> weakPtr.lock();
+</span><span>        std::cout </span><span style=color:#f92672><< </span><span>sPtr2->val </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>        }
+</span><span>    </span><span style=color:#75715e>//shared_ptr deleted, so weak ptr not available here:
+</span><span>    check(weakPtr);
+</span><span>    </span><span style=color:#f92672>return </span><span style=color:#ae81ff>0</span><span>;
+</span><span>    }
+</span></code></pre><p>All in all, these different pointer types take on the burden of managing resource deletion so that you don't have too, while offering different ownership semantics when required. It is well worth becoming comfortable with these.<h1 id=rvalue-references><em>rvalue</em> references</h1><p>In c++, there are two types of expression, <em>lvalues</em> and <em>rvalues</em>. <em>lvalues</em> are basically anything that survives beyond a single line; that is, anything with an actual memory address. <em>lvalues</em> can always exist on the left hand side of an expression. <em>rvalues</em> are everything else; expressions whose result would not normally persist longer than that line. <em>rvalues</em> can only ever exist on the right hand side of an expression. Some examples:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>int</span><span> number </span><span style=color:#f92672>= </span><span style=color:#ae81ff>10</span><span>;
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>someFunction</span><span>(){</span><span style=color:#f92672>return </span><span style=color:#ae81ff>4</span><span>;}
+</span><span style=font-style:italic;color:#66d9ef>int</span><span style=color:#f92672>& </span><span style=color:#a6e22e>anotherFunction</span><span>(){</span><span style=color:#f92672>return</span><span> number;}
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>int</span><span> a </span><span style=color:#f92672>= </span><span style=color:#ae81ff>3</span><span style=color:#f92672>+</span><span style=color:#ae81ff>5</span><span>;
+</span><span>    </span><span style=color:#75715e>//a is an lvalue. (3+5) is an rvalue.
+</span><span>
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>int</span><span> b </span><span style=color:#f92672>= </span><span>someFunction();
+</span><span>    </span><span style=color:#75715e>//b is an lvalue, (someFunction()) is an rvalue.
+</span><span>
+</span><span>    (a </span><span style=color:#f92672>></span><span> b</span><span style=color:#f92672>?</span><span> a </span><span style=color:#f92672>:</span><span> b) </span><span style=color:#f92672>= </span><span style=color:#ae81ff>10</span><span>;
+</span><span>    </span><span style=color:#75715e>//the result of (a > b? a : b) is an lvalue.
+</span><span>
+</span><span>    anotherFunction() </span><span style=color:#f92672>= </span><span style=color:#ae81ff>3</span><span>;
+</span><span>    </span><span style=color:#75715e>//anotherFunction() is an lvalue:
+</span><span>    </span><span style=color:#75715e>//it returns something with an address.
+</span><span>
+</span><span>    </span><span style=color:#f92672>return </span><span style=color:#ae81ff>0</span><span>;
+</span><span>    }
+</span></code></pre><p>Prior to C++11, there was no way to know whether your function was being passed an lvalue or an rvalue. Why does this matter? Well, since rvalues are never again accessed, why not make use of their resources rather than make a potentially expensive copy. Rvalue references are a way of explicitly accessing rvalues.<p>An rvalue reference is denoted like a regular reference, but uses two <code>&&</code> symbols instead of one. It should never be passed with the <code>const</code> modifier, as that would defeat the point of being able to use its resources (and thus modify it). Functions that take in rvalue references cannot be passed lvalues, and thus will ordinarily be seen paired up with overloads of them that also accept normal references (also known as <em>lvalue references</em>).<p>One often used example is in adding together resources. Here is how we might write and use an addition function for some random structure without rvalues:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>struct </span><span>Stuff
+</span><span>    {
+</span><span>    std::vector<</span><span style=font-style:italic;color:#66d9ef>int</span><span>> v;
+</span><span>    </span><span style=color:#a6e22e>Stuff</span><span>(</span><span style=font-style:italic;color:#66d9ef>int </span><span style=font-style:italic;color:#fd971f>l</span><span>)
+</span><span>        {
+</span><span>        std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"Constructing" </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>        </span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>int</span><span> i </span><span style=color:#f92672>= </span><span style=color:#ae81ff>0</span><span>; i </span><span style=color:#f92672><</span><span> l; i</span><span style=color:#f92672>++</span><span>)
+</span><span>            {
+</span><span>            v.push_back(i);
+</span><span>            }
+</span><span>        }
+</span><span>    </span><span style=color:#a6e22e>Stuff</span><span>(): Stuff(</span><span style=color:#ae81ff>0</span><span>)
+</span><span>        {}
+</span><span>    };
+</span><span>Stuff </span><span style=color:#a6e22e>operator+</span><span>(</span><span style=color:#f92672>const</span><span> Stuff</span><span style=color:#f92672>& </span><span style=font-style:italic;color:#fd971f>s1</span><span>, </span><span style=color:#f92672>const</span><span> Stuff</span><span style=color:#f92672>& </span><span style=font-style:italic;color:#fd971f>s2</span><span>)
+</span><span>    {
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"lvalue + lvalue" </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    Stuff s3;
+</span><span>    </span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>auto</span><span> val </span><span style=color:#f92672>:</span><span> s1.v) s3.v.push_back(val);
+</span><span>    </span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>auto</span><span> val </span><span style=color:#f92672>:</span><span> s2.v) s3.v.push_back(val);
+</span><span>    </span><span style=color:#f92672>return</span><span> s3;
+</span><span>    }
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"# Making Stuff objects:" </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    Stuff s1(</span><span style=color:#ae81ff>2</span><span>);
+</span><span>    Stuff s2(</span><span style=color:#ae81ff>5</span><span>);
+</span><span>    Stuff s3(</span><span style=color:#ae81ff>10</span><span>);
+</span><span>
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"# Add them to new Stuff:" </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    Stuff s4 </span><span style=color:#f92672>=</span><span> s1 </span><span style=color:#f92672>+</span><span> s2 </span><span style=color:#f92672>+</span><span> s3;
+</span><span>
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"# Add rvalue Stuffs to new Stuff:" </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    Stuff s5 </span><span style=color:#f92672>= </span><span>Stuff(</span><span style=color:#ae81ff>10</span><span>) </span><span style=color:#f92672>+ </span><span>Stuff(</span><span style=color:#ae81ff>20</span><span>) </span><span style=color:#f92672>+ </span><span>Stuff(</span><span style=color:#ae81ff>30</span><span>);
+</span><span>
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"# Add mix of Stuffs to new Stuff:" </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    Stuff s6 </span><span style=color:#f92672>=</span><span> s1 </span><span style=color:#f92672>+ </span><span>Stuff(</span><span style=color:#ae81ff>10</span><span>) </span><span style=color:#f92672>+</span><span> s2 </span><span style=color:#f92672>+ </span><span>Stuff(</span><span style=color:#ae81ff>20</span><span>);
+</span><span>
+</span><span>    </span><span style=color:#f92672>return </span><span style=color:#ae81ff>0</span><span>;
+</span><span>    }
+</span></code></pre><p>And the output of that is as follows:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span># Making Stuff objects:
+</span><span>Constructing
+</span><span>Constructing
+</span><span>Constructing
+</span><span># Add them to new Stuff:
+</span><span>lvalue + lvalue
+</span><span>Constructing
+</span><span>lvalue + lvalue
+</span><span>Constructing
+</span><span># Add rvalue Stuffs to new Stuff:
+</span><span>Constructing
+</span><span>Constructing
+</span><span>Constructing
+</span><span>lvalue + lvalue
+</span><span>Constructing
+</span><span>lvalue + lvalue
+</span><span>Constructing
+</span><span># Add mix of Stuffs to new Stuff:
+</span><span>Constructing
+</span><span>Constructing
+</span><span>lvalue + lvalue
+</span><span>Constructing
+</span><span>lvalue + lvalue
+</span><span>Constructing
+</span><span>lvalue + lvalue
+</span><span>Constructing
+</span></code></pre><p>In contrast, if we define the following operators to make use of rvalue semantics:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=color:#75715e>//s1 is an rvalue reference:
+</span><span>Stuff </span><span style=color:#a6e22e>operator+</span><span>(Stuff</span><span style=color:#f92672>&& </span><span style=font-style:italic;color:#fd971f>s1</span><span>, </span><span style=color:#f92672>const</span><span> Stuff</span><span style=color:#f92672>& </span><span style=font-style:italic;color:#fd971f>s2</span><span>)
+</span><span>    {
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"rvalue + lvalue" </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    </span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>auto</span><span> val </span><span style=color:#f92672>:</span><span> s2.v) s1.v.push_back(val);
+</span><span>    </span><span style=color:#f92672>return</span><span> s1;
+</span><span>    }
+</span><span>
+</span><span style=color:#75715e>//s2 is an rvalue reference:
+</span><span>Stuff </span><span style=color:#a6e22e>operator+</span><span>(</span><span style=color:#f92672>const</span><span> Stuff</span><span style=color:#f92672>& </span><span style=font-style:italic;color:#fd971f>s1</span><span>, Stuff</span><span style=color:#f92672>&& </span><span style=font-style:italic;color:#fd971f>s2</span><span>)
+</span><span>    {
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"lvalue + rvalue" </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>
+</span><span>    std::vector<</span><span style=font-style:italic;color:#66d9ef>int</span><span>> tmp(s1.v);
+</span><span>    </span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>auto</span><span> val </span><span style=color:#f92672>:</span><span> s2.v) tmp.push_back(val);
+</span><span>    s2.v </span><span style=color:#f92672>= </span><span>std::move(tmp);
+</span><span>
+</span><span>    </span><span style=color:#f92672>return</span><span> s2;
+</span><span>    }
+</span><span>
+</span><span style=color:#75715e>//s1 and s2 are rvalue references:
+</span><span>Stuff </span><span style=color:#a6e22e>operator+</span><span>(Stuff</span><span style=color:#f92672>&& </span><span style=font-style:italic;color:#fd971f>s1</span><span>, Stuff</span><span style=color:#f92672>&& </span><span style=font-style:italic;color:#fd971f>s2</span><span>)
+</span><span>    {
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"rvalue + rvalue" </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    </span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>auto</span><span> val </span><span style=color:#f92672>:</span><span> s1.v) s2.v.push_back(val);
+</span><span>    </span><span style=color:#f92672>return</span><span> s2;
+</span><span>    }
+</span></code></pre><p>The output becomes:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span># Making Stuff objects:
+</span><span>Constructing
+</span><span>Constructing
+</span><span>Constructing
+</span><span># Add them to new Stuff:
+</span><span>lvalue + lvalue
+</span><span>Constructing
+</span><span>rvalue + lvalue
+</span><span># Add rvalue Stuffs to new Stuff:
+</span><span>Constructing
+</span><span>Constructing
+</span><span>Constructing
+</span><span>rvalue + rvalue
+</span><span>rvalue + rvalue
+</span><span># Add mix of Stuffs to new Stuff:
+</span><span>Constructing
+</span><span>Constructing
+</span><span>lvalue + rvalue
+</span><span>rvalue + lvalue
+</span><span>rvalue + rvalue
+</span></code></pre><p>Notice that in the new functions we have added, we avoid creating a new Stuff object entirely (which could be potentially expensive if it was more complex), and instead make use of the already-constructed rvalue that would otherwise be destroyed anyway. In addition, when an rvalue is on the left hand side of the <code>+</code> operation, we make use of its existing vector, and just add the additional values onto it, rather than copying both sets of values into a new vector.<h2 id=std-move><code>std::move</code></h2><p>You'll notice that I used std::move in one of the new operators above. All this does is turn an lvalue that is passed into it, into an rvalue. This is useful when you wish to pass something into a function that you never plan on using again anyway, in case it can take advantage of this fact and pillage its resources. Any variable passed somewhere with <code>std::move</code> will be put back into a default state; a vector will be emptied for instance.<h2 id=std-forward><code>std::forward</code></h2><p><code>std::forward</code> on the other hand works with templates, and converts the argument passed into it back into what it was originally. Consider this example:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>void </span><span style=color:#a6e22e>someFunc</span><span>(</span><span style=color:#f92672>const </span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#f92672>& </span><span style=font-style:italic;color:#fd971f>a</span><span>)
+</span><span>    {
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"lvalue version called" </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    }
+</span><span style=font-style:italic;color:#66d9ef>void </span><span style=color:#a6e22e>someFunc</span><span>(</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#f92672>&& </span><span style=font-style:italic;color:#fd971f>a</span><span>)
+</span><span>    {
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"rvalue version called" </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    }
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>template</span><span><</span><span style=font-style:italic;color:#66d9ef>class</span><span> T>
+</span><span style=font-style:italic;color:#66d9ef>void </span><span style=color:#a6e22e>stuff</span><span>(T </span><span style=color:#f92672>&& </span><span style=font-style:italic;color:#fd971f>input</span><span>)
+</span><span>    {
+</span><span>    </span><span style=color:#75715e>//...do stuff...
+</span><span>    </span><span style=color:#75715e>//forward argument to new function:
+</span><span>    someFunc(std::forward&LTT>(input));
+</span><span>    }
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>    stuff(</span><span style=color:#ae81ff>5</span><span>);
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>int</span><span> num </span><span style=color:#f92672>= </span><span style=color:#ae81ff>3</span><span>;
+</span><span>    stuff(num);
+</span><span>    }
+</span></code></pre><p>The above outputs:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>rvalue version called
+</span><span>lvalue version called
+</span></code></pre><p>Why? Simply put, the template function <code>stuff</code> can take in an lvalue or rvalue reference. However, inside the function body, everything is an lvalue again, as it has been named (note that the rvalue passed in can now be used on the left hand side of an expression in the function body). <code>std::forward</code> converts the value back into its original form as it was passed in to the function, allowing it to be once again treated as an rvalue <strong>if it was one originally</strong>.<p>In reality, things are a bit more complex, so I encourage you to read around for more information if you plan on putting this feature to use.<h1 id=variadic-templates>Variadic templates</h1><p>Variadic templates are templates that can take a variable number of parameters. They provide a type-safe alternative to regular variadic functions, and enable a range of rather fancy generic programming techniques. I'll kick us off with the simplest example I could think up:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>template</span><span><</span><span style=font-style:italic;color:#66d9ef>typename</span><span> First>
+</span><span style=font-style:italic;color:#66d9ef>double </span><span style=color:#a6e22e>sum</span><span>(First </span><span style=font-style:italic;color:#fd971f>value</span><span>)
+</span><span>    {
+</span><span>    </span><span style=color:#f92672>return</span><span> value;
+</span><span>    }
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>template</span><span><</span><span style=font-style:italic;color:#66d9ef>typename</span><span> First, </span><span style=font-style:italic;color:#66d9ef>typename</span><span style=color:#f92672>...</span><span> Rest>
+</span><span style=font-style:italic;color:#66d9ef>double </span><span style=color:#a6e22e>sum</span><span>(First </span><span style=font-style:italic;color:#fd971f>value</span><span>, Rest</span><span style=color:#f92672>... </span><span style=font-style:italic;color:#fd971f>others</span><span>)
+</span><span>    {
+</span><span>    </span><span style=color:#f92672>return</span><span> value </span><span style=color:#f92672>+ </span><span>sum(others</span><span style=color:#f92672>...</span><span>);
+</span><span>    }
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span>sum(</span><span style=color:#ae81ff>2</span><span>, </span><span style=color:#ae81ff>3.0</span><span>, </span><span style=color:#ae81ff>400</span><span>, </span><span style=color:#ae81ff>5</span><span>) </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    }
+</span></code></pre><p>The template <code>sum</code> function declared here takes in any number of valid numbers, adds them together, and returns the result in the form of a <code>double</code>. The ellipsis (<code>...</code>) is used before the variable name in the template declaration to show that this variable represents 0 or more possible inputs. when used after the variable name in the function body, that variable is expanded out into all of the variables it represents. Hence, in the above example, the function body of sum looks like this after the first call:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>template</span><span><</span><span style=font-style:italic;color:#66d9ef>typename</span><span> First, </span><span style=font-style:italic;color:#66d9ef>typename</span><span style=color:#f92672>...</span><span> Rest>
+</span><span style=font-style:italic;color:#66d9ef>double </span><span style=color:#a6e22e>sum</span><span>(First </span><span style=font-style:italic;color:#fd971f>value</span><span>, Rest</span><span style=color:#f92672>... </span><span style=font-style:italic;color:#fd971f>others</span><span>)
+</span><span>    {
+</span><span>    </span><span style=color:#f92672>return </span><span style=color:#ae81ff>2 </span><span style=color:#f92672>+ </span><span>sum(</span><span style=color:#ae81ff>3.0</span><span>, </span><span style=color:#ae81ff>400</span><span>, </span><span style=color:#ae81ff>5</span><span>);
+</span><span>    }
+</span></code></pre><p>As <code>sum</code> is called recursively, this expands into:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>template</span><span><</span><span style=font-style:italic;color:#66d9ef>typename</span><span> First, </span><span style=font-style:italic;color:#66d9ef>typename</span><span style=color:#f92672>...</span><span> Rest>
+</span><span style=font-style:italic;color:#66d9ef>double </span><span style=color:#a6e22e>sum</span><span>(First </span><span style=font-style:italic;color:#fd971f>value</span><span>, Rest</span><span style=color:#f92672>... </span><span style=font-style:italic;color:#fd971f>others</span><span>)
+</span><span>    {
+</span><span>    </span><span style=color:#f92672>return </span><span style=color:#ae81ff>2 </span><span style=color:#f92672>+ </span><span style=color:#ae81ff>3.0 </span><span style=color:#f92672>+ </span><span>sum(</span><span style=color:#ae81ff>400</span><span>, </span><span style=color:#ae81ff>5</span><span>);
+</span><span>    }
+</span></code></pre><p>And then:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>template</span><span><</span><span style=font-style:italic;color:#66d9ef>typename</span><span> First, </span><span style=font-style:italic;color:#66d9ef>typename</span><span style=color:#f92672>...</span><span> Rest>
+</span><span style=font-style:italic;color:#66d9ef>double </span><span style=color:#a6e22e>sum</span><span>(First </span><span style=font-style:italic;color:#fd971f>value</span><span>, Rest</span><span style=color:#f92672>... </span><span style=font-style:italic;color:#fd971f>others</span><span>)
+</span><span>    {
+</span><span>    </span><span style=color:#f92672>return </span><span style=color:#ae81ff>2 </span><span style=color:#f92672>+ </span><span style=color:#ae81ff>3.0 </span><span style=color:#f92672>+ </span><span style=color:#ae81ff>400 </span><span style=color:#f92672>+ </span><span>sum(</span><span style=color:#ae81ff>5</span><span>);
+</span><span>    }
+</span></code></pre><p>At which point, we can see why an overload of sum taking in only one value is needed; the packed variable <code>others</code> expands into just one variable, which is just returned by the overloaded version of <code>sum</code>:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>template</span><span><</span><span style=font-style:italic;color:#66d9ef>typename</span><span> First, </span><span style=font-style:italic;color:#66d9ef>typename</span><span style=color:#f92672>...</span><span> Rest>
+</span><span style=font-style:italic;color:#66d9ef>double </span><span style=color:#a6e22e>sum</span><span>(First </span><span style=font-style:italic;color:#fd971f>value</span><span>, Rest</span><span style=color:#f92672>... </span><span style=font-style:italic;color:#fd971f>others</span><span>)
+</span><span>    {
+</span><span>    </span><span style=color:#f92672>return </span><span style=color:#ae81ff>2 </span><span style=color:#f92672>+ </span><span style=color:#ae81ff>3.0 </span><span style=color:#f92672>+ </span><span style=color:#ae81ff>400 </span><span style=color:#f92672>+ </span><span style=color:#ae81ff>5</span><span>;
+</span><span>    }
+</span></code></pre><p>Now we have expanded all of the templates out, we have the resulting function call that is made upon calling <code>sum</code>, which we can see will result in the correct answer. Note that template expansion is done at compile time, essentially creating a separate sum function for each unique set of inputs used with it at compile time.<p>There is not much that you can do with the packed variables declared using <code>...</code> except unpack them to be passed into another function, and get the number of them. This is why typically they are applied recursively, as above.<p>In this next example, we count the number of arguments passed into a variadic template function using the <code>sizeof...()</code> function:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>template</span><span><</span><span style=font-style:italic;color:#66d9ef>typename</span><span style=color:#f92672>...</span><span> T>
+</span><span style=font-style:italic;color:#66d9ef>unsigned int </span><span style=color:#a6e22e>count</span><span>(T</span><span style=color:#f92672>... </span><span style=font-style:italic;color:#fd971f>variables</span><span>)
+</span><span>    {
+</span><span>    </span><span style=color:#75715e>//note that we do not unpack the variables for this:
+</span><span>    </span><span style=color:#f92672>return sizeof...</span><span>(variables);
+</span><span>    }
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>    </span><span style=color:#75715e>//prints 5:
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span>count(</span><span style=color:#ae81ff>2</span><span>, </span><span style=color:#ae81ff>3.0</span><span>, </span><span style=color:#ae81ff>400</span><span>, </span><span style=color:#ae81ff>5</span><span>, </span><span style=color:#e6db74>"hello"</span><span>) </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    }
+</span></code></pre><p>One other useful thing that we can do is to apply a function to all of the packed variables to transform them prior to unpacking. Getting back to the sum algorithm, this modification adds one to all of the tail variables each recursion step:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>template</span><span><</span><span style=font-style:italic;color:#66d9ef>typename</span><span> First>
+</span><span style=font-style:italic;color:#66d9ef>double </span><span style=color:#a6e22e>sum</span><span>(First </span><span style=font-style:italic;color:#fd971f>value</span><span>)
+</span><span>    {
+</span><span>    </span><span style=color:#f92672>return</span><span> value;
+</span><span>    }
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>template</span><span><</span><span style=font-style:italic;color:#66d9ef>typename</span><span> First, </span><span style=font-style:italic;color:#66d9ef>typename</span><span style=color:#f92672>...</span><span> Rest>
+</span><span style=font-style:italic;color:#66d9ef>double </span><span style=color:#a6e22e>sum</span><span>(First </span><span style=font-style:italic;color:#fd971f>value</span><span>, Rest</span><span style=color:#f92672>... </span><span style=font-style:italic;color:#fd971f>others</span><span>)
+</span><span>    {
+</span><span>    </span><span style=color:#f92672>return</span><span> value </span><span style=color:#f92672>+ </span><span>sum((others</span><span style=color:#f92672>+</span><span style=color:#ae81ff>1</span><span>)</span><span style=color:#f92672>...</span><span>);
+</span><span>    }
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span>sum(</span><span style=color:#ae81ff>1</span><span>) </span><span style=color:#f92672><<</span><span> std::endl; </span><span style=color:#75715e>//1
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span>sum(</span><span style=color:#ae81ff>1</span><span>, </span><span style=color:#ae81ff>1</span><span>) </span><span style=color:#f92672><<</span><span> std::endl; </span><span style=color:#75715e>//3
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span>sum(</span><span style=color:#ae81ff>1</span><span>, </span><span style=color:#ae81ff>1</span><span>, </span><span style=color:#ae81ff>1</span><span>) </span><span style=color:#f92672><<</span><span> std::endl; </span><span style=color:#75715e>//6
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span>sum(</span><span style=color:#ae81ff>1</span><span>, </span><span style=color:#ae81ff>1</span><span>, </span><span style=color:#ae81ff>1</span><span>, </span><span style=color:#ae81ff>1</span><span>) </span><span style=color:#f92672><<</span><span> std::endl; </span><span style=color:#75715e>//10
+</span><span>    std::cout </span><span style=color:#f92672><< </span><span>sum(</span><span style=color:#ae81ff>1</span><span>, </span><span style=color:#ae81ff>1</span><span>, </span><span style=color:#ae81ff>1</span><span>, </span><span style=color:#ae81ff>1</span><span>, </span><span style=color:#ae81ff>1</span><span>) </span><span style=color:#f92672><<</span><span> std::endl; </span><span style=color:#75715e>//15
+</span><span>    }
+</span></code></pre><h2 id=perfect-forwarding>Perfect Forwarding</h2><p>More usefully, you can wrap variables in functions such as <code>std::forward</code>, to preserve rvalue-ness and allow for the perfect forwarding of variables through one function call to another:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>struct </span><span>randomStruct
+</span><span>    {
+</span><span>    std::vector<</span><span style=font-style:italic;color:#66d9ef>int</span><span>> v;
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>template</span><span><</span><span style=font-style:italic;color:#66d9ef>typename</span><span> T>
+</span><span>    </span><span style=color:#a6e22e>randomStruct</span><span>(T</span><span style=color:#f92672>&& </span><span style=font-style:italic;color:#fd971f>a</span><span>): v(std::forward&LTT>(a))
+</span><span>        {}
+</span><span>    };
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>template</span><span><</span><span style=font-style:italic;color:#66d9ef>typename</span><span> Struc, </span><span style=font-style:italic;color:#66d9ef>typename </span><span style=color:#f92672>...</span><span>Inputs>
+</span><span>Struc </span><span style=color:#f92672>* </span><span style=color:#a6e22e>perfect</span><span>(Inputs </span><span style=color:#f92672>&& ...</span><span style=font-style:italic;color:#fd971f>params</span><span>)
+</span><span>    {
+</span><span>    </span><span style=color:#f92672>return new </span><span>Struc(std::forward&LTInputs>(params)</span><span style=color:#f92672>...</span><span>);
+</span><span>    }
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>auto</span><span> s </span><span style=color:#f92672>= </span><span>perfect&LTrandomStruct>(std::vector<</span><span style=font-style:italic;color:#66d9ef>int</span><span>>{</span><span style=color:#ae81ff>100</span><span>,</span><span style=color:#ae81ff>200</span><span>,</span><span style=color:#ae81ff>300</span><span>,</span><span style=color:#ae81ff>10</span><span>,</span><span style=color:#ae81ff>40</span><span>});
+</span><span>    </span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>auto</span><span> i </span><span style=color:#f92672>:</span><span> s->v) std::cout </span><span style=color:#f92672><<</span><span> i </span><span style=color:#f92672><< </span><span style=color:#e6db74>" "</span><span>;
+</span><span>    std::cout </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    }
+</span></code></pre><p>In the above, the variadic template function <code>perfect</code> takes in any number of arguments as references (optionally rvalue references, given that two &&'s are used), and forwards them to the constructor of whatever is passed in as a template parameter. The <code>std::forward</code> function turns any argument that was passed in as an rvalue back into an rvalue again, before sending it off to the constructor. The constructor for <code>randomStruct</code> itself forwards the vector taken in to the vector's inbuilt move constructor.<p>The templating of the <code>randomStruct</code> constructor is an alternative to manually writing out two separate declarations for it to take either rvalues or lvalues. the template constructor for <code>randomStruct</code> could thus have been replaced with:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span>randomStruct(</span><span style=color:#f92672>const</span><span> std::vector<</span><span style=font-style:italic;color:#66d9ef>int</span><span>> </span><span style=color:#f92672>&</span><span> a)</span><span style=color:#f92672>: </span><span>v(a)
+</span><span>  {}
+</span><span>randomStruct(std::vector<</span><span style=font-style:italic;color:#66d9ef>int</span><span>> </span><span style=color:#f92672>&&</span><span> a)</span><span style=color:#f92672>: </span><span>v(std::forward&LTstd::vector<</span><span style=font-style:italic;color:#66d9ef>int</span><span>>>(a))
+</span><span>  {}
+</span></code></pre><p>which would accomplish the same task. One thing that's neat about variadic templates is that we can delegate the creation of an object to some function, which in turn places the object exactly where it's wanted. This is what the new <code>emplace</code> function does on the stl containers:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>struct </span><span>Stuff
+</span><span>    {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>int</span><span> a;
+</span><span>    std::vector<</span><span style=font-style:italic;color:#66d9ef>int</span><span>> b;
+</span><span>    </span><span style=color:#a6e22e>Stuff</span><span>(</span><span style=font-style:italic;color:#66d9ef>int </span><span style=font-style:italic;color:#fd971f>a1</span><span>, </span><span style=color:#f92672>const</span><span> std::vector<</span><span style=font-style:italic;color:#66d9ef>int</span><span>> </span><span style=color:#f92672>& </span><span style=font-style:italic;color:#fd971f>b1</span><span>): a(a1), b(b1)
+</span><span>        {}
+</span><span>    };
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>    std::vector&LTStuff> s;
+</span><span>    </span><span style=color:#75715e>//pass in arguments to have objects constructed:
+</span><span>    s.emplace_back(</span><span style=color:#ae81ff>10</span><span>, std::vector<</span><span style=font-style:italic;color:#66d9ef>int</span><span>>{</span><span style=color:#ae81ff>1</span><span>,</span><span style=color:#ae81ff>2</span><span>,</span><span style=color:#ae81ff>3</span><span>,</span><span style=color:#ae81ff>4</span><span>,</span><span style=color:#ae81ff>5</span><span>});
+</span><span>    s.emplace_back(</span><span style=color:#ae81ff>8</span><span>, std::vector<</span><span style=font-style:italic;color:#66d9ef>int</span><span>>{</span><span style=color:#ae81ff>1</span><span>});
+</span><span>    </span><span style=color:#f92672>return </span><span style=color:#ae81ff>0</span><span>;
+</span><span>    }
+</span></code></pre><h1 id=tuples>Tuples</h1><p>A tuple is a type of container that is based on a variadic template, and can take any number of heterogeneous types. One way of looking at it might be as a generic version of a <code>struct</code>. Tuples make it easy to return a pack containing multiple values from a function, which can then be unpacked into local variables using the <code>std::tie</code> function. Here is a simple example (you'll need the <code>tuple</code> header for this):<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=color:#75715e>//make a tuple of type std::tuple&LTstd::string,double>
+</span><span style=color:#75715e>//with contents "Hello" and 4.0:
+</span><span style=font-style:italic;color:#66d9ef>auto</span><span> a </span><span style=color:#f92672>= </span><span>std::make_tuple(</span><span style=color:#e6db74>"Hello"</span><span>, </span><span style=color:#ae81ff>4.0</span><span>);
+</span><span>
+</span><span>std::string word;
+</span><span style=font-style:italic;color:#66d9ef>double</span><span> number;
+</span><span>
+</span><span style=color:#75715e>//extract the two variables stored in the tuple into local
+</span><span style=color:#75715e>//variables "word" and "number":
+</span><span>std::</span><span style=color:#a6e22e>tie</span><span>(</span><span style=font-style:italic;color:#fd971f>word</span><span>, </span><span style=font-style:italic;color:#fd971f>number</span><span>) </span><span style=color:#f92672>= </span><span>a;
+</span><span>
+</span><span style=color:#75715e>//prints "Hello, 4.0":
+</span><span>std::cout </span><span style=color:#f92672><<</span><span> word </span><span style=color:#f92672><< </span><span style=color:#e6db74>", " </span><span style=color:#f92672><<</span><span> number </span><span style=color:#f92672><<</span><span> std::endl;
+</span></code></pre><p>Tuples can be used similarly to return multiple values from a function. You can also ignore variables stored in the tuple when unpacking them using std::tie, if you don't want to unpack all of them. An example:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span>std::tuple<</span><span style=font-style:italic;color:#66d9ef>int</span><span>, std::string> </span><span style=color:#a6e22e>someFunc</span><span>()
+</span><span>    {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>int</span><span> some_number </span><span style=color:#f92672>= </span><span style=color:#ae81ff>12</span><span>;
+</span><span>    std::string some_string </span><span style=color:#f92672>= </span><span style=color:#e6db74>"Hello"</span><span>;
+</span><span>    </span><span style=color:#f92672>return </span><span>std::make_tuple(some_number, some_string);
+</span><span>    }
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int </span><span style=color:#a6e22e>main</span><span>()
+</span><span>    {
+</span><span>    std::string s;
+</span><span>
+</span><span>    </span><span style=color:#75715e>//Note: we use std::ignore here to ignore a variable:
+</span><span>    std::tie(std::ignore, s) </span><span style=color:#f92672>= </span><span>someFunc();
+</span><span>
+</span><span>    </span><span style=color:#75715e>//outputs "Hello":
+</span><span>    std::cout </span><span style=color:#f92672><<</span><span> s </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>    </span><span style=color:#f92672>return </span><span style=color:#ae81ff>0</span><span>;
+</span><span>    }
+</span></code></pre><p>Tuples have some handy convenience functions defined for them. You can, for instance, use comparison operators to compare two tuples worth of items. The comparison works through each item one at a time until there is a difference, and then returns that:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>auto</span><span> a </span><span style=color:#f92672>= </span><span>std::make_tuple(</span><span style=color:#e6db74>"a"</span><span>, </span><span style=color:#ae81ff>12</span><span>, </span><span style=color:#ae81ff>10</span><span>);
+</span><span style=font-style:italic;color:#66d9ef>auto</span><span> b </span><span style=color:#f92672>= </span><span>std::make_tuple(</span><span style=color:#e6db74>"b"</span><span>, </span><span style=color:#ae81ff>12</span><span>, </span><span style=color:#ae81ff>10</span><span>);
+</span><span style=font-style:italic;color:#66d9ef>auto</span><span> c </span><span style=color:#f92672>= </span><span>std::make_tuple(</span><span style=color:#e6db74>"b"</span><span>, </span><span style=color:#ae81ff>12</span><span>, </span><span style=color:#ae81ff>8</span><span>);
+</span><span style=font-style:italic;color:#66d9ef>auto</span><span> d </span><span style=color:#f92672>= </span><span>std::make_tuple(</span><span style=color:#e6db74>"b"</span><span>, </span><span style=color:#ae81ff>10</span><span>, </span><span style=color:#ae81ff>100</span><span>);
+</span><span>
+</span><span>std::cout </span><span style=color:#f92672><< </span><span>(a </span><span style=color:#f92672><</span><span> b) </span><span style=color:#f92672><<</span><span> std::endl; </span><span style=color:#75715e>//returns 1
+</span><span>std::cout </span><span style=color:#f92672><< </span><span>(b </span><span style=color:#f92672><</span><span> c) </span><span style=color:#f92672><<</span><span> std::endl; </span><span style=color:#75715e>//returns 0
+</span><span>std::cout </span><span style=color:#f92672><< </span><span>(c </span><span style=color:#f92672><</span><span> d) </span><span style=color:#f92672><<</span><span> std::endl; </span><span style=color:#75715e>//returns 0
+</span></code></pre><p>A more efficient way to invoke the comparison of arbitrary values is to use <code>std::tie</code>, which when not assigned too, takes in references to arbitrary variables and returns a tuple full of references, as illustrated here:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=color:#75715e>//define some variables:
+</span><span style=font-style:italic;color:#66d9ef>int</span><span> n1 </span><span style=color:#f92672>= </span><span style=color:#ae81ff>10</span><span>, n2 </span><span style=color:#f92672>= </span><span style=color:#ae81ff>20</span><span>, n3 </span><span style=color:#f92672>= </span><span style=color:#ae81ff>20</span><span>;
+</span><span>std::string </span><span style=color:#a6e22e>s1</span><span>(</span><span style=color:#e6db74>"Hello"</span><span>), s2(</span><span style=color:#e6db74>"Bye"</span><span>), s3(</span><span style=color:#e6db74>"Woop"</span><span>);
+</span><span>
+</span><span style=color:#75715e>//quick multi-comparison with std::tie:
+</span><span style=color:#f92672>if</span><span>(std::tie(n1, s1) </span><span style=color:#f92672>< </span><span>std::tie(n2, s2))
+</span><span>  std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"n1_s1 is less than n2_s2" </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>
+</span><span style=color:#75715e>//makes a tuple of references to n3 and s3:
+</span><span style=font-style:italic;color:#66d9ef>auto</span><span> tup </span><span style=color:#f92672>= </span><span>std::tie(n3, s3);
+</span><span>
+</span><span style=color:#75715e>//change value of n3:
+</span><span>std::get<</span><span style=color:#ae81ff>0</span><span>>(tup) </span><span style=color:#f92672>= </span><span style=color:#ae81ff>5</span><span>;
+</span><span>
+</span><span style=color:#75715e>//outputs 5:
+</span><span>std::cout </span><span style=color:#f92672><<</span><span> n3 </span><span style=color:#f92672><<</span><span> std::endl;
+</span></code></pre><p>Above, we see the <code>std::get</code> function used, which takes in a template parameter indicating the position of the item to obtain, and takes a tuple as its parameter, returning the variable stored at that position. In this case, that variable is a reference to n3, which subsequently can be modified. using <code>std::tie</code> also makes defining custom comparison operators in multi-variable stricts simpler, for example:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>struct </span><span>MyStruct
+</span><span>    {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>int</span><span> a;
+</span><span>    std::string b;
+</span><span>    };
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>bool </span><span style=color:#a6e22e>operator< </span><span>(</span><span style=color:#f92672>const</span><span> MyStruct </span><span style=color:#f92672>& </span><span style=font-style:italic;color:#fd971f>s1</span><span>, </span><span style=color:#f92672>const</span><span> MyStruct </span><span style=color:#f92672>& </span><span style=font-style:italic;color:#fd971f>s2</span><span>)
+</span><span>    {
+</span><span>    </span><span style=color:#75715e>//one line comparison:
+</span><span>    </span><span style=color:#f92672>return </span><span>std::tie(s1.a, s1.b) </span><span style=color:#f92672>< </span><span>std::tie(s2.a, s2.b);
+</span><span>    }
+</span></code></pre><p>Due to their generic nature, we can also mess around with templates and tuples. The following example uses code taken from <a href=http://stackoverflow.com/questions/1198260/iterate-over-tuple>here</a>, and applies a visitor function object to a tuple, which iterates over each item in it, running a function overloaded for the relevant element type:<pre class=language-cpp data-lang=cpp style=background:#272822;color:#f8f8f2><code class=language-cpp data-lang=cpp><span style=font-style:italic;color:#66d9ef>struct </span><span>visitor
+</span><span>    {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>template</span><span><</span><span style=font-style:italic;color:#66d9ef>typename</span><span> T>
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>void </span><span style=color:#a6e22e>operator() </span><span>(T </span><span style=font-style:italic;color:#fd971f>s</span><span>)
+</span><span>        {
+</span><span>        std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"Unknown: " </span><span style=color:#f92672><<</span><span> s </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>        }
+</span><span>
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>void </span><span style=color:#a6e22e>operator() </span><span>(</span><span style=font-style:italic;color:#66d9ef>int </span><span style=font-style:italic;color:#fd971f>s</span><span>)
+</span><span>        {
+</span><span>        std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"Integer: " </span><span style=color:#f92672><<</span><span> s </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>        }
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>void </span><span style=color:#a6e22e>operator() </span><span>(</span><span style=font-style:italic;color:#66d9ef>double </span><span style=font-style:italic;color:#fd971f>s</span><span>)
+</span><span>        {
+</span><span>        std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"Double: " </span><span style=color:#f92672><<</span><span> s </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>        }
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>void </span><span style=color:#a6e22e>operator() </span><span>(</span><span style=color:#f92672>const </span><span style=font-style:italic;color:#66d9ef>char</span><span style=color:#f92672>* </span><span style=font-style:italic;color:#fd971f>s</span><span>)
+</span><span>        {
+</span><span>        std::cout </span><span style=color:#f92672><< </span><span style=color:#e6db74>"String: " </span><span style=color:#f92672><<</span><span> s </span><span style=color:#f92672><<</span><span> std::endl;
+</span><span>        }
+</span><span>    };
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>template</span><span>&LTstd::</span><span style=font-style:italic;color:#66d9ef>size_t</span><span> I </span><span style=color:#f92672>= </span><span style=color:#ae81ff>0</span><span>, </span><span style=font-style:italic;color:#66d9ef>typename</span><span> Func, </span><span style=font-style:italic;color:#66d9ef>typename</span><span style=color:#f92672>...</span><span> Tup>
+</span><span style=color:#f92672>typename</span><span> std::enable_if&LTI </span><span style=color:#f92672>== sizeof...</span><span>(Tup), </span><span style=font-style:italic;color:#66d9ef>void</span><span>>::type
+</span><span>  </span><span style=color:#a6e22e>apply</span><span>(std::tuple&LTTup</span><span style=color:#f92672>...</span><span>> </span><span style=color:#f92672>&</span><span>, </span><span style=font-style:italic;color:#fd971f>Func</span><span>)
+</span><span>  { }
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>template</span><span>&LTstd::</span><span style=font-style:italic;color:#66d9ef>size_t</span><span> I </span><span style=color:#f92672>= </span><span style=color:#ae81ff>0</span><span>, </span><span style=font-style:italic;color:#66d9ef>typename</span><span> Func, </span><span style=font-style:italic;color:#66d9ef>typename</span><span style=color:#f92672>...</span><span> Tup>
+</span><span style=color:#f92672>typename</span><span> std::enable_if&LTI < </span><span style=color:#f92672>sizeof...</span><span>(Tup), </span><span style=font-style:italic;color:#66d9ef>void</span><span>>::type
+</span><span>  apply(std::tuple&LTTup</span><span style=color:#f92672>...</span><span>></span><span style=color:#f92672>&</span><span> t, Func </span><span style=color:#f92672>&</span><span> f)
+</span><span>  {
+</span><span>    f(std::get&LTI>(t));
+</span><span>    apply&LTI </span><span style=color:#f92672>+ </span><span style=color:#ae81ff>1</span><span>, Func, Tup</span><span style=color:#f92672>...</span><span>>(t, f);
+</span><span>  }
+</span><span>
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>int</span><span> main()
+</span><span>    {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>auto</span><span> t </span><span style=color:#f92672>= </span><span>std::make_tuple(</span><span style=color:#ae81ff>4.0</span><span>, </span><span style=color:#ae81ff>3</span><span>, </span><span style=color:#e6db74>"hello"</span><span>, </span><span style=color:#ae81ff>false</span><span>);
+</span><span>
+</span><span>    visitor V;
+</span><span>    apply(t, V);
+</span><span>
+</span><span>    </span><span style=color:#f92672>return </span><span style=color:#ae81ff>0</span><span>;
+</span><span>    }
+</span></code></pre><p>output:<pre class=language-txt data-lang=txt style=background:#272822;color:#f8f8f2><code class=language-txt data-lang=txt><span>Double: 4
+</span><span>Integer: 3
+</span><span>String: hello
+</span><span>Unknown: 0
+</span></code></pre><p>Essentially, the template functions <code>apply</code> take in the tuple, and iterate over each member of it, sending it to the passed in function. The clever bit of code is the <code>std::enable_if</code> call. This takes in a boolean as its first template parameter, and the desired return type as the second. If the boolean is false, the <code>type</code> member does not exist, causing a substitution failure, and thus ignoring the template. Otherwise, type does exist, and the template function can be used as normal (read up on <strong>SFINAE</strong> for more information).<p>This functionality enables us to define a stopping case in the form of another template function which becomes valid in place of the original, to stop iterating ocne we have viewed all of the elements. The visitor object then overloads the <code>operator()</code> function for different types, and has a template version in place for any unknown types.<p>Tuples can be handy for the built in functionality that they provide, and can help make some cases more readable and flexible. That said, as values stored inside them are not named unlike in a struct, they may not always be the best choice and may make it less clear as to what your function is returning. However, for swapping variables around quickly, comparing multiple variables with eachother, and some return cases, not to mention their applications in template programming, they seem to be pretty interesting.<h1 id=summary>Summary</h1><p>Well, that about covers it. I didn’t manage to talk about everything, for example the better random number features, timing, or regular expressions (my version of gcc isn't up to scratch yet, and the post was getting rather long anyway), but if you got this far, you'll no doubt have the tools at your disposal to do some pretty cool things now.<p>Thanks for reading!</div></div></section><footer></footer></div><script src=https://jsdw.me/page.js></script>

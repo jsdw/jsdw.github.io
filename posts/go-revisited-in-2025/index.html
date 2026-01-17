@@ -1,0 +1,292 @@
+<!doctype html><html><head><meta charset=utf-8><meta content="width=device-width,initial-scale=1" name=viewport><title>
+    jsdw - Go: Generics and Iterators
+</title><link href="https://fonts.googleapis.com/css?family=IBM+Plex+Serif|Open+Sans" rel=stylesheet><link href=https://jsdw.me/app.css rel=stylesheet><link href=https://jsdw.me/apple-touch-icon.png rel=apple-touch-icon sizes=180x180><link href=https://jsdw.me/favicon-32x32.png rel=icon sizes=32x32 type=image/png><link href=https://jsdw.me/favicon-16x16.png rel=icon sizes=16x16 type=image/png><link href=https://jsdw.me/site.webmanifest rel=manifest><link color=#5bbad5 href=https://jsdw.me/safari-pinned-tab.svg rel=mask-icon><meta content=#f9409c name=msapplication-TileColor><meta content=#ffffff name=theme-color><body><div class="body post"><header><div class=title-inner><div class=jsdw><a href=https://jsdw.me>JSDW</a></div><nav><a href=https://jsdw.me/posts/>posts</a><a href=https://jsdw.me/projects/>projects</a></nav></div></header><section><div class=top><div class=top-scene><svg class="polygon two" viewbox="0 0 100 100" height=100% style=fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421 version=1.1 width=100% xml:space=preserve xmlns=http://www.w3.org/2000/svg xmlns:serif=http://www.serif.com/ xmlns:xlink=http://www.w3.org/1999/xlink><polygon points="0 100, 15 40, 60 0, 100 30"/></svg><svg class="polygon one" viewbox="0 0 100 100" height=100% style=fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421 version=1.1 width=100% xml:space=preserve xmlns=http://www.w3.org/2000/svg xmlns:serif=http://www.serif.com/ xmlns:xlink=http://www.w3.org/1999/xlink><polygon points="0 40, 30 0, 80 33, 100 100"/></svg></div><div class=top-inner><h1 class=title>Go: Generics and Iterators <span class=date>2026-01-16</span></h1></div></div><div class=content-inner><div class=post><p>I first ran into Go probably more than a decade ago now. There were some things that I loved about the language. The async runtime meant that there was no need for <code>async</code> and <code>await</code> keywords; the runtime took care of yielding and switching between tasks for you. The standard library was pretty feature rich, at least in the context of making web servers (which was what I was most interested in at the time). Compilation times were amazing (especially coming from languages like C++). Channels and goroutines made it trivial to build actor-like programs that passed data between tasks.<p>There were also some things that frustrated me. A lack of generics meant that we were back in the old Java days of passing <code>interface{}</code> types around and casting them to/from the desired types. Creating custom data types was hideous and the compiler didn't have your back regarding type safety. At the same time, I was being exposed to languages like Rust which has a beautiful <code>Iterator</code> trait for iterating over all sorts of different types.<p>I'd heard about Go getting generics a while ago, so I thought it was time to have play with it, which is pretty much what Advent of Code is for. To my surprise, I found out that not only does Go have generics, but it also has a rather beautiful approach to iteration.<p>Let's have a look!<h1 id=generics>Generics</h1><p>The main thing I find myself doing a lot in languages like <code>Rust</code> is wanting to wrap functionality up into custom data structures. I also want to leverage as much type safety as possible. This is now possible to some extent in Go. For example, in Advent of Code this year I wanted a queue data structure (and was determined to not reach beyond the stdlib for anything), so I wrote myself a <a href=https://github.com/jsdw/advent-of-code-2025/blob/main/utils/deque.go>double ended queue</a> which could be used like:<pre class=language-go data-lang=go style=background:#272822;color:#f8f8f2><code class=language-go data-lang=go><span>d </span><span style=color:#f92672>:= </span><span>NewDeque[int]()
+</span><span>
+</span><span style=color:#75715e>// Push values to the back:
+</span><span>d.PushBack(</span><span style=color:#ae81ff>1</span><span>)
+</span><span>d.PushBack(</span><span style=color:#ae81ff>2</span><span>)
+</span><span>d.PushBack(</span><span style=color:#ae81ff>3</span><span>)
+</span><span>
+</span><span style=color:#75715e>// Or to the front:
+</span><span>d.PushFront(</span><span style=color:#ae81ff>0</span><span>)
+</span><span>d.PushFront(</span><span style=color:#f92672>-</span><span style=color:#ae81ff>1</span><span>)
+</span><span>d.PushFront(</span><span style=color:#f92672>-</span><span style=color:#ae81ff>2</span><span>)
+</span><span>
+</span><span style=color:#75715e>// Pop values off either side:
+</span><span>val, ok </span><span style=color:#f92672>:= </span><span>d.PopBack()
+</span><span>val, ok </span><span style=color:#f92672>:= </span><span>d.PopFront()
+</span></code></pre><p>This is entirely type safe; no casting to or from any <code>interface{}</code> / <code>any</code> types anywhere.<p>I also ended up writing <a href=https://github.com/jsdw/advent-of-code-2025/blob/main/utils/heap.go>a <code>Heap</code> data structure</a> which wrapped Go's <code>"container/heap"</code> interface into something nicer, <a href=https://github.com/jsdw/advent-of-code-2025/blob/main/utils/set.go>a <code>Set</code> structure</a> to wrap <code>map[T]struct{}</code> and expose useful functions for working with sets, and then things like <a href=https://github.com/jsdw/advent-of-code-2025/blob/main/utils/dfs.go>a <em>depth first search</em> type</a> for searching over generic states.<p>Generics in Go have som similarities to generics in Rust: for each generic parameter that you declare, you can opt to constrain it to types which implement a specific interface, much like how Rust generics can be constrained to types implementing certain traits.<p>Here's an example:<pre class=language-go data-lang=go style=background:#272822;color:#f8f8f2><code class=language-go data-lang=go><span style=color:#75715e>// Interface representing something
+</span><span style=color:#75715e>// that creates IDs:
+</span><span style=font-style:italic;color:#66d9ef>type </span><span>IdMaker[Id comparable] </span><span style=font-style:italic;color:#66d9ef>interface </span><span>{
+</span><span>    </span><span style=color:#a6e22e>NextId</span><span>() </span><span style=font-style:italic;color:#66d9ef>Id
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>// Create int IDs:
+</span><span style=font-style:italic;color:#66d9ef>type </span><span>IntIdMaker </span><span style=font-style:italic;color:#66d9ef>int
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>func </span><span>(</span><span style=font-style:italic;color:#fd971f>this </span><span style=color:#f92672>*</span><span style=font-style:italic;color:#66d9ef>IntIdMaker</span><span>) </span><span style=color:#a6e22e>NextId</span><span>() </span><span style=font-style:italic;color:#66d9ef>int </span><span>{
+</span><span>    </span><span style=color:#f92672>*</span><span>this </span><span style=color:#f92672>+= </span><span style=color:#ae81ff>1
+</span><span>    </span><span style=color:#f92672>return </span><span style=font-style:italic;color:#66d9ef>int</span><span>(</span><span style=color:#f92672>*</span><span>this)
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>// Create string IDs:
+</span><span style=font-style:italic;color:#66d9ef>type </span><span>StringIdMaker </span><span style=font-style:italic;color:#66d9ef>int
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>func </span><span>(</span><span style=font-style:italic;color:#fd971f>this </span><span style=color:#f92672>*</span><span style=font-style:italic;color:#66d9ef>StringIdMaker</span><span>) </span><span style=color:#a6e22e>NextId</span><span>() </span><span style=font-style:italic;color:#66d9ef>string </span><span>{
+</span><span>    </span><span style=color:#f92672>*</span><span>this </span><span style=color:#f92672>+= </span><span style=color:#ae81ff>1
+</span><span>    </span><span style=color:#f92672>return </span><span style=color:#e6db74>"s:" </span><span style=color:#f92672>+ </span><span>strconv.Itoa(</span><span style=font-style:italic;color:#66d9ef>int</span><span>(</span><span style=color:#f92672>*</span><span>this))
+</span><span>}
+</span></code></pre><p>Here, <code>IdMaker</code> is an interface which itself has a generic parameter <code>Id</code> (which is constrained to be only types that are comparable). The interface is implemented a couple of times on the concrete types <code>IntIdMaker</code> and <code>StringIdMaker</code>.<p>Functions also accept generic arguments, so we can create one which uses this <code>IdMaker</code> like so:<pre class=language-go data-lang=go style=background:#272822;color:#f8f8f2><code class=language-go data-lang=go><span style=font-style:italic;color:#66d9ef>func </span><span>CreateIds[Ids IdMaker[Id], Id comparable](idMaker Ids, n int) []</span><span style=font-style:italic;color:#66d9ef>Id </span><span>{
+</span><span>    ids </span><span style=color:#f92672>:= </span><span>[]</span><span style=font-style:italic;color:#66d9ef>Id</span><span>{}
+</span><span>    </span><span style=color:#f92672>for range </span><span>n {
+</span><span>        ids </span><span style=color:#f92672>= </span><span style=color:#66d9ef>append</span><span>(ids, idMaker.NextId())
+</span><span>    }
+</span><span>    </span><span style=color:#f92672>return </span><span>ids
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>// Usage:
+</span><span>intIdMaker </span><span style=color:#f92672>:= </span><span>IntIdMaker(</span><span style=color:#ae81ff>0</span><span>)
+</span><span>ids </span><span style=color:#f92672>:= </span><span>CreateIds(</span><span style=color:#f92672>&</span><span>intIdMaker, </span><span style=color:#ae81ff>10</span><span>)
+</span><span>fmt.Println(ids) </span><span style=color:#75715e>// Output: [1 2 3 4 5 6 7 8 9 10]
+</span></code></pre><p>Here, <code>CreateIds</code> takes some type which implements our <code>IdMaker</code> interface and doesn't care about the type of ID it creates. It outputs a slice of <code>n</code> IDs using it.<p>Structs also accept generic arguments in a similar way. Here's a dumb cache type which caches values against IDs returned from our <code>IdMaker</code>:<pre class=language-go data-lang=go style=background:#272822;color:#f8f8f2><code class=language-go data-lang=go><span style=font-style:italic;color:#66d9ef>type </span><span>Cache[Ids IdMaker[Id], Id comparable, T any] </span><span style=font-style:italic;color:#66d9ef>struct </span><span>{
+</span><span>    ids    </span><span style=font-style:italic;color:#66d9ef>IdMaker</span><span>[Id]
+</span><span>    values </span><span style=font-style:italic;color:#66d9ef>map</span><span>[</span><span style=font-style:italic;color:#66d9ef>Id</span><span>]</span><span style=font-style:italic;color:#66d9ef>T
+</span><span>}
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>func </span><span>NewCache[Ids IdMaker[Id], Id comparable, T any](idMaker IdMaker[Id]) Cache[Ids, Id, T] {
+</span><span>    </span><span style=color:#f92672>return </span><span>Cache[Ids, Id, T]{
+</span><span>        ids:    idMaker,
+</span><span>        values: </span><span style=font-style:italic;color:#66d9ef>map</span><span>[</span><span style=font-style:italic;color:#66d9ef>Id</span><span>]</span><span style=font-style:italic;color:#66d9ef>T</span><span>{},
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>func </span><span>(</span><span style=font-style:italic;color:#fd971f>this </span><span style=color:#f92672>*</span><span style=font-style:italic;color:#66d9ef>Cache</span><span>[</span><span style=font-style:italic;color:#fd971f>Ids</span><span>, </span><span style=font-style:italic;color:#fd971f>Id</span><span>, </span><span style=font-style:italic;color:#fd971f>T</span><span>]) </span><span style=color:#a6e22e>Insert</span><span>(</span><span style=font-style:italic;color:#fd971f>val </span><span style=font-style:italic;color:#66d9ef>T</span><span>) </span><span style=font-style:italic;color:#66d9ef>Id </span><span>{
+</span><span>    thisId </span><span style=color:#f92672>:= </span><span>this.ids.NextId()
+</span><span>    this.values[thisId] </span><span style=color:#f92672>= </span><span>val
+</span><span>    </span><span style=color:#f92672>return </span><span>thisId
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>// Usage:
+</span><span>stringIdMaker </span><span style=color:#f92672>:= </span><span>StringIdMaker(</span><span style=color:#ae81ff>0</span><span>)
+</span><span>cache </span><span style=color:#f92672>:= </span><span>NewCache[</span><span style=color:#f92672>*</span><span>StringIdMaker, string, string](</span><span style=color:#f92672>&</span><span>stringIdMaker)
+</span><span>
+</span><span>fmt.Println(cache.Insert(</span><span style=color:#e6db74>"hello"</span><span>)) </span><span style=color:#75715e>// Output: s:1
+</span><span>fmt.Println(cache.Insert(</span><span style=color:#e6db74>"world"</span><span>)) </span><span style=color:#75715e>// Output: s:2
+</span></code></pre><p>This is all a little convoluted in order to show generics and the constraints that can be placed on them. Overall, you can go quite far with generics in Go, but there are a couple of limitations which you'll run into:<h2 id=no-generic-methods>No generic methods</h2><p>The one place where generics aren't allows it on methods. This prevents you from writing functions like <code>Map</code> or <code>Fold</code> on your new generic container types. For instance, this is not valid Go:<pre class=language-go data-lang=go style=background:#272822;color:#f8f8f2><code class=language-go data-lang=go><span style=color:#75715e>// Some data structure:
+</span><span style=font-style:italic;color:#66d9ef>type </span><span>MyDataStructure[T any] </span><span style=font-style:italic;color:#66d9ef>struct</span><span>{
+</span><span>    </span><span style=color:#75715e>// impl
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>// Map the values in this data structure to a different type:
+</span><span style=font-style:italic;color:#66d9ef>func </span><span>(</span><span style=font-style:italic;color:#fd971f>d </span><span style=font-style:italic;color:#66d9ef>MyDataStructure</span><span>[</span><span style=font-style:italic;color:#fd971f>T</span><span>]) </span><span style=font-style:italic;color:#66d9ef>Map</span><span>[R any](f </span><span style=font-style:italic;color:#66d9ef>func</span><span>(</span><span style=font-style:italic;color:#66d9ef>T</span><span>) </span><span style=font-style:italic;color:#66d9ef>R</span><span>) MyDataStructure[R] {
+</span><span>    out </span><span style=color:#f92672>:= </span><span>NewMyDataStructure[R]()
+</span><span>    </span><span style=color:#f92672>for </span><span>value </span><span style=color:#f92672>:= range </span><span>d.Values() {
+</span><span>        out.Push(f(value))
+</span><span>    }
+</span><span>    </span><span style=color:#f92672>return </span><span>out
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>// usage:
+</span><span>stringData </span><span style=color:#f92672>:= </span><span>intData.Map(</span><span style=font-style:italic;color:#66d9ef>func</span><span>(</span><span style=font-style:italic;color:#fd971f>val </span><span style=font-style:italic;color:#66d9ef>int</span><span>) </span><span style=font-style:italic;color:#66d9ef>string </span><span>{
+</span><span>    </span><span style=color:#f92672>return </span><span>val.String()
+</span><span>})
+</span></code></pre><p>However, you can write a freestanding function to do this instead, which loses some of the elegance of a method call but achieves the same goal:<pre class=language-go data-lang=go style=background:#272822;color:#f8f8f2><code class=language-go data-lang=go><span style=font-style:italic;color:#66d9ef>func </span><span>Map[T any, R any](d MyDataStructure[T], f </span><span style=font-style:italic;color:#66d9ef>func</span><span>(</span><span style=font-style:italic;color:#66d9ef>T</span><span>) </span><span style=font-style:italic;color:#66d9ef>R</span><span>) MyDataStructure[R] {
+</span><span>    out </span><span style=color:#f92672>:= </span><span>NewMyDataStructure[R]()
+</span><span>    </span><span style=color:#f92672>for </span><span>value </span><span style=color:#f92672>:= range </span><span>d.Values() {
+</span><span>        out.Push(f(value))
+</span><span>    }
+</span><span>    </span><span style=color:#f92672>return </span><span>out
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>// usage:
+</span><span>stringData </span><span style=color:#f92672>:= </span><span>mydatastructure.Map(intData, </span><span style=font-style:italic;color:#66d9ef>func</span><span>(</span><span style=font-style:italic;color:#fd971f>val </span><span style=font-style:italic;color:#66d9ef>int</span><span>) </span><span style=font-style:italic;color:#66d9ef>string </span><span>{
+</span><span>    </span><span style=color:#f92672>return </span><span>val.String()
+</span><span>})
+</span></code></pre><h2 id=interfaces-can-t-use-self-or-this-in-their-signatures>Interfaces can't use <code>Self</code> or <code>this</code> in their signatures</h2><p>There exists a built-in <code>comparable</code> interface, which is implemented automatically on most types (except, annoyingly, not on slices or any type containing a slice). How could I implement a similar interface, if I wanted to be able to compare slices or more arbitrary custom types in a similar way?<p>My first thought would be something like this:<pre class=language-go data-lang=go style=background:#272822;color:#f8f8f2><code class=language-go data-lang=go><span style=font-style:italic;color:#66d9ef>type </span><span>Comparable </span><span style=font-style:italic;color:#66d9ef>Interface </span><span>{
+</span><span>    </span><span style=color:#75715e>// Just want equality to keep it simple:
+</span><span>    Eq(other Self) bool
+</span><span>}
+</span></code></pre><p>However, this isn't valid Go: I can't say that I want a value of the same type as an input to an interface method.<p>What I can do is use a generic parameter on the interface though, like this:<pre class=language-go data-lang=go style=background:#272822;color:#f8f8f2><code class=language-go data-lang=go><span style=font-style:italic;color:#66d9ef>type </span><span>Comparable[Other any] </span><span style=font-style:italic;color:#66d9ef>interface </span><span>{
+</span><span>    </span><span style=color:#a6e22e>Eq</span><span>(</span><span style=font-style:italic;color:#fd971f>other </span><span style=font-style:italic;color:#66d9ef>Other</span><span>) </span><span style=font-style:italic;color:#66d9ef>bool
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>// MyInt will implement Comparable[MyInt]:
+</span><span style=font-style:italic;color:#66d9ef>type </span><span>MyInt </span><span style=font-style:italic;color:#66d9ef>int
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>func </span><span>(</span><span style=font-style:italic;color:#fd971f>this </span><span style=font-style:italic;color:#66d9ef>MyInt</span><span>) </span><span style=color:#a6e22e>Eq</span><span>(</span><span style=font-style:italic;color:#fd971f>other </span><span style=font-style:italic;color:#66d9ef>MyInt</span><span>) </span><span style=font-style:italic;color:#66d9ef>bool </span><span>{
+</span><span>    </span><span style=color:#f92672>return </span><span style=font-style:italic;color:#66d9ef>int</span><span>(other) </span><span style=color:#f92672>== </span><span style=font-style:italic;color:#66d9ef>int</span><span>(this)
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>// We can now use this in custom data types like this:
+</span><span style=font-style:italic;color:#66d9ef>type </span><span>MyDataType[T Comparable[T]] </span><span style=font-style:italic;color:#66d9ef>struct </span><span>{
+</span><span>    vals []</span><span style=font-style:italic;color:#66d9ef>T
+</span><span>}
+</span><span>ints </span><span style=color:#f92672>:= </span><span>MyDataType[MyInt]{}
+</span></code></pre><p>I suppose this is actually similar to how Rust implements such traits, except that the <code>Other</code> generic defaults to <code>Self</code> if it's not provided. The obvious limitation over using the builtin <code>comparable</code> interface is that this isn't implemented for the builtin or primitive types. You could wrap comparable types to implement this <code>Comparable</code> like this though:<pre class=language-go data-lang=go style=background:#272822;color:#f8f8f2><code class=language-go data-lang=go><span style=font-style:italic;color:#66d9ef>type </span><span>FromComparable[C comparable] </span><span style=font-style:italic;color:#66d9ef>struct</span><span>{ c </span><span style=font-style:italic;color:#66d9ef>C </span><span>}
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>func </span><span>(</span><span style=font-style:italic;color:#fd971f>this </span><span style=font-style:italic;color:#66d9ef>FromComparable</span><span>[</span><span style=font-style:italic;color:#fd971f>C</span><span>]) </span><span style=color:#a6e22e>Eq</span><span>(</span><span style=font-style:italic;color:#fd971f>other </span><span style=font-style:italic;color:#66d9ef>FromComparable</span><span>[</span><span style=font-style:italic;color:#fd971f>C</span><span>]) </span><span style=font-style:italic;color:#66d9ef>bool </span><span>{
+</span><span>    </span><span style=color:#f92672>return </span><span>this.c </span><span style=color:#f92672>== </span><span>other.c
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>// These are Comparable now:
+</span><span>FromComparable[string]{</span><span style=color:#e6db74>"hello"</span><span>}
+</span><span>FromComparable[int]{</span><span style=color:#ae81ff>1</span><span>}
+</span></code></pre><p>Whether re-inventing the wheel to this extent is a good idea is another question though, but I suppose it's good to know that it's possible, and this sort of approach may be necessary if you want to write custom data types like Binary Trees which accept custom keys (<code>cmp.Ordered</code> exists but is only implemented for primitive types or wrappers around primitive types).<p>However..<h2 id=function-names-cannot-collide>Function names cannot collide</h2><p>This means that we can't actually implement our <code>Comparable[C]</code> interface more than once for a given type. This would be useful but not valid:<pre class=language-go data-lang=go style=background:#272822;color:#f8f8f2><code class=language-go data-lang=go><span style=font-style:italic;color:#66d9ef>type </span><span>MyType </span><span style=font-style:italic;color:#66d9ef>int
+</span><span>
+</span><span style=color:#75715e>// Implements Comparable[int]
+</span><span style=font-style:italic;color:#66d9ef>func </span><span>(</span><span style=font-style:italic;color:#fd971f>this </span><span style=font-style:italic;color:#66d9ef>MyType</span><span>) </span><span style=color:#a6e22e>Eq</span><span>(</span><span style=font-style:italic;color:#fd971f>other </span><span style=font-style:italic;color:#66d9ef>int</span><span>) </span><span style=font-style:italic;color:#66d9ef>bool </span><span>{
+</span><span>    </span><span style=color:#f92672>return </span><span style=font-style:italic;color:#66d9ef>int</span><span>(this) </span><span style=color:#f92672>== </span><span>other
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>// Implements Comparable[MyType]
+</span><span style=font-style:italic;color:#66d9ef>func </span><span>(</span><span style=font-style:italic;color:#fd971f>this </span><span style=font-style:italic;color:#66d9ef>MyType</span><span>) </span><span style=color:#a6e22e>Eq</span><span>(</span><span style=font-style:italic;color:#fd971f>other </span><span style=font-style:italic;color:#66d9ef>MyType</span><span>) </span><span style=font-style:italic;color:#66d9ef>bool </span><span>{
+</span><span>    </span><span style=color:#f92672>return </span><span style=font-style:italic;color:#66d9ef>int</span><span>(this) </span><span style=color:#f92672>== </span><span style=font-style:italic;color:#66d9ef>int</span><span>(other)
+</span><span>}
+</span></code></pre><p>given this limitation, it's probably best to define <code>Comparable</code> without a generic, and have one implementation which can compare against any type you think useful, like so:<pre class=language-go data-lang=go style=background:#272822;color:#f8f8f2><code class=language-go data-lang=go><span style=font-style:italic;color:#66d9ef>type </span><span>Comparable </span><span style=font-style:italic;color:#66d9ef>interface </span><span>{
+</span><span>    </span><span style=color:#a6e22e>Eq</span><span>(</span><span style=font-style:italic;color:#fd971f>other </span><span style=font-style:italic;color:#66d9ef>any</span><span>) </span><span style=font-style:italic;color:#66d9ef>bool
+</span><span>}
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>type </span><span>MyType </span><span style=font-style:italic;color:#66d9ef>int
+</span><span>
+</span><span style=color:#75715e>// Implements Comparable
+</span><span style=font-style:italic;color:#66d9ef>func </span><span>(</span><span style=font-style:italic;color:#fd971f>this </span><span style=font-style:italic;color:#66d9ef>MyType</span><span>) </span><span style=color:#a6e22e>Eq</span><span>(</span><span style=font-style:italic;color:#fd971f>other </span><span style=font-style:italic;color:#66d9ef>any</span><span>) </span><span style=font-style:italic;color:#66d9ef>bool </span><span>{
+</span><span>    </span><span style=color:#f92672>switch </span><span>v </span><span style=color:#f92672>:= </span><span>other.(</span><span style=font-style:italic;color:#66d9ef>type</span><span>) {
+</span><span>    </span><span style=color:#f92672>case </span><span>int:
+</span><span>        </span><span style=color:#f92672>return </span><span style=font-style:italic;color:#66d9ef>int</span><span>(this) </span><span style=color:#f92672>== </span><span>v
+</span><span>    </span><span style=color:#f92672>case </span><span>MyType:
+</span><span>        </span><span style=color:#f92672>return </span><span>this </span><span style=color:#f92672>== </span><span>v
+</span><span>    }
+</span><span>    </span><span style=color:#f92672>return </span><span style=color:#ae81ff>false
+</span><span>}
+</span></code></pre><p>This is a little less type safe, but in this case does the trick.<p>There are some other <a href=https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md#issues>known issues</a> with generics discussed by the Go team too. Despite these limitations, Go generics make the language <em>so</em> much more enjoyable to use in my opinion.<h1 id=iterators>Iterators</h1><p>I hadn't even noticed that Go had adopted any sort of iterator approach, and was very pleasantly surprised to see that iterators have now been integrated much more into Go. Iterators are great when there are several intermediate steps that you'd like to apply to the items in some data structure (for instance a slice), or when you want to provide back each of the values in some data structure for users to do something with, or just when you want to stream values back to a user as they become available.<p>In Go, you've always been able to iterate over the built-in data structures:<pre class=language-go data-lang=go style=background:#272822;color:#f8f8f2><code class=language-go data-lang=go><span>mySlice </span><span style=color:#f92672>:= </span><span>[]</span><span style=font-style:italic;color:#66d9ef>int</span><span>{}
+</span><span style=color:#f92672>for </span><span>index, value </span><span style=color:#f92672>:= range </span><span>mySlice {
+</span><span>    </span><span style=color:#75715e>// Do something with each value
+</span><span>}
+</span><span>
+</span><span>myMap </span><span style=color:#f92672>:= </span><span style=font-style:italic;color:#66d9ef>map</span><span>[</span><span style=font-style:italic;color:#66d9ef>int</span><span>]</span><span style=font-style:italic;color:#66d9ef>string</span><span>{}
+</span><span style=color:#f92672>for </span><span>key, value </span><span style=color:#f92672>:= range </span><span>myMap {
+</span><span>    </span><span style=color:#75715e>// Do something with each value
+</span><span>}
+</span></code></pre><p>Now, you're able to iterate over arbitrary things by writing functions/methods which return functions that match the special iterator type signatures (which are aliased as <code>iter.Seq[A]</code> or <code>iter.Seq2[A, B]</code>). These functions are our iterators.<p>Writing these functions looks something like this:<pre class=language-go data-lang=go style=background:#272822;color:#f8f8f2><code class=language-go data-lang=go><span style=font-style:italic;color:#66d9ef>type </span><span>MyContainer[T any] </span><span style=font-style:italic;color:#66d9ef>struct</span><span>{
+</span><span>    inner []</span><span style=font-style:italic;color:#66d9ef>T
+</span><span>}
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>func </span><span>(</span><span style=font-style:italic;color:#fd971f>c </span><span style=color:#f92672>*</span><span style=font-style:italic;color:#66d9ef>MyContainer</span><span>[</span><span style=font-style:italic;color:#fd971f>T</span><span>]) </span><span style=color:#a6e22e>Values</span><span>() iter.</span><span style=font-style:italic;color:#66d9ef>Seq</span><span>[T] {
+</span><span>    </span><span style=color:#f92672>return </span><span style=font-style:italic;color:#66d9ef>func</span><span>(</span><span style=font-style:italic;color:#fd971f>yield </span><span style=font-style:italic;color:#66d9ef>func</span><span>(</span><span style=font-style:italic;color:#66d9ef>T</span><span>) </span><span style=font-style:italic;color:#66d9ef>bool</span><span>) {
+</span><span>        </span><span style=color:#f92672>for </span><span>_, value </span><span style=color:#f92672>:= range </span><span>c.inner {
+</span><span>            </span><span style=color:#f92672>if !</span><span>yield(value) {
+</span><span>                </span><span style=color:#f92672>return
+</span><span>            }
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>func </span><span>(</span><span style=font-style:italic;color:#fd971f>c </span><span style=color:#f92672>*</span><span style=font-style:italic;color:#66d9ef>MyContainer</span><span>[</span><span style=font-style:italic;color:#fd971f>T</span><span>]) </span><span style=color:#a6e22e>KeysAndValues</span><span>() iter.</span><span style=font-style:italic;color:#66d9ef>Seq2</span><span>[int, T] {
+</span><span>    </span><span style=color:#f92672>return </span><span style=font-style:italic;color:#66d9ef>func</span><span>(</span><span style=font-style:italic;color:#fd971f>yield </span><span style=font-style:italic;color:#66d9ef>func</span><span>(</span><span style=font-style:italic;color:#66d9ef>int</span><span>, </span><span style=font-style:italic;color:#66d9ef>T</span><span>) </span><span style=font-style:italic;color:#66d9ef>bool</span><span>) {
+</span><span>        </span><span style=color:#f92672>for </span><span>key, value </span><span style=color:#f92672>:= range </span><span>c.inner {
+</span><span>            </span><span style=color:#f92672>if !</span><span>yield(key, value) {
+</span><span>                </span><span style=color:#f92672>return
+</span><span>            }
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre><p>How can we use these iterators? The naive way is to just call the iterator function like so:<pre class=language-go data-lang=go style=background:#272822;color:#f8f8f2><code class=language-go data-lang=go><span>myContainer </span><span style=color:#f92672>:= &</span><span>MyContainer[string]{}
+</span><span>
+</span><span>iterFn </span><span style=color:#f92672>:= </span><span>myContainer.Values()
+</span><span>iterFn(</span><span style=font-style:italic;color:#66d9ef>func </span><span style=color:#a6e22e>yield</span><span>(</span><span style=font-style:italic;color:#fd971f>v </span><span style=font-style:italic;color:#66d9ef>string</span><span>) </span><span style=font-style:italic;color:#66d9ef>bool </span><span>{
+</span><span>    </span><span style=color:#75715e>// do something with each item,
+</span><span>    </span><span style=color:#75715e>// return false when we don't want more.
+</span><span>})
+</span><span>
+</span><span>keyAndValueIterFn </span><span style=color:#f92672>:= </span><span>myContainer.KeysAndValues()
+</span><span>keyAndValueIterFn(</span><span style=font-style:italic;color:#66d9ef>func </span><span style=color:#a6e22e>yield</span><span>(</span><span style=font-style:italic;color:#fd971f>k </span><span style=font-style:italic;color:#66d9ef>int</span><span>, </span><span style=font-style:italic;color:#fd971f>v </span><span style=font-style:italic;color:#66d9ef>string</span><span>) </span><span style=font-style:italic;color:#66d9ef>bool </span><span>{
+</span><span>    </span><span style=color:#75715e>// do something with keys and values
+</span><span>    </span><span style=color:#75715e>// return false when we don't want more.
+</span><span>})
+</span></code></pre><p>Go also added some syntax sugar so that <code>for range</code> loops work too, where the loop body is basically the function call:<pre class=language-go data-lang=go style=background:#272822;color:#f8f8f2><code class=language-go data-lang=go><span style=color:#f92672>for </span><span>v </span><span style=color:#f92672>:= range </span><span>myContainer.Values() {
+</span><span>    </span><span style=color:#75715e>// do something with values
+</span><span>    </span><span style=color:#75715e>// break out of the loop when we don't want more.
+</span><span>}
+</span><span style=color:#f92672>for </span><span>k, v </span><span style=color:#f92672>:= range </span><span>myContainer.KeysAndValues() {
+</span><span>    </span><span style=color:#75715e>// do something with keys and values
+</span><span>    </span><span style=color:#75715e>// break out of the loop when we don't want more.
+</span><span>}
+</span></code></pre><p>Aside from being able to write your own iterators, we now have some handy iterators in the standard library, like <code>slices.Values</code> to iterate over the values in a slice (useful if you want to consume an iterator somewhere and have a slice), <code>maps.All</code>, <code>maps.Keys</code> and <code>maps.Values</code> for iterating over maps, things like <code>strings.Lines</code> for iterating over all of the lines in a string, and a bunch more. Some iterator functions in the stdlib end with <code>Seq</code> to differentiate themselves from the pre-existing non-iterator functions that came before.<p>Iterators in Go are beautiful, in my opinion. Without any new keywords (like <code>yield</code> for instance) and minimal extra language support (just some syntax sugar to make iterators play nicely with <code>for range</code> loops), Go has made it possible to:<ul><li>Stream synchronous <em>or</em> asynchronous values using a single, consistent interface.<li>Use a simple callback based approach to returning values, which makes it easy to return them at any point in potentially complex functions.<li>Convert these into pull based iterators, to allow even more flexibility.</ul><h2 id=push-and-pull-based-iterators>Push and pull based iterators</h2><p>Push based iterators are iterators which push the values to the caller; the caller does not control the progress of the iterator. Pull based iterators hand control to the caller; the caller decides when to pull the next value from the iterator.<p>At first glance, Rust style iterators are pull based and Go style iterators are push based. Let's look at a very simple iterator implementation in Go:<pre class=language-go data-lang=go style=background:#272822;color:#f8f8f2><code class=language-go data-lang=go><span style=font-style:italic;color:#66d9ef>func </span><span style=color:#a6e22e>Range</span><span>(</span><span style=font-style:italic;color:#fd971f>n </span><span style=font-style:italic;color:#66d9ef>int</span><span>) iter.</span><span style=font-style:italic;color:#66d9ef>Seq</span><span>[int] {
+</span><span>    </span><span style=color:#f92672>return </span><span style=font-style:italic;color:#66d9ef>func</span><span>(</span><span style=font-style:italic;color:#fd971f>yield </span><span style=font-style:italic;color:#66d9ef>func</span><span>(</span><span style=font-style:italic;color:#66d9ef>int</span><span>) </span><span style=font-style:italic;color:#66d9ef>bool</span><span>) {
+</span><span>        </span><span style=color:#f92672>for </span><span>v </span><span style=color:#f92672>:= range </span><span>n {
+</span><span>            </span><span style=color:#f92672>if !</span><span>yield(v) {
+</span><span>                </span><span style=color:#f92672>return
+</span><span>            }
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre><p>The <code>Range</code> function here returns an iterator (which is itself just a function). When handed a callback, this iterator calls the callback with each value from 0 to <code>n</code>. If the callback is done receiving values, it can return false to tell the iterator function to stop.<p>This has limitations. For instance, what if I want to execute two iterators in lock step, handing back the values for each? It turns out that Go has a way to convert its push based iterators into pull based ones via an <code>iter.Pull</code> function.<p>Here's how we can use this function to "zip" two iterators together, returning an iterator which hands back pairs of values from both of the input iterators:<pre class=language-go data-lang=go style=background:#272822;color:#f8f8f2><code class=language-go data-lang=go><span style=font-style:italic;color:#66d9ef>func </span><span>Zip[A any, B any](as iter.Seq[A], bs iter.Seq[B]) iter.Seq2[A, B] {
+</span><span>    </span><span style=color:#f92672>return </span><span style=font-style:italic;color:#66d9ef>func</span><span>(</span><span style=font-style:italic;color:#fd971f>yield </span><span style=font-style:italic;color:#66d9ef>func</span><span>(</span><span style=font-style:italic;color:#66d9ef>A</span><span>, </span><span style=font-style:italic;color:#66d9ef>B</span><span>) </span><span style=font-style:italic;color:#66d9ef>bool</span><span>) {
+</span><span>        </span><span style=color:#75715e>// Convert the first iterator to be pull based:
+</span><span>        nextA, stopA </span><span style=color:#f92672>:= </span><span>iter.Pull(as)
+</span><span>        </span><span style=color:#f92672>defer </span><span>stopA()
+</span><span>        </span><span style=color:#75715e>// Convert the second iterator to be pull based:
+</span><span>        nextB, stopB </span><span style=color:#f92672>:= </span><span>iter.Pull(bs)
+</span><span>        </span><span style=color:#f92672>defer </span><span>stopB()
+</span><span>
+</span><span>        </span><span style=color:#f92672>for </span><span>{
+</span><span>            </span><span style=color:#75715e>// Now, we can ask for one value from each at a
+</span><span>            </span><span style=color:#75715e>// time, and yield them both together:
+</span><span>            a, aIsOk </span><span style=color:#f92672>:= </span><span>nextA()
+</span><span>            b, bIsOk </span><span style=color:#f92672>:= </span><span>nextB()
+</span><span>
+</span><span>            </span><span style=color:#f92672>if </span><span>aIsOk </span><span style=color:#f92672>&& </span><span>bIsOk {
+</span><span>                </span><span style=color:#f92672>if !</span><span>yield(a, b) {
+</span><span>                    </span><span style=color:#f92672>return
+</span><span>                }
+</span><span>            } </span><span style=color:#f92672>else </span><span>{
+</span><span>                </span><span style=color:#f92672>return
+</span><span>            }
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>// usage:
+</span><span>
+</span><span>strings </span><span style=color:#f92672>:= </span><span>[]</span><span style=font-style:italic;color:#66d9ef>string</span><span>{</span><span style=color:#e6db74>"a"</span><span>, </span><span style=color:#e6db74>"b"</span><span>, </span><span style=color:#e6db74>"c"</span><span>}
+</span><span>ints </span><span style=color:#f92672>:= </span><span>[]</span><span style=font-style:italic;color:#66d9ef>int</span><span>{</span><span style=color:#ae81ff>1</span><span>, </span><span style=color:#ae81ff>2</span><span>, </span><span style=color:#ae81ff>3</span><span>}
+</span><span>
+</span><span style=color:#f92672>for </span><span>s, i </span><span style=color:#f92672>:= range </span><span>Zip(slices.Values(strings), slices.Values(ints)) {
+</span><span>    fmt.Println(s, i) </span><span style=color:#75715e>// "a" 1, "b" 2, "c" 3
+</span><span>}
+</span></code></pre><p>This ability to convert push based iterators into pull based ones is magical, in my opinion, and relies on the fact that the Go runtime can pause and resume coroutines. In fact, you can implement this yourself; this is my quick attempt at doing so:<pre class=language-go data-lang=go style=background:#272822;color:#f8f8f2><code class=language-go data-lang=go><span style=font-style:italic;color:#66d9ef>func </span><span>Pull[V any](it iter.Seq[V]) (next </span><span style=font-style:italic;color:#66d9ef>func</span><span>() (</span><span style=font-style:italic;color:#66d9ef>V</span><span>, </span><span style=font-style:italic;color:#66d9ef>bool</span><span>), stop </span><span style=font-style:italic;color:#66d9ef>func</span><span>()) {
+</span><span>    valueChan </span><span style=color:#f92672>:= </span><span style=color:#66d9ef>make</span><span>(</span><span style=font-style:italic;color:#66d9ef>chan V</span><span>)
+</span><span>    stopChan </span><span style=color:#f92672>:= </span><span style=color:#66d9ef>make</span><span>(</span><span style=font-style:italic;color:#66d9ef>chan struct</span><span>{})
+</span><span>
+</span><span>    </span><span style=color:#75715e>// Call the iterator with our yield callback in a
+</span><span>    </span><span style=color:#75715e>// goroutine. This blocks each time it is handed back a
+</span><span>    </span><span style=color:#75715e>// value until the next() fn is called to receive it.
+</span><span>    </span><span style=color:#f92672>go </span><span style=font-style:italic;color:#66d9ef>func</span><span>() {
+</span><span>        it(</span><span style=font-style:italic;color:#66d9ef>func</span><span>(</span><span style=font-style:italic;color:#fd971f>val </span><span style=font-style:italic;color:#66d9ef>V</span><span>) </span><span style=font-style:italic;color:#66d9ef>bool </span><span>{
+</span><span>            </span><span style=color:#f92672>select </span><span>{
+</span><span>            </span><span style=color:#f92672>case &LT-</span><span>stopChan:
+</span><span>                </span><span style=color:#f92672>return </span><span style=color:#ae81ff>false
+</span><span>            </span><span style=color:#f92672>case </span><span>valueChan </span><span style=color:#f92672>&LT- </span><span>val:
+</span><span>                </span><span style=color:#f92672>return </span><span style=color:#ae81ff>true
+</span><span>            }
+</span><span>        })
+</span><span>        </span><span style=color:#66d9ef>close</span><span>(valueChan)
+</span><span>    }()
+</span><span>
+</span><span>    </span><span style=color:#75715e>// Each time next is called, pull another value
+</span><span>    </span><span style=color:#75715e>// from our yield function, unblocking it until it
+</span><span>    </span><span style=color:#75715e>// yields another value.
+</span><span>    next </span><span style=color:#f92672>= </span><span style=font-style:italic;color:#66d9ef>func</span><span>() (</span><span style=font-style:italic;color:#66d9ef>V</span><span>, </span><span style=font-style:italic;color:#66d9ef>bool</span><span>) {
+</span><span>        val, ok </span><span style=color:#f92672>:= &LT-</span><span>valueChan
+</span><span>        </span><span style=color:#f92672>return </span><span>val, ok
+</span><span>    }
+</span><span>
+</span><span>    </span><span style=color:#75715e>// Closing the stopChan signals that we should
+</span><span>    </span><span style=color:#75715e>// return false from our yield fn, ending iteration.
+</span><span>    stop </span><span style=color:#f92672>= </span><span style=font-style:italic;color:#66d9ef>func</span><span>() {
+</span><span>        </span><span style=color:#66d9ef>close</span><span>(stopChan)
+</span><span>    }
+</span><span>
+</span><span>    </span><span style=color:#f92672>return
+</span><span>}
+</span></code></pre><p>By using a select statement and channel inside our yield function, we block it from progressing until the next function is called and pulls the value back out of the channel. The actual implementation is more efficient than this but a similar concept.<p>The asynchronous runtime in Go really shines here, enabling powerful, flexible iterators without needing additional keywords. I love Rust, but because it lacks this runtime support, it needs to draw a distinction between synchronous <code>Iterator</code>s and asynchronous <code>Streams</code>, and it would require new language syntax (<code>gen fn</code>) to provide the ergonomics afforded when writing push based iterators in Go.<h1 id=closing-thoughts>Closing thoughts</h1><p>Go has always moved slowly and carefully as a language, which I appreciate more and more as time goes on. That said, I really enjoy these recent evolutions to the language. Iterators and Generics add two of the big feature that I sorely missed, and makes it possible for me to write the sort of code I want to write. While I still have various other gripes, the same is true of most languages.<p>Now I will just hope that Go gets tagged enums at some point :)</div></div></section><footer></footer></div><script src=https://jsdw.me/page.js></script>
