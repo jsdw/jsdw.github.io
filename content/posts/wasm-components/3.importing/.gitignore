@@ -1,0 +1,8 @@
+*
+!.gitignore
+!importing.wat
+!importing.wit
+!provider.wat
+!provider.wit
+!index.html
+!README.md

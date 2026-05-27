@@ -1,0 +1,9 @@
+package demo:importing@0.1.0;
+
+interface provider {
+    get: func() -> u32;
+}
+
+world example {
+    export provider;
+}

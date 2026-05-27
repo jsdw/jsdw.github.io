@@ -1,0 +1,8 @@
+*
+!rust_lib
+!rust_lib/src
+!rust_lib/src/lib.rs
+!rust_lib/Cargo.toml
+!.gitignore
+!index.html
+!README.md

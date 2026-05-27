@@ -1,7 +1,7 @@
 +++
 title = "Go: Generics and Iterators"
 description = "Back when I last used Go a decade ago, it had no Generics or Iterators. Now that they've been added, I thought I'd try it again and give my thoughts on them."
-date = 2026-01-16
+date = 2026-05-27
 [extra]
 created = "2026-01-04"
 +++
@@ -40,7 +40,7 @@ This is entirely type safe; no casting to or from any `interface{}` / `any` type
 
 I also ended up writing [a `Heap` data structure][heap] which wrapped Go's `"container/heap"` interface into something nicer, [a `Set` structure][set] to wrap `map[T]struct{}` and expose useful functions for working with sets, and then things like [a _depth first search_ type][dfs] for searching over generic states.
 
-Generics in Go have som similarities to generics in Rust: for each generic parameter that you declare, you can opt to constrain it to types which implement a specific interface, much like how Rust generics can be constrained to types implementing certain traits.
+Generics in Go have some similarities to generics in Rust: for each generic parameter that you declare, you can opt to constrain it to types which implement a specific interface, much like how Rust generics can be constrained to types implementing certain traits.
 
 Here's an example:
 
@@ -118,11 +118,11 @@ fmt.Println(cache.Insert("hello")) // Output: s:1
 fmt.Println(cache.Insert("world")) // Output: s:2
 ```
 
-This is all a little convoluted in order to show generics and the constraints that can be placed on them. Overall, you can go quite far with generics in Go, but there are a couple of limitations which you'll run into:
+This is all a little convoluted in order to show generics and the constraints that can be placed on them. Overall, you can go quite far with generics in Go, but there are a couple of limitations which you'll run into. Let's get into them:
 
-## No generic methods
+## Limitation 1: No generic methods
 
-The one place where generics aren't allows it on methods. This prevents you from writing functions like `Map` or `Fold` on your new generic container types. For instance, this is not valid Go:
+The one place where generics aren't allowed is on methods. This prevents you from writing functions like `Map` or `Fold` on your new generic container types. For instance, I'd love to be able to write something like this, but it is not valid Go:
 
 ```go
 // Some data structure:
@@ -162,9 +162,11 @@ stringData := mydatastructure.Map(intData, func(val int) string {
 })
 ```
 
-## Interfaces can't use `Self` or `this` in their signatures
+EDIT: It looks like generic methods [will make it into Go 1.27][generic-methods].
 
-There exists a built-in `comparable` interface, which is implemented automatically on most types (except, annoyingly, not on slices or any type containing a slice). How could I implement a similar interface, if I wanted to be able to compare slices or more arbitrary custom types in a similar way?
+## Limitation 2: Interfaces can't use `Self` or `this` in their signatures
+
+To help understand this, let's look at the built-in `comparable` interface, which is implemented automatically on most types (except, annoyingly, not on slices or any type containing a slice). How could I create a similar interface if I wanted to be able to compare slices or more arbitrary custom types in a similar way?
 
 My first thought would be something like this:
 
@@ -175,23 +177,23 @@ type Comparable Interface {
 }
 ```
 
-However, this isn't valid Go: I can't say that I want a value of the same type as an input to an interface method.
+I am trying to say here that I have a type that can be compared with itself. However, this isn't valid Go.
 
-What I can do is use a generic parameter on the interface though, like this:
+What I can do instead is to use a generic parameter on the interface, like this:
 
 ```go
 type Comparable[Other any] interface {
     Eq(other Other) bool
 }
 
-// MyInt will implement Comparable[MyInt]:
+// Example: MyInt will implement Comparable[MyInt]:
 type MyInt int
 
 func (this MyInt) Eq(other MyInt) bool {
     return int(other) == int(this)
 }
 
-// We can now use this in custom data types like this:
+// We can now use Comparable in custom data types like this:
 type MyDataType[T Comparable[T]] struct {
     vals []T
 }
@@ -212,13 +214,11 @@ FromComparable[string]{"hello"}
 FromComparable[int]{1}
 ```
 
-Whether re-inventing the wheel to this extent is a good idea is another question though, but I suppose it's good to know that it's possible, and this sort of approach may be necessary if you want to write custom data types like Binary Trees which accept custom keys (`cmp.Ordered` exists but is only implemented for primitive types or wrappers around primitive types).
+Whether it's a good idea to re-implement the `comparable` interface or not is another question, but it seems like it is possible. However..
 
-However..
+## Limitation 3: Function names cannot collide
 
-## Function names cannot collide
-
-This means that we can't actually implement our `Comparable[C]` interface more than once for a given type. This would be useful but not valid:
+This means that we can't actually implement our `Comparable[C]` interface more than once for a given type. This would be useful but is not valid Go:
 
 ```go
 type MyType int
@@ -229,12 +229,13 @@ func (this MyType) Eq(other int) bool {
 }
 
 // Implements Comparable[MyType]
+// Error: Eq already defined for MyType.
 func (this MyType) Eq(other MyType) bool {
     return int(this) == int(other)
 }
 ```
 
-given this limitation, it's probably best to define `Comparable` without a generic, and have one implementation which can compare against any type you think useful, like so:
+Given this limitation, it's probably best to define `Comparable` without a generic, and have one implementation which can compare against any type you think useful, like so:
 
 ```go
 type Comparable interface {
@@ -261,7 +262,9 @@ There are some other [known issues][generic-issues] with generics discussed by t
 
 # Iterators
 
-I hadn't even noticed that Go had adopted any sort of iterator approach, and was very pleasantly surprised to see that iterators have now been integrated much more into Go. Iterators are great when there are several intermediate steps that you'd like to apply to the items in some data structure (for instance a slice), or when you want to provide back each of the values in some data structure for users to do something with, or just when you want to stream values back to a user as they become available.
+I hadn't even noticed that Go had adopted a generic approach to iteration, and was very pleasantly surprised to see that custom iterators are now possible in Go. 
+
+Iterators are great when there are several intermediate steps that you'd like to apply to each of the items in some data structure (for instance a slice), or when you want to provide back each of the values in some data structure for users to do something with, or just when you want to stream values back to a user as they become available.
 
 In Go, you've always been able to iterate over the built-in data structures:
 
@@ -277,15 +280,16 @@ for key, value := range myMap {
 }
 ```
 
-Now, you're able to iterate over arbitrary things by writing functions/methods which return functions that match the special iterator type signatures (which are aliased as `iter.Seq[A]` or `iter.Seq2[A, B]`). These functions are our iterators.
+Now, you're able to iterate over arbitrary things by writing functions/methods which themselves return functions whose shape matches the special iterator type signatures (which are aliased as `iter.Seq[A]` or `iter.Seq2[A, B]`).
 
-Writing these functions looks something like this:
+Writing these iterator functions looks something like this:
 
 ```go
 type MyContainer[T any] struct{
     inner []T
 }
 
+// iterate over the values in our container
 func (c *MyContainer[T]) Values() iter.Seq[T] {
     return func(yield func(T) bool) {
         for _, value := range c.inner {
@@ -296,6 +300,7 @@ func (c *MyContainer[T]) Values() iter.Seq[T] {
     }
 }
 
+// iterate over the keys & values in our container
 func (c *MyContainer[T]) KeysAndValues() iter.Seq2[int, T] {
     return func(yield func(int, T) bool) {
         for key, value := range c.inner {
@@ -340,7 +345,7 @@ for k, v := range myContainer.KeysAndValues() {
 
 Aside from being able to write your own iterators, we now have some handy iterators in the standard library, like `slices.Values` to iterate over the values in a slice (useful if you want to consume an iterator somewhere and have a slice), `maps.All`, `maps.Keys` and `maps.Values` for iterating over maps, things like `strings.Lines` for iterating over all of the lines in a string, and a bunch more. Some iterator functions in the stdlib end with `Seq` to differentiate themselves from the pre-existing non-iterator functions that came before.
 
-Iterators in Go are beautiful, in my opinion. Without any new keywords (like `yield` for instance) and minimal extra language support (just some syntax sugar to make iterators play nicely with `for range` loops), Go has made it possible to:
+Iterators in Go are beautiful, in my opinion. Without any new language keywords (many languages would use `yield` for instance to achieve similar) and minimal extra language support (just some syntax sugar to make iterators play nicely with `for range` loops), Go has made it possible to:
 
 - Stream synchronous _or_ asynchronous values using a single, consistent interface.
 - Use a simple callback based approach to returning values, which makes it easy to return them at any point in potentially complex functions.
@@ -350,7 +355,27 @@ Iterators in Go are beautiful, in my opinion. Without any new keywords (like `yi
 
 Push based iterators are iterators which push the values to the caller; the caller does not control the progress of the iterator. Pull based iterators hand control to the caller; the caller decides when to pull the next value from the iterator. 
 
-At first glance, Rust style iterators are pull based and Go style iterators are push based. Let's look at a very simple iterator implementation in Go:
+At first glance, Rust style iterators are pull based and Go style iterators are push based.
+
+Here's a Rust function which returns an iterator which provides back each value up to the given `n`:
+
+```rust
+fn range(n isize) -> impl Iterator<Item = isize> {
+    let mut val = 0;
+    std::iter::from_fn(move || {
+        let res = if val == isize {
+            None
+        } else {
+            Some(val)
+        };
+
+        val += 1;
+        res
+    })
+}
+```
+
+Here's a similar function in Go:
 
 ```go
 func Range(n int) iter.Seq[int] {
@@ -364,11 +389,13 @@ func Range(n int) iter.Seq[int] {
 }
 ```
 
-The `Range` function here returns an iterator (which is itself just a function). When handed a callback, this iterator calls the callback with each value from 0 to `n`. If the callback is done receiving values, it can return false to tell the iterator function to stop.
+In Rust, the `range` function returns a struct called `FromFn` which implements `Iterator`. Each time the `next()` method is called on this struct, the next value is returned. This is pull based; the caller decides when to call `next()` to pull another value out.
 
-This has limitations. For instance, what if I want to execute two iterators in lock step, handing back the values for each? It turns out that Go has a way to convert its push based iterators into pull based ones via an `iter.Pull` function. 
+In Go, the `Range` function returns a _function_ whose type is the same as `iter.Seq[int]`. When handed a callback, this iterator calls the callback with each value from 0 to `n`. If the callback is done receiving values, it can return false to tell the iterator function to stop. This is push based; each value is pushed to the callback function and the caller does not decide when it is called.
 
-Here's how we can use this function to "zip" two iterators together, returning an iterator which hands back pairs of values from both of the input iterators:
+The Go version here appears to have limitations. For instance, what if I want to execute two Go iterators in lock step, handing back the values for each? Offhand, it feels like you would have to call one iterator function, collect all of the values handed back via the callback, and then call the second iterator function and in the callback, combine the values being handed back with those collected.
+
+It turns out that we can avoid collecting any values in Go: Go has a nice way to convert its push based iterators into pull based ones via an `iter.Pull` function. Here's how we can use this function to "zip" two iterators together, returning an iterator which hands back pairs of values from both of the input iterators without collecting any of them up:
 
 ```go
 func Zip[A any, B any](as iter.Seq[A], bs iter.Seq[B]) iter.Seq2[A, B] {
@@ -449,13 +476,11 @@ func Pull[V any](it iter.Seq[V]) (next func() (V, bool), stop func()) {
 
 By using a select statement and channel inside our yield function, we block it from progressing until the next function is called and pulls the value back out of the channel. The actual implementation is more efficient than this but a similar concept.
 
-The asynchronous runtime in Go really shines here, enabling powerful, flexible iterators without needing additional keywords. I love Rust, but because it lacks this runtime support, it needs to draw a distinction between synchronous `Iterator`s and asynchronous `Streams`, and it would require new language syntax (`gen fn`) to provide the ergonomics afforded when writing push based iterators in Go.
+The asynchronous runtime in Go really shines here, enabling powerful, flexible iterators without needing additional keywords. I love Rust, but because it lacks this runtime support, it needs to draw a distinction between synchronous `Iterator`s and asynchronous `Streams`, and it would require new language syntax (`gen fn` and `yield` for synchronous iteration and `async gen fn` for async iteration) to provide anything close to the ergonomics afforded when writing push based iterators in Go.
 
 # Closing thoughts
 
-Go has always moved slowly and carefully as a language, which I appreciate more and more as time goes on. That said, I really enjoy these recent evolutions to the language. Iterators and Generics add two of the big feature that I sorely missed, and makes it possible for me to write the sort of code I want to write. While I still have various other gripes, the same is true of most languages. 
-
-Now I will just hope that Go gets tagged enums at some point :)
+Go has always moved slowly and carefully as a language, which I appreciate more and more as time goes on. That said, I really enjoy these recent evolutions to the language. Iterators and Generics add two of the big feature that I sorely missed, and makes it possible for me to write the sort of code I want to write. Now I will just hope that Go gets tagged enums at some point :)
 
 [aoc2025]: https://github.com/jsdw/advent-of-code-2025
 [deque]: https://github.com/jsdw/advent-of-code-2025/blob/main/utils/deque.go
@@ -463,3 +488,4 @@ Now I will just hope that Go gets tagged enums at some point :)
 [set]: https://github.com/jsdw/advent-of-code-2025/blob/main/utils/set.go
 [dfs]: https://github.com/jsdw/advent-of-code-2025/blob/main/utils/dfs.go
 [generic-issues]: https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md#issues
+[generic-methods]: https://github.com/golang/go/issues/77273

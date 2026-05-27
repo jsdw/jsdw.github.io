@@ -1,0 +1,6 @@
+*
+!.gitignore
+!index.html
+!adder.wat
+!adder.wit
+!README.md

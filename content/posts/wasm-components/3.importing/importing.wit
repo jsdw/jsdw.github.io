@@ -1,0 +1,15 @@
+package demo:importing@0.1.0;
+
+interface provider {
+    get: func() -> u32;
+}
+
+interface adder {
+    add: func(other: u32) -> u32;
+    mul: func(other: u32) -> u32;
+}
+
+world example {
+    import provider;
+    export adder;
+}

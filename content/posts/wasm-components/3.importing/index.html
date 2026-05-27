@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script type="module">
+// Run this file behind an HTTP server eg:
+//   python3 -m http.server 8080
+//
+// Then visit:
+//   http://localhost:8080/
+
+import { adder } from "./importing_js/importing.component.js"
+
+// Run functions exposed by our module
+console.log("123 + 1 =", adder.add(1));
+console.log("123 * 2 =", adder.mul(2));
+
+</script>
+</head>
+<body>
+    Open the dev console.
+</body>
+</html>

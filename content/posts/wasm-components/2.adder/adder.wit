@@ -1,0 +1,9 @@
+package demo:addcomponent@0.1.0;
+
+interface adder {
+    add: func(a: u32, b: u32) -> u32;
+}
+
+world example {
+    export adder;
+}
