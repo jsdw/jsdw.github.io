@@ -17,6 +17,11 @@ compile_sass = true
 # Minify HTML
 minify_html = true
 
+ignored_content = [
+    # Don't process README files in posts.
+    "**/README.md"
+]
+
 [markdown]
 
 highlight_code = true
