@@ -1,7 +1,7 @@
 +++
-title = "How do we talk to WebAssembly, and can WebAssembly Components and WASI help?"
-description = "This post introduces WebAssembly, looks at how we pass data in and out of it, and then looks to the WASI P2 standard and WebAssembly Component modal as a means to improve on this."
-date = 2026-05-27
+title = "Working with WebAssembly and WASI 0.2 components"
+description = "This post introduces WebAssembly, looks at how we pass data in and out of it, and then looks to the WASI 0.2 standard and WebAssembly Component modal as a way to pass more complex data back and forth"
+date = 2026-05-28
 draft = false
 [extra]
 created = "2026-05-27"
