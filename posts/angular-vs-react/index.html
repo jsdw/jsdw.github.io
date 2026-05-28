@@ -1,0 +1,613 @@
+<!doctype html><html><head><meta charset=utf-8><meta content="width=device-width,initial-scale=1" name=viewport><title>
+    jsdw - Angular and React: A Tale of Two Frameworks
+</title><link href="https://fonts.googleapis.com/css?family=IBM+Plex+Serif|Open+Sans" rel=stylesheet><link href=https://jsdw.me/app.css rel=stylesheet><link href=https://jsdw.me/apple-touch-icon.png rel=apple-touch-icon sizes=180x180><link href=https://jsdw.me/favicon-32x32.png rel=icon sizes=32x32 type=image/png><link href=https://jsdw.me/favicon-16x16.png rel=icon sizes=16x16 type=image/png><link href=https://jsdw.me/site.webmanifest rel=manifest><link color=#5bbad5 href=https://jsdw.me/safari-pinned-tab.svg rel=mask-icon><meta content=#f9409c name=msapplication-TileColor><meta content=#ffffff name=theme-color><body><div class="body post"><header><div class=title-inner><div class=jsdw><a href=https://jsdw.me>JSDW</a></div><nav><a href=https://jsdw.me/posts/>posts</a><a href=https://jsdw.me/projects/>projects</a></nav></div></header><section><div class=top><div class=top-scene><svg class="polygon two" viewbox="0 0 100 100" height=100% style=fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421 version=1.1 width=100% xml:space=preserve xmlns=http://www.w3.org/2000/svg xmlns:serif=http://www.serif.com/ xmlns:xlink=http://www.w3.org/1999/xlink><polygon points="0 100, 15 40, 60 0, 100 30"/></svg><svg class="polygon one" viewbox="0 0 100 100" height=100% style=fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421 version=1.1 width=100% xml:space=preserve xmlns=http://www.w3.org/2000/svg xmlns:serif=http://www.serif.com/ xmlns:xlink=http://www.w3.org/1999/xlink><polygon points="0 40, 30 0, 80 33, 100 100"/></svg></div><div class=top-inner><h1 class=title>Angular and React: A Tale of Two Frameworks <span class=date>2015-03-15</span></h1></div></div><div class=content-inner><div class=post><h1 id=tl-dr>TL;DR</h1><p>Angular allows you to create more beautiful interfaces and in fewer lines of code, but at the cost of a much steeper learning curve and many more concepts to master before this is possible. The separation of presentation and logic is nice and makes collaboration easier. React is less fully featured and more verbose but it's also clear and easy to understand in comparison, and feels like the more elegant of the two with lots of potential going forward.<blockquote><p>If you want to see all of the following examples in action, I have made them available <a href=https://jsdw.me/posts/angular-vs-react/plunkr.html>here</a>. You should also be able to paste this code straight into <a href=http://plunkr.co/edit>plunkr</a> to play with interactively.</blockquote><h1 id=introduction>Introduction</h1><h2 id=angular-in-a-nutshell>Angular in a Nutshell</h2><p>Angular is a relatively popular framework from Google that's all about managing updates to your HTML in response to changes in your data so you don't have to. It gives you a bunch of goodies out of the box, including:<ul><li>A Dependency Injection core which can help with isolating and testing components.<li>A way to create your own dependencies to inject where needed - known as services - things that encapsulate chunks of useful functionality (for example code to fetch data from your backend, store state, perform generic operations on data etc).<li>A way to interface your handy services and data with HTML - known as controllers - allowing you to present your data and make it possible to interact with it.<li>A way to create components - known as directives - that wrap this combination of controller and HTML together and allows for the creation of reusable widgets (for example comment forms, fancy sliders, dropdowns etc).</ul><p>Angular comes with a bunch of useful services built in such as <code>$http</code> which allows you to request data from a backend, <code>$q</code> to make use of promises, page routing to handle changes to the URL, and many others.<p>Its primary goal is to keep the HTML in sync with your data, so that you only have to worry about changes to your data and the HTML updates as required in response to them.<p>Angular also strives to make testing your code as approachable as possible; everything in angular declares a list of dependencies explicitly in order to make use of those things, and so by mocking those dependencies with fake implementations we can test the thing itself to make sure it acts as expected.<p>It also aims to give you everything you need out of the box to throw together some pretty cool things with minimal fuss. For anything more complicated, or a larger project where well organized components becomes much more important, you will end up resorting to creating your own directives, which is where the initial learning curve begins to look a little more like a cliff face for many.<h2 id=react-in-a-nutshell>React in a Nutshell</h2><p>React has a lot in common with Angular. It's created by another big player in the web game - Facebook - and its primary aim is also managing updates to your HTML in response to your data. React doesn't give you as much out of the box as Angular, instead focusing on creating reusable components. It can most easily be compared with Angular directives.<p>Angular allows you to extend the vocabulary of HTML, adding custom elements and attributes to implement new functionality while keeping the more complex logic separate in Javascript land. React on the other hand couples view and logic in the Javascript. To make things prettier it provides a JSX syntax which allows you to write what looks much like XML in your Javascript, which is compiled down to React function calls representing the desired HTML structure. React veers away from using actual heavyweight DOM elements in favour of its own stripped down representation.<p>React also has some goodies if you use <em>Node.js</em> on the backend; it can provide pre-rendered components on page load which the Javascript on the frontend then takes control of. This is made possible by its lack of reliance on real DOM elements, and means that pages can display properly before Javascript kicks in - useful for allowing search bots to scrape your pages without fuss. Testing in React is also facilitated by this ability to render components to strings, though this does not take you as far as the dependency injection route can.<p>React keeps things up to date by generating its stripped down version of DOM elements each time an update might have happened, and comparing it with the current version. It can then use that to work out where to splice changes into the HTML.<p>React, in comparison to angular, is very easy to learn, having fewer moving parts than angular and a simple, well defined approach to creating components. Less built in magic does however mean that code tends to be more verbose. You also don't get the framework around components that angular gives you, although (especially for smaller projects) it is often pretty straightforward to create the missing parts yourself.<h1 id=compare-and-contrast-time>Compare and Contrast Time</h1><p>Let's look at how we'd do some things in both frameworks, and how they would handle it. This will focus generally on slightly more complex examples, since often that is where you hit a stumbling block with these frameworks. I'll try to give at least a general idea of what's going on, but won't go into depth. Hopefully you'll finish with a general feel for how easy or difficult it is to get real things done in each framework.<p>Let's start with communication; how to pass data back and forward between your different components.<h2 id=communication-between-components-vertical>Communication Between Components: Vertical</h2><p>This is one of the first things you'll end up doing in either frameworks. Let's get straight into an example in Angular.<p>Our very simple HTML fragment looks like this:<pre style=background:#272822;color:#f8f8f2><code><span>&LTdiv ng-app="myApp">
+</span><span>	&LTdiv ng-controller="details as ctrl">
+</span><span>		{{ctrl.numbers | json}}
+</span><span>		&LTdiv inner name="ctrl.name" numbers="ctrl.numbers">&LT/div>
+</span><span>	&LT/div>
+</span><span>&LT/div>
+</span></code></pre><p>We declare that we'll be using the <code>details</code> controller (aliased as <code>ctrl</code>), which exposes <code>numbers</code>, an array, and <code>name</code>, a string. We render the array of numbers as a JSON string by passing it through the built in Angular <code>json</code> filter. We also pass these into a custom component (or "directive" as it's known in Angular), which then does what it likes with them.<p>Our inner component displays the numbers in a different format to show how we might make use of data passed in ,but also modifies it itself to demonstrate two way binding. The outer controller also modifies the array every second, and we expect the directive output to mirror this change.<p>Here's the Javascript to wire this up:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span>angular.</span><span style=color:#a6e22e>module</span><span>(</span><span style=color:#e6db74>"myApp"</span><span>, [])
+</span><span>	.</span><span style=color:#a6e22e>controller</span><span>(</span><span style=color:#e6db74>"details"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$interval</span><span>){
+</span><span>
+</span><span>		</span><span style=font-style:italic;color:#66d9ef>var </span><span>ctrl </span><span style=color:#f92672>= </span><span>this;
+</span><span>		</span><span style=font-style:italic;color:#66d9ef>var </span><span>count </span><span style=color:#f92672>= </span><span style=color:#ae81ff>1</span><span>;
+</span><span>
+</span><span>		</span><span style=color:#75715e>//expose our name and numbers:
+</span><span>		ctrl.name </span><span style=color:#f92672>= </span><span style=color:#e6db74>"James"</span><span>;
+</span><span>		ctrl.numbers </span><span style=color:#f92672>= </span><span>[];
+</span><span>
+</span><span>		</span><span style=color:#75715e>//periodically change numbers array:
+</span><span>		</span><span style=font-style:italic;color:#66d9ef>var </span><span>i </span><span style=color:#f92672>= </span><span style=color:#a6e22e>$interval</span><span>(</span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>			ctrl.numbers.</span><span style=color:#66d9ef>push</span><span>(count</span><span style=color:#f92672>++</span><span>);
+</span><span>			</span><span style=color:#f92672>if</span><span>(count </span><span style=color:#f92672>> </span><span style=color:#ae81ff>10</span><span>) $interval.</span><span style=color:#a6e22e>cancel</span><span>(i);
+</span><span>		}, </span><span style=color:#ae81ff>1000</span><span>);
+</span><span>
+</span><span>	})
+</span><span>	.</span><span style=color:#a6e22e>directive</span><span>(</span><span style=color:#e6db74>"inner"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		</span><span style=color:#f92672>return </span><span>{
+</span><span>			</span><span style=color:#75715e>//declaring scope like this isolates the directive
+</span><span>			</span><span style=color:#75715e>//from the outside world and from information in
+</span><span>			</span><span style=color:#75715e>//parent scopes (prototypically at least)
+</span><span>			scope: {
+</span><span>				</span><span style=color:#75715e>//"watch" the name property on both sides:
+</span><span>				name: </span><span style=color:#e6db74>"="</span><span>,
+</span><span>				</span><span style=color:#75715e>//add * to shallow watch an object rather than by ref:
+</span><span>				inputNumbers: </span><span style=color:#e6db74>"=*numbers"
+</span><span>			},
+</span><span>			</span><span style=color:#a6e22e>controller</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$scope</span><span>){
+</span><span>
+</span><span>				$scope.</span><span style=color:#a6e22e>$watchCollection</span><span>(</span><span style=color:#e6db74>"inputNumbers"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>n</span><span>){
+</span><span>
+</span><span>					</span><span style=color:#f92672>if</span><span>(</span><span style=color:#f92672>!</span><span>angular.</span><span style=color:#a6e22e>isArray</span><span>(n)) </span><span style=color:#f92672>return</span><span>;
+</span><span>
+</span><span>					</span><span style=color:#75715e>//add half increments too so numbers arr is 1,1.5,2,2.5,3,3.5..
+</span><span>					</span><span style=color:#f92672>if</span><span>(n.length </span><span style=color:#f92672>&& </span><span>n[n.length</span><span style=color:#f92672>-</span><span style=color:#ae81ff>1</span><span>] </span><span style=color:#f92672>== </span><span style=color:#66d9ef>Math</span><span>.</span><span style=color:#66d9ef>floor</span><span>(n[n.length</span><span style=color:#f92672>-</span><span style=color:#ae81ff>1</span><span>])){
+</span><span>						n.</span><span style=color:#66d9ef>push</span><span>(n[n.length</span><span style=color:#f92672>-</span><span style=color:#ae81ff>1</span><span>]</span><span style=color:#f92672>+</span><span style=color:#ae81ff>0.5</span><span>);
+</span><span>					}
+</span><span>
+</span><span>					$scope.numbers </span><span style=color:#f92672>= </span><span>n.</span><span style=color:#66d9ef>join</span><span>(</span><span style=color:#e6db74>", "</span><span>);
+</span><span>
+</span><span>				});
+</span><span>
+</span><span>			},
+</span><span>			</span><span style=color:#75715e>//this is what we render inside the div with "inner" on:
+</span><span>			template: </span><span style=color:#e6db74>"&LTdiv>{{name}}: {{numbers.length? numbers : 'No Numbers'}}&LT/div>"
+</span><span>		};
+</span><span>	});
+</span></code></pre><p>For someone that's been doing Angular for a while, this looks pretty straight forward, but to the newcomer there are a number of new concepts right off the bat. First, dependency injection; the fact that the argument order on the controller functions and directive function is irrelevant; arguments are asked for by name (see my post <a href=https://jsdw.me/posts/angular-vs-react/./posts/angular-services-and-di-demystified/index.md>here</a> for details on this). Next, the Angular digest cycle, which is why we need to <code>watch</code> things in order that our application can react to things changing properly.<blockquote><p>The digest cycle is a bit of a brick wall for beginners, and it hits you hard as soon as you want to create custom elements. Fundamentally, Angular must store a list of all values that it needs to <em>watch</em> for changes. Each time a digest is triggered (normally by some directive), Angular checks all values it is watching and performs the necessary action attached to each watch (for example updating HTML, or in the above case noticing that <code>numbers</code> changed and updating our string representation of it.)</blockquote><p>The set of services and directives that Angular includes handle triggering digests for you when you'd commonly want Angular to react to changes, such as on user input, or when promises resolve. If you want to handle some custom behaviour that Angular does not provide a directive for, or react to changes outside of Angular, you'll need to trigger one yourself to tell Angular to make sure everything is up to date. The same is true for watches; Angular directives handle watching things in many cases, but there are times when you'll want to tell Angular to watch something explicitly.<p>Time to see how we'd do the same thing in React.<h3 id=react>React</h3><p>Unlike Angular, in which you declare your layout in HTML (on the whole), React mangles the HTML and logic together in Javascript land. In HTML, we just need an element to mount our React component into, for example:<pre style=background:#272822;color:#f8f8f2><code><span>&LTdiv id="react-talk-twoway">&LT/div>
+</span><span>
+</span></code></pre><p>The meat of our application is then in Javascript:<pre class=language-tsx data-lang=tsx style=background:#272822;color:#f8f8f2><code class=language-tsx data-lang=tsx><span style=font-style:italic;color:#66d9ef>var </span><span>Outer </span><span style=color:#f92672>= </span><span>React.</span><span style=color:#a6e22e>createClass</span><span>({
+</span><span>
+</span><span>	</span><span style=color:#a6e22e>getInitialState</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		</span><span style=color:#f92672>return </span><span>{
+</span><span>			name: </span><span style=color:#e6db74>"James"</span><span>,
+</span><span>			count: </span><span style=color:#ae81ff>1</span><span>,
+</span><span>			numbers: []
+</span><span>		};
+</span><span>	},
+</span><span>
+</span><span>	</span><span style=color:#a6e22e>componentDidMount</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		</span><span style=font-style:italic;color:#66d9ef>var </span><span>self </span><span style=color:#f92672>= </span><span>this;
+</span><span>		self.__interval </span><span style=color:#f92672>= </span><span style=color:#66d9ef>setInterval</span><span>(</span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>
+</span><span>			</span><span style=font-style:italic;color:#66d9ef>var </span><span>n </span><span style=color:#f92672>= </span><span>self.state.numbers,
+</span><span>			    c </span><span style=color:#f92672>= </span><span>self.state.count;
+</span><span>
+</span><span>			self.</span><span style=color:#a6e22e>setState</span><span>({
+</span><span>				numbers: n.</span><span style=color:#66d9ef>concat</span><span>([c]),
+</span><span>				count: c</span><span style=color:#f92672>+</span><span style=color:#ae81ff>1
+</span><span>			});
+</span><span>
+</span><span>			</span><span style=color:#f92672>if</span><span>(c</span><span style=color:#f92672>+</span><span style=color:#ae81ff>1 </span><span style=color:#f92672>> </span><span style=color:#ae81ff>10</span><span>) </span><span style=color:#66d9ef>clearInterval</span><span>(self.__interval);
+</span><span>
+</span><span>		},</span><span style=color:#ae81ff>1000</span><span>);
+</span><span>	},
+</span><span>
+</span><span>	</span><span style=color:#a6e22e>updateNumbers</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>newNumbers</span><span>){
+</span><span>		this.</span><span style=color:#a6e22e>setState</span><span>({
+</span><span>			numbers: newNumbers
+</span><span>		});
+</span><span>	},
+</span><span>
+</span><span>	</span><span style=color:#a6e22e>componentWillUnmount</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		</span><span style=color:#66d9ef>clearInterval</span><span>(this.__interval);
+</span><span>	},
+</span><span>
+</span><span>	</span><span style=color:#a6e22e>render</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		</span><span style=font-style:italic;color:#66d9ef>var </span><span>s </span><span style=color:#f92672>= </span><span>this.state;
+</span><span>		</span><span style=color:#f92672>return </span><span>(
+</span><span>			<</span><span style=color:#f92672>div</span><span>>
+</span><span>				{</span><span style=color:#66d9ef>JSON</span><span>.</span><span style=color:#66d9ef>stringify</span><span>(this.state.numbers)}
+</span><span>				<</span><span style=font-style:italic;color:#66d9ef>Inner </span><span style=color:#a6e22e>numbers</span><span style=color:#f92672>=</span><span>{s.numbers} </span><span style=color:#a6e22e>name</span><span style=color:#f92672>=</span><span>{s.name} </span><span style=color:#a6e22e>onUpdate</span><span style=color:#f92672>=</span><span>{this.updateNumbers} />
+</span><span>			&LT/</span><span style=color:#f92672>div</span><span>>
+</span><span>		);
+</span><span>	}
+</span><span>
+</span><span>});
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>var </span><span>Inner </span><span style=color:#f92672>= </span><span>React.</span><span style=color:#a6e22e>createClass</span><span>({
+</span><span>
+</span><span>	propTypes: {
+</span><span>		numbers: React.PropTypes.array,
+</span><span>		name: React.PropTypes.string,
+</span><span>		onUpdate: React.PropTypes.func
+</span><span>	},
+</span><span>
+</span><span>	</span><span style=color:#a6e22e>getDefaultProps</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		</span><span style=color:#f92672>return </span><span>{
+</span><span>			numbers: [],
+</span><span>			name: </span><span style=color:#e6db74>"No Name"</span><span>,
+</span><span>			</span><span style=color:#a6e22e>onUpdate</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){}
+</span><span>		};
+</span><span>	},
+</span><span>
+</span><span>	</span><span style=color:#a6e22e>getInitialState</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		</span><span style=color:#f92672>return </span><span>{};
+</span><span>	},
+</span><span>
+</span><span>	</span><span style=color:#a6e22e>componentWillReceiveProps</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>nextProps</span><span>){
+</span><span>
+</span><span>		</span><span style=font-style:italic;color:#66d9ef>var </span><span>n </span><span style=color:#f92672>= </span><span>nextProps.numbers;
+</span><span>
+</span><span>		</span><span style=color:#75715e>//add half increments too so it's like 1,1.5,2,2.5,3,3.5..
+</span><span>		</span><span style=color:#f92672>if</span><span>(n.length </span><span style=color:#f92672>&& </span><span>n[n.length</span><span style=color:#f92672>-</span><span style=color:#ae81ff>1</span><span>] </span><span style=color:#f92672>== </span><span style=color:#66d9ef>Math</span><span>.</span><span style=color:#66d9ef>floor</span><span>(n[n.length</span><span style=color:#f92672>-</span><span style=color:#ae81ff>1</span><span>])){
+</span><span>			n </span><span style=color:#f92672>= </span><span>n.</span><span style=color:#66d9ef>concat</span><span>([ n[n.length</span><span style=color:#f92672>-</span><span style=color:#ae81ff>1</span><span>]</span><span style=color:#f92672>+</span><span style=color:#ae81ff>0.5 </span><span>]);
+</span><span>			this.props.</span><span style=color:#a6e22e>onUpdate</span><span>(n);
+</span><span>		}
+</span><span>
+</span><span>		this.</span><span style=color:#a6e22e>setState</span><span>({
+</span><span>			numberString: n.</span><span style=color:#66d9ef>join</span><span>(</span><span style=color:#e6db74>", "</span><span>)
+</span><span>		});
+</span><span>
+</span><span>	},
+</span><span>
+</span><span>	</span><span style=color:#a6e22e>render</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		</span><span style=color:#f92672>return </span><span>(
+</span><span>			<</span><span style=color:#f92672>div</span><span>>{this.props.name}: {this.state.numberString </span><span style=color:#f92672>|| </span><span style=color:#e6db74>'No Numbers'</span><span>}&LT/</span><span style=color:#f92672>div</span><span>>
+</span><span>		);
+</span><span>	}
+</span><span>
+</span><span>});
+</span><span>
+</span><span>React.</span><span style=color:#a6e22e>render</span><span>(
+</span><span>	<</span><span style=font-style:italic;color:#66d9ef>Outer </span><span>/>,
+</span><span>	document.</span><span style=color:#66d9ef>getElementById</span><span>(</span><span style=color:#e6db74>"react-talk-twoway"</span><span>)
+</span><span>);
+</span></code></pre><p>React has fewer concepts to learn than Angular. Instead of controllers, directives, services and so on, we just have components. Here, we have two React components named <code>Inner</code> and <code>Outer</code>.<p>We make use of Reacts JSX transformer to write XML style syntax to represent the output HTML. It is easy to add the transformer to compile this into regular function calls into your build process, and I find JSX much easier to work with (but using it is optional if you'd prefer regular function calls).<blockquote><p>React classes consist of a mandatory <code>render</code> function, which - you guessed it - renders some HTML. Other methods are optional and have pretty clear names; <code>componentWillReceiveProps</code> is called whenever the the values being passed to the component are about to change, <code>getInitialState</code> gets the initial component state, and <code>propTypes</code> is a nice optional extra that throws warnings into your console if values passed into your component don't match what's expected by it (and which is disabled in production mode for performance).</blockquote><p>In our example, Our <code>Outer</code> component contains an instance of our <code>Inner one</code>, and passes it the name and numbers array, along with an <code>onUpdate</code> function.<p>Angular bindings are by default two way. In the angular example, changes inside the <code>inner</code> directive to the numbers array or name string are propagated to the outside world (by a series of watches angular creates behind the scenes). This Allows a form of child to parent communication not present in React, but also one I tend to avoid in Angular as it makes the flow of data a little less clear.<p>In React, the common alternative to two way binding is to pass a callback function to the child element that the child can then fire on some event to notify the parent of it. We do this with our <code>onUpdate</code> function.<p>While more verbose, I think it is a lot easier for a beginner to grasp the React example; it has a simplicity to it that I can't help but respect.<h2 id=communication-between-components-horizontal>Communication Between Components: Horizontal</h2><p>Fairly often you'll want some form of horizontal communication or coordination between your different components. For example, if something changes on the backend an event might fire to the front end which your components will want to react to. Alternately you might just have a menu bar on one side of your application and various things that want to react or otherwise communicate with it on the other (say when things are dragged onto it perhaps).<p>Here's one way to do that in Angular that is quite widely applicable to a range of problems. First, the HTML:<pre class=language-html data-lang=html style=background:#272822;color:#f8f8f2><code class=language-html data-lang=html><span><</span><span style=color:#f92672>div </span><span style=color:#a6e22e>ng-app</span><span>=</span><span style=color:#e6db74>"myApp"</span><span>>
+</span><span>	<</span><span style=color:#f92672>div </span><span style=color:#a6e22e>ng-controller</span><span>=</span><span style=color:#e6db74>"countDisplay as ctrl"</span><span>>
+</span><span>		Count: {{ctrl.count}}
+</span><span>	&LT/</span><span style=color:#f92672>div</span><span>>
+</span><span>	<</span><span style=color:#f92672>div </span><span style=color:#a6e22e>ng-controller</span><span>=</span><span style=color:#e6db74>"countControls as ctrl"</span><span>>
+</span><span>		<</span><span style=color:#f92672>button </span><span style=color:#a6e22e>ng-click</span><span>=</span><span style=color:#e6db74>"ctrl.increment()"</span><span>>Increment&LT/</span><span style=color:#f92672>button</span><span>>
+</span><span>		<</span><span style=color:#f92672>button </span><span style=color:#a6e22e>ng-click</span><span>=</span><span style=color:#e6db74>"ctrl.decrement()"</span><span>>Decrement&LT/</span><span style=color:#f92672>button</span><span>>
+</span><span>	&LT/</span><span style=color:#f92672>div</span><span>>
+</span><span>&LT/</span><span style=color:#f92672>div</span><span>>
+</span></code></pre><p>Here we have two controllers, each responsible for separate parts of the DOM. One controller is responsible for showing us a count, and another is responsible for modifying that count. Here's the Javascript to wire this up:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span>angular.</span><span style=color:#a6e22e>module</span><span>(</span><span style=color:#e6db74>"myApp"</span><span>, [])
+</span><span>	.</span><span style=color:#a6e22e>factory</span><span>(</span><span style=color:#e6db74>"counter"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$rootScope</span><span>){
+</span><span>
+</span><span>		</span><span style=font-style:italic;color:#66d9ef>var </span><span>counter </span><span style=color:#f92672>= </span><span style=color:#ae81ff>0</span><span>;
+</span><span>		</span><span style=color:#f92672>return </span><span>{
+</span><span>			</span><span style=color:#a6e22e>getCount</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>				</span><span style=color:#f92672>return </span><span>counter;
+</span><span>			},
+</span><span>			</span><span style=color:#a6e22e>setCount</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>value</span><span>){
+</span><span>				counter </span><span style=color:#f92672>= </span><span>value;
+</span><span>				$rootScope.</span><span style=color:#a6e22e>$emit</span><span>(</span><span style=color:#e6db74>"counterChanged"</span><span>)
+</span><span>			},
+</span><span>			</span><span style=color:#a6e22e>onChange</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$scope</span><span>, </span><span style=font-style:italic;color:#fd971f>fn</span><span>){
+</span><span>				</span><span style=font-style:italic;color:#66d9ef>var </span><span>off </span><span style=color:#f92672>= </span><span>$rootScope.</span><span style=color:#a6e22e>$on</span><span>(</span><span style=color:#e6db74>"counterChanged"</span><span>, fn);
+</span><span>				$scope.</span><span style=color:#a6e22e>$on</span><span>(</span><span style=color:#e6db74>"$destroy"</span><span>, off);
+</span><span>				</span><span style=color:#f92672>return </span><span>off;
+</span><span>			}
+</span><span>		};
+</span><span>
+</span><span>	})
+</span><span>	.</span><span style=color:#a6e22e>controller</span><span>(</span><span style=color:#e6db74>"countDisplay"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$scope</span><span>, </span><span style=font-style:italic;color:#fd971f>counter</span><span>){
+</span><span>
+</span><span>		</span><span style=font-style:italic;color:#66d9ef>var </span><span>ctrl </span><span style=color:#f92672>= </span><span>this;
+</span><span>		ctrl.count </span><span style=color:#f92672>= </span><span>counter.</span><span style=color:#a6e22e>getCount</span><span>();
+</span><span>		counter.</span><span style=color:#66d9ef>onChange</span><span>($scope, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>			ctrl.count </span><span style=color:#f92672>= </span><span>counter.</span><span style=color:#a6e22e>getCount</span><span>();
+</span><span>		});
+</span><span>
+</span><span>	})
+</span><span>	.</span><span style=color:#a6e22e>controller</span><span>(</span><span style=color:#e6db74>"countControls"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$scope</span><span>, </span><span style=font-style:italic;color:#fd971f>counter</span><span>){
+</span><span>
+</span><span>		this.</span><span style=color:#a6e22e>increment </span><span style=color:#f92672>= </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>			counter.</span><span style=color:#a6e22e>setCount</span><span>( counter.</span><span style=color:#a6e22e>getCount</span><span>()</span><span style=color:#f92672>+</span><span style=color:#ae81ff>1 </span><span>);
+</span><span>		}
+</span><span>		this.</span><span style=color:#a6e22e>decrement </span><span style=color:#f92672>= </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>			counter.</span><span style=color:#a6e22e>setCount</span><span>( counter.</span><span style=color:#a6e22e>getCount</span><span>()</span><span style=color:#f92672>-</span><span style=color:#ae81ff>1 </span><span>);
+</span><span>		}
+</span><span>
+</span><span>	});
+</span></code></pre><p>First we create a service using the <code>factory</code> function. This service exposes functions to alter and retrieve the count, and a function which fires a provided callback each time it is changed (using the built in <code>$rootScope</code> event emitting functionality to make quick work of this). Using a change event rather than watchers is more performant and scales well to working with large amounts of data or asynchronous data for instance.<p>Thanks to the dependency injection magic, our new service can now be asked for by name by each of the two controllers, so we make short work of using the simple interface it provides to expose functions to increment and decrement in one controller, and keep it up to date in the other.<p>As an aside, the <code>ng-app</code> directive which links your angular app of the same name to that element, can only be used once per page, but luckily the alternative approach in Javascript is very easy and would look something like:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span>angular.</span><span style=color:#a6e22e>bootstrap</span><span>(
+</span><span>	document.</span><span style=color:#66d9ef>getElementById</span><span>(</span><span style=color:#e6db74>"counter"</span><span>),
+</span><span>	[</span><span style=color:#e6db74>'angularCounter'</span><span>]
+</span><span>);
+</span></code></pre><p>Which is somewhat similar to the React <code>render</code> function which achieves the same goal. Use this if you want to create widgets rather than full page apps to avoid conflict. Your widgets will be entirely isolated from each-other in Angular land and thus cannot share services and the like.<h3 id=react-1>React</h3><p>How would we do the same in React? First, there is nothing built in we can use as a channel to send data, so I'll whip one together quickly:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span style=font-style:italic;color:#66d9ef>var </span><span style=color:#a6e22e>MixinChannel </span><span style=color:#f92672>= </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>	</span><span style=font-style:italic;color:#66d9ef>var </span><span>subscribed </span><span style=color:#f92672>= </span><span>[];
+</span><span>	</span><span style=color:#f92672>return </span><span>{
+</span><span>		</span><span style=color:#a6e22e>createMixin</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>			</span><span style=font-style:italic;color:#66d9ef>var </span><span>offs </span><span style=color:#f92672>= </span><span>[];
+</span><span>			</span><span style=color:#f92672>return </span><span>{
+</span><span>				</span><span style=color:#a6e22e>onChange</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>fn</span><span>){
+</span><span>					subscribed.</span><span style=color:#66d9ef>push</span><span>(fn);
+</span><span>					</span><span style=font-style:italic;color:#66d9ef>var </span><span style=color:#a6e22e>off </span><span style=color:#f92672>= </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>						</span><span style=font-style:italic;color:#66d9ef>var </span><span>idx </span><span style=color:#f92672>= </span><span>subscribed.</span><span style=color:#66d9ef>indexOf</span><span>(cb);
+</span><span>						</span><span style=color:#f92672>if</span><span>(idx </span><span style=color:#f92672>!== -</span><span style=color:#ae81ff>1</span><span>) subscribed.</span><span style=color:#66d9ef>splice</span><span>(idx,</span><span style=color:#ae81ff>1</span><span>);
+</span><span>					}
+</span><span>					offs.</span><span style=color:#66d9ef>push</span><span>(off);
+</span><span>					</span><span style=color:#f92672>return </span><span>off;
+</span><span>				},
+</span><span>				</span><span style=color:#a6e22e>componentWillUnmount</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>					</span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>var </span><span>i </span><span style=color:#f92672>= </span><span style=color:#ae81ff>0</span><span>; i </span><span style=color:#f92672>< </span><span>offs.length; i</span><span style=color:#f92672>++</span><span>){
+</span><span>						offs[i]();
+</span><span>					}
+</span><span>				}
+</span><span>			};
+</span><span>		},
+</span><span>		</span><span style=color:#a6e22e>fire</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>			</span><span style=color:#f92672>for</span><span>(</span><span style=font-style:italic;color:#66d9ef>var </span><span>i </span><span style=color:#f92672>= </span><span style=color:#ae81ff>0</span><span>; i </span><span style=color:#f92672>< </span><span>subscribed.length; i</span><span style=color:#f92672>++</span><span>){
+</span><span>				subscribed[i].</span><span style=color:#66d9ef>apply</span><span>(</span><span style=color:#ae81ff>null</span><span>,arguments);
+</span><span>			}
+</span><span>		}
+</span><span>	}
+</span><span>}
+</span></code></pre><p>I called this a <code>MixinChannel</code> because instances of it expose a <code>createMixin</code> function which can be used to provide a <em>mixin</em> to React components. Mixins are a nice way to compose general purpose functionality into React components, extending the properties of the React component and intelligently merging duplicate uses of lifecycle methods. With this created, we can build the core of our app.<p>First, the obligatory HTML to mount our components into. We'll mount two separate components to artificially make our job of communicating more difficult, so we'll have two elements:<pre class=language-html data-lang=html style=background:#272822;color:#f8f8f2><code class=language-html data-lang=html><span><</span><span style=color:#f92672>div </span><span style=color:#a6e22e>id</span><span>=</span><span style=color:#e6db74>"react-counter-display"</span><span>>&LT/</span><span style=color:#f92672>div</span><span>>
+</span><span><</span><span style=color:#f92672>div </span><span style=color:#a6e22e>id</span><span>=</span><span style=color:#e6db74>"react-counter-controls"</span><span>>&LT/</span><span style=color:#f92672>div</span><span>>
+</span></code></pre><p>Finally, the Javascript to make it tick.<pre class=language-tsx data-lang=tsx style=background:#272822;color:#f8f8f2><code class=language-tsx data-lang=tsx><span style=font-style:italic;color:#66d9ef>var </span><span style=color:#a6e22e>Counter </span><span style=color:#f92672>= </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>	</span><span style=font-style:italic;color:#66d9ef>var </span><span>count </span><span style=color:#f92672>= </span><span style=color:#ae81ff>0</span><span>;
+</span><span>	</span><span style=font-style:italic;color:#66d9ef>var </span><span>chan </span><span style=color:#f92672>= </span><span style=color:#a6e22e>MixinChannel</span><span>();
+</span><span>	</span><span style=font-style:italic;color:#66d9ef>var </span><span>mixin </span><span style=color:#f92672>= </span><span>chan.</span><span style=color:#a6e22e>createMixin</span><span>(</span><span style=color:#e6db74>"onCounterChanged"</span><span>);
+</span><span>	</span><span style=color:#f92672>return </span><span>{
+</span><span>		</span><span style=color:#a6e22e>getCount</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>			</span><span style=color:#f92672>return </span><span>count;
+</span><span>		},
+</span><span>		</span><span style=color:#a6e22e>setCount</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>value</span><span>){
+</span><span>			count </span><span style=color:#f92672>= </span><span>value;
+</span><span>			chan.</span><span style=color:#a6e22e>fire</span><span>();
+</span><span>		},
+</span><span>		onCounterChanged: mixin.onChange,
+</span><span>		componentWillUnmount: mixin.componentWillUnmount
+</span><span>	};
+</span><span>}
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>var </span><span>myCounter </span><span style=color:#f92672>= </span><span style=color:#a6e22e>Counter</span><span>();
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>var </span><span>CounterControls </span><span style=color:#f92672>= </span><span>React.</span><span style=color:#a6e22e>createClass</span><span>({
+</span><span>	mixins: [myCounter],
+</span><span>	</span><span style=color:#a6e22e>incrementCount</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		this.</span><span style=color:#a6e22e>setCount</span><span>(this.</span><span style=color:#a6e22e>getCount</span><span>()</span><span style=color:#f92672>+</span><span style=color:#ae81ff>1</span><span>);
+</span><span>	},
+</span><span>	</span><span style=color:#a6e22e>decrementCount</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		this.</span><span style=color:#a6e22e>setCount</span><span>(this.</span><span style=color:#a6e22e>getCount</span><span>()</span><span style=color:#f92672>-</span><span style=color:#ae81ff>1</span><span>);
+</span><span>	},
+</span><span>	</span><span style=color:#a6e22e>render</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		</span><span style=color:#f92672>return </span><span>(
+</span><span>			<</span><span style=color:#f92672>div</span><span>>
+</span><span>				<</span><span style=color:#f92672>button </span><span style=color:#a6e22e>onClick</span><span style=color:#f92672>=</span><span>{this.incrementCount}>Increment&LT/</span><span style=color:#f92672>button</span><span>>
+</span><span>				<</span><span style=color:#f92672>button </span><span style=color:#a6e22e>onClick</span><span style=color:#f92672>=</span><span>{this.decrementCount}>Decrement&LT/</span><span style=color:#f92672>button</span><span>>
+</span><span>			&LT/</span><span style=color:#f92672>div</span><span>>
+</span><span>		);
+</span><span>	}
+</span><span>});
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>var </span><span>CounterDisplay </span><span style=color:#f92672>= </span><span>React.</span><span style=color:#a6e22e>createClass</span><span>({
+</span><span>	mixins: [myCounter],
+</span><span>	</span><span style=color:#a6e22e>getInitialState</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		</span><span style=color:#f92672>return </span><span>{count: this.</span><span style=color:#a6e22e>getCount</span><span>()};
+</span><span>	},
+</span><span>	</span><span style=color:#a6e22e>componentDidMount</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		</span><span style=font-style:italic;color:#66d9ef>var </span><span>self </span><span style=color:#f92672>= </span><span>this;
+</span><span>		self.</span><span style=color:#a6e22e>onCounterChanged</span><span>(</span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>			self.</span><span style=color:#a6e22e>setState</span><span>({count: self.</span><span style=color:#a6e22e>getCount</span><span>()});
+</span><span>		});
+</span><span>	},
+</span><span>	</span><span style=color:#a6e22e>render</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		</span><span style=color:#f92672>return </span><span>(
+</span><span>			<</span><span style=color:#f92672>div</span><span>>Count: {this.state.count}&LT/</span><span style=color:#f92672>div</span><span>>
+</span><span>		);
+</span><span>	}
+</span><span>});
+</span><span>
+</span><span>React.</span><span style=color:#a6e22e>render</span><span>(
+</span><span>	<</span><span style=font-style:italic;color:#66d9ef>CounterDisplay</span><span>/>,
+</span><span>	document.</span><span style=color:#66d9ef>getElementById</span><span>(</span><span style=color:#e6db74>"react-counter-display"</span><span>)
+</span><span>);
+</span><span>React.</span><span style=color:#a6e22e>render</span><span>(
+</span><span>	<</span><span style=font-style:italic;color:#66d9ef>CounterControls</span><span>/>,
+</span><span>	document.</span><span style=color:#66d9ef>getElementById</span><span>(</span><span style=color:#e6db74>"react-counter-controls"</span><span>)
+</span><span>);
+</span></code></pre><p>First, we create a <code>Counter</code> factory. From that we make one counter instance, which plays the role of our counter service in Angular, and provide it as a mixin to our <code>CounterControls</code> and <code>CounterDisplay</code> components. This endows them with the methods exposed in the counter instance. Our mixin automatically removes subscribed events if the component is unmounted, preventing leaks.<p>Once again, the React version is more verbose, especially as we had to write some code in React that Angular provides for us. This is the sort of thing that leads to React being referred to as "just the directive part of Angular". While there is truth to this, I do believe that much of what Angular provides is to help manage its digest and watch cycle without exposing it to the user too much, something React does not require. Other parts can be build relatively easily or pulled in from third party sources.<h2 id=more-advanced-components-a-tree>More Advanced Components: A Tree</h2><p>Let's try something more advanced.<p>Something I have encountered a need for a number of times is the need to render data that takes the form of a tree-like structure in my HTML. Such data might look like this:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span>[
+</span><span>	{
+</span><span>		title: </span><span style=color:#e6db74>"Folder 1"</span><span>,
+</span><span>		children: [
+</span><span>			{
+</span><span>				title: </span><span style=color:#e6db74>"Sub 10"
+</span><span>			},
+</span><span>			{
+</span><span>				title: </span><span style=color:#e6db74>"Sub 11"
+</span><span>			},
+</span><span>			{
+</span><span>				title: </span><span style=color:#e6db74>"Sub 12"</span><span>,
+</span><span>				children: [
+</span><span>					{
+</span><span>						title: </span><span style=color:#e6db74>"Sub 100"
+</span><span>					},
+</span><span>					{
+</span><span>						title: </span><span style=color:#e6db74>"Sub 200"
+</span><span>					}
+</span><span>				]
+</span><span>			}
+</span><span>		]
+</span><span>	},
+</span><span>	{
+</span><span>		title: </span><span style=color:#e6db74>"Folder 2"</span><span>,
+</span><span>		children: [
+</span><span>			{
+</span><span>				title: </span><span style=color:#e6db74>"Sub 20"
+</span><span>			}
+</span><span>		]
+</span><span>	}
+</span><span>
+</span><span>]
+</span></code></pre><p>I have kept it to a bare minimum, expecting titles to be unique (rather than a separate id property as would be more common) and children to be optional for any given item. The aim is render a tree with items that can be individually expanded and contracted.<p>The recursive nature of such a structure can easily trip you up in Angular initially. Let's start with a very simple approach for one-off rendering of some tree structure in Angular. Here's the HTML:<pre class=language-html data-lang=html style=background:#272822;color:#f8f8f2><code class=language-html data-lang=html><span><</span><span style=color:#f92672>div </span><span style=color:#a6e22e>ng-app</span><span>=</span><span style=color:#e6db74>"myApp"</span><span>>
+</span><span>	<</span><span style=color:#f92672>script </span><span style=color:#a6e22e>type</span><span>=</span><span style=color:#e6db74>"text/ng-template" </span><span style=color:#a6e22e>id</span><span>=</span><span style=color:#e6db74>"tree-template"</span><span>>
+</span><span>		&LTdiv ng-repeat='item in items track by item.title'>
+</span><span>			{{item.title}}
+</span><span>			&LTbutton ng-show="item.children" ng-click="showChildren = !showChildren">
+</span><span>				{{ (showChildren? 'Hide' : 'Show')+' Children' }}
+</span><span>			&LT/button>
+</span><span>			&LTtree ng-if='item.children && showChildren' items='item.children'>&LT/tree>
+</span><span>		&LT/div>
+</span><span>	&LT/</span><span style=color:#f92672>script</span><span>>
+</span><span>	<</span><span style=color:#f92672>div </span><span style=color:#a6e22e>ng-controller</span><span>=</span><span style=color:#e6db74>"treeCtrl as ctrl"</span><span>>
+</span><span>		<</span><span style=color:#f92672>tree </span><span style=color:#a6e22e>items</span><span>=</span><span style=color:#e6db74>"ctrl.tree"</span><span>>&LT/</span><span style=color:#f92672>tree</span><span>>
+</span><span>	&LT/</span><span style=color:#f92672>div</span><span>>
+</span><span>&LT/</span><span style=color:#f92672>div</span><span>>
+</span></code></pre><p>Here, we create an angular template called <code>tree-template</code>. We also make use of a <code>tree</code> directive we have created to help with the recursive aspect of this. The Javascript then looks like this:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span>angular.</span><span style=color:#a6e22e>module</span><span>(</span><span style=color:#e6db74>"myApp"</span><span>, [])
+</span><span>	.</span><span style=color:#a6e22e>directive</span><span>(</span><span style=color:#e6db74>"tree"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$compile</span><span>,</span><span style=font-style:italic;color:#fd971f>$templateCache</span><span>){
+</span><span>		</span><span style=color:#f92672>return </span><span>{
+</span><span>			</span><span style=color:#75715e>//this directive uses a new scope, one which inherits
+</span><span>			</span><span style=color:#75715e>//properties from parent scopes rather than is isolated:
+</span><span>			scope: </span><span style=color:#ae81ff>true</span><span>,
+</span><span>			</span><span style=color:#a6e22e>link</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>scope</span><span>,</span><span style=font-style:italic;color:#fd971f>elem</span><span>,</span><span style=font-style:italic;color:#fd971f>attrs</span><span>){
+</span><span>				scope.items </span><span style=color:#f92672>= </span><span>scope.</span><span style=color:#a6e22e>$eval</span><span>(attrs.items);
+</span><span>				</span><span style=color:#f92672>if</span><span>(</span><span style=color:#f92672>!</span><span>scope.items.length) </span><span style=color:#f92672>return</span><span>;
+</span><span>				</span><span style=font-style:italic;color:#66d9ef>var </span><span>html </span><span style=color:#f92672>= </span><span style=color:#a6e22e>$compile</span><span>($templateCache.</span><span style=color:#66d9ef>get</span><span>(</span><span style=color:#e6db74>"tree-template"</span><span>))(scope);
+</span><span>				elem.</span><span style=color:#66d9ef>append</span><span>(html);
+</span><span>			}
+</span><span>		};
+</span><span>	})
+</span><span>	.</span><span style=color:#a6e22e>controller</span><span>(</span><span style=color:#e6db74>"treeCtrl"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		this.tree </span><span style=color:#f92672>= </span><span>[</span><span style=color:#75715e>/* tree structure goes here */</span><span>];
+</span><span>	});
+</span></code></pre><p>While concise, we make use of some new concepts in Angular.<p>First, we need to <code>$eval</code> the "item.children" attribute string provided to the directive, assigning the result to <code>scope.children</code>. This makes use of the fact that the directive scope prototypically inherits from its parent.<p>The <code>$templateCache</code> allows access to any templates Angular has picked up (as a result of their <em>text/ng-template</em> type) and stored away (in string form), so we use that to get at our <code>tree-template</code> HTML.<p>The <code>$compile</code> service is what Angular uses to turn an almost normal looking string of HTML with Angular directives and curly braces sprinkled about, into a ready-to-view HTML fragment that will react to changes and whatnot.<p>We give <code>$compile</code> our HTML string, and then link it to our tree scope, making anything on that scope usable inside the HTML fragment. We only perform the compilation if the list has children, otherwise we get stuck in an infinite loop whereby every attempt to compile the template leads to another attempt to compile the tree directive, and so on.<p>This is very basic but renders the tree structure complete with buttons that allow it to be expanded and contracted, as well as allowing functions declared on scopes above where the tree directive is used to be used inside it.<p>Many things however are less than ideal. Changes aren't properly watched for one thing. Fortunately, I wanted to make use of a directive like this in work, so I turned it into something more production ready. Here's what a fully capable <code>tree</code> directive might look like in Angular:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span>App.</span><span style=color:#a6e22e>directive</span><span>(NAME, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>	</span><span style=color:#f92672>return </span><span>{
+</span><span>		restrict: </span><span style=color:#e6db74>"AE"</span><span>,
+</span><span>		scope: </span><span style=color:#ae81ff>true</span><span>,
+</span><span>		transclude: </span><span style=color:#ae81ff>true</span><span>,
+</span><span>		controller: [</span><span style=color:#e6db74>"$scope"</span><span>,</span><span style=color:#e6db74>"$element"</span><span>,</span><span style=color:#e6db74>"$attrs"</span><span>,</span><span style=color:#e6db74>"$transclude"</span><span>,
+</span><span>			</span><span style=font-style:italic;color:#66d9ef>function</span><span>( </span><span style=font-style:italic;color:#fd971f>$scope</span><span>,  </span><span style=font-style:italic;color:#fd971f>$element</span><span>,  </span><span style=font-style:italic;color:#fd971f>$attrs</span><span>,  </span><span style=font-style:italic;color:#fd971f>$transclude</span><span>){
+</span><span>
+</span><span>			</span><span style=color:#f92672>if</span><span>(</span><span style=color:#e6db74>"children" </span><span style=color:#f92672>in </span><span>$attrs) $scope.__treeOpts </span><span style=color:#f92672>= </span><span>{
+</span><span>				transcludeFn: $transclude,
+</span><span>				noWatch: </span><span style=color:#e6db74>"noWatch" </span><span style=color:#f92672>in </span><span>$attrs</span><span style=color:#f92672>? </span><span style=color:#ae81ff>true </span><span style=color:#f92672>: </span><span style=color:#ae81ff>false</span><span>,
+</span><span>				class: $scope.$parent.</span><span style=color:#a6e22e>$eval</span><span>($attrs.itemClass) </span><span style=color:#f92672>|| </span><span style=color:#e6db74>""</span><span>,
+</span><span>				key: $attrs.key </span><span style=color:#f92672>|| </span><span style=color:#ae81ff>false</span><span>,
+</span><span>				ref: $attrs.ref </span><span style=color:#f92672>|| </span><span style=color:#e6db74>"item"
+</span><span>			};
+</span><span>
+</span><span>			</span><span style=color:#f92672>if</span><span>(</span><span style=color:#f92672>!</span><span>$scope.__treeOpts) {
+</span><span>				</span><span style=color:#f92672>throw </span><span style=font-style:italic;color:#66d9ef>Error</span><span>(NAME</span><span style=color:#f92672>+</span><span style=color:#e6db74>":: tree declared with 'children' attr but not a child tree."</span><span>);
+</span><span>			}
+</span><span>
+</span><span>			</span><span style=font-style:italic;color:#66d9ef>var </span><span>noWatch </span><span style=color:#f92672>= </span><span>$scope.__treeOpts.noWatch;
+</span><span>			</span><span style=font-style:italic;color:#66d9ef>var </span><span>turnOffWatch </span><span style=color:#f92672>= </span><span>$scope.$parent.</span><span style=color:#a6e22e>$watchCollection</span><span>($attrs.items, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>n</span><span>){
+</span><span>				</span><span style=font-style:italic;color:#66d9ef>var </span><span>bIsArray </span><span style=color:#f92672>= </span><span>n </span><span style=color:#f92672>instanceof </span><span>Array;
+</span><span>				$scope.items </span><span style=color:#f92672>= </span><span>bIsArray</span><span style=color:#f92672>? </span><span>n </span><span style=color:#f92672>: </span><span>[];
+</span><span>				</span><span style=color:#f92672>if</span><span>(bIsArray </span><span style=color:#f92672>&& </span><span>noWatch) </span><span style=color:#a6e22e>turnOffWatch</span><span>();
+</span><span>			});
+</span><span>
+</span><span>		}],
+</span><span>		template: </span><span style=color:#e6db74>"&LTdiv ng-repeat='item in items track by (__treeOpts.key? item[__treeOpts.key] : $index)' ng-class='__treeOpts.class' jw-tree-item='item'>&LT/div>"
+</span><span>	};
+</span><span>});
+</span><span>
+</span><span>App.</span><span style=color:#a6e22e>directive</span><span>(</span><span style=color:#e6db74>"jwTreeItem"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>	</span><span style=color:#f92672>return </span><span>{
+</span><span>		restrict: </span><span style=color:#e6db74>"A"</span><span>,
+</span><span>		scope: </span><span style=color:#ae81ff>true</span><span>,
+</span><span>		controller: [</span><span style=color:#e6db74>"$scope"</span><span>,</span><span style=color:#e6db74>"$element"</span><span>,</span><span style=color:#e6db74>"$attrs"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$scope</span><span>,</span><span style=font-style:italic;color:#fd971f>$element</span><span>,</span><span style=font-style:italic;color:#fd971f>$attrs</span><span>){
+</span><span>
+</span><span>			</span><span style=color:#f92672>if</span><span>(</span><span style=color:#f92672>!</span><span>$scope.__treeOpts) </span><span style=color:#f92672>throw </span><span style=font-style:italic;color:#66d9ef>Error</span><span>(NAME</span><span style=color:#f92672>+</span><span style=color:#e6db74>":: TreeItem not beneath a Tree!"</span><span>);
+</span><span>
+</span><span>			</span><span style=font-style:italic;color:#66d9ef>var </span><span>noWatch </span><span style=color:#f92672>= </span><span>$scope.__treeOpts.noWatch;
+</span><span>			</span><span style=font-style:italic;color:#66d9ef>var </span><span>turnOffWatch </span><span style=color:#f92672>= </span><span>$scope.$parent.</span><span style=color:#a6e22e>$watch</span><span>($attrs.jwTreeItem, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>n</span><span>){
+</span><span>				</span><span style=font-style:italic;color:#66d9ef>var </span><span>bIsUndefined </span><span style=color:#f92672>= typeof </span><span>n </span><span style=color:#f92672>== </span><span style=color:#e6db74>"undefined"</span><span>;
+</span><span>				$scope[$scope.__treeOpts.ref] </span><span style=color:#f92672>= </span><span>n;
+</span><span>				</span><span style=color:#f92672>if</span><span>(bIsUndefined </span><span style=color:#f92672>&& </span><span>noWatch) </span><span style=color:#a6e22e>turnOffWatch</span><span>();
+</span><span>			});
+</span><span>
+</span><span>			$scope.__treeOpts.</span><span style=color:#a6e22e>transcludeFn</span><span>($scope, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>elem</span><span>){
+</span><span>				$element.</span><span style=color:#66d9ef>append</span><span>(elem);
+</span><span>			});
+</span><span>		}],
+</span><span>	};
+</span><span>});
+</span></code></pre><p>And here's how it might be used to render the same tree structure as above without any extra Javascript:<pre class=language-html data-lang=html style=background:#272822;color:#f8f8f2><code class=language-html data-lang=html><span><</span><span style=color:#f92672>div </span><span style=color:#a6e22e>ng-controller</span><span>=</span><span style=color:#e6db74>"treeCtrl as ctrl"</span><span>>
+</span><span>	<</span><span style=color:#f92672>tree </span><span style=color:#a6e22e>ref</span><span>=</span><span style=color:#e6db74>"item" </span><span style=color:#a6e22e>key</span><span>=</span><span style=color:#e6db74>"title" </span><span style=color:#a6e22e>items</span><span>=</span><span style=color:#e6db74>"ctrl.tree"</span><span>>
+</span><span>		{{item.title}}
+</span><span>		<</span><span style=color:#f92672>button </span><span style=color:#a6e22e>ng-show</span><span>=</span><span style=color:#e6db74>"item.children" </span><span style=color:#a6e22e>ng-click</span><span>=</span><span style=color:#e6db74>"showChildren = !showChildren"</span><span>>
+</span><span>			{{ (showChildren? 'Hide' : 'Show')+' Children' }}
+</span><span>		&LT/</span><span style=color:#f92672>button</span><span>>
+</span><span>		<</span><span style=color:#f92672>tree </span><span style=color:#a6e22e>children items</span><span>=</span><span style=color:#e6db74>'item.children' </span><span style=color:#a6e22e>ng-if</span><span>=</span><span style=color:#e6db74>'item.children && showChildren'</span><span>>
+</span><span>		&LT/</span><span style=color:#f92672>tree</span><span>>
+</span><span>	&LT/</span><span style=color:#f92672>tree</span><span>>
+</span><span>&LT/</span><span style=color:#f92672>div</span><span>>
+</span></code></pre><p>This version will react to any changes as you'd expect. You pass to it the HTML you'd like an item to be rendered with, which can itself include a reference to the tree directive to point out where the children should live and what property to find the children in.<p>This highlights one of the best/worst points in Angular I think. You can create components with beautiful interfaces that are as general purpose as you could want, but in order to do so you have to understand a number of concepts quite well. Things like scope inheritance for example can easily lead to hard to find bugs.<h3 id=react-2>React</h3><p>Let's look at a similar implementation in React. We'll omit the obligatory HTML element and jump to the Javascript:<pre class=language-tsx data-lang=tsx style=background:#272822;color:#f8f8f2><code class=language-tsx data-lang=tsx><span style=color:#75715e>//our 'tree' component, which is really just repeating over
+</span><span style=color:#75715e>//a list of elements and rendering the provided component
+</span><span style=color:#75715e>//for each:
+</span><span style=font-style:italic;color:#66d9ef>var </span><span>Tree </span><span style=color:#f92672>= </span><span>React.</span><span style=color:#a6e22e>createClass</span><span>({
+</span><span>	propTypes: {
+</span><span>		items: React.PropTypes.array.isRequired,
+</span><span>		template: React.PropTypes.func.isRequired,
+</span><span>		keyProp: React.PropTypes.string.isRequired
+</span><span>	},
+</span><span>	</span><span style=color:#a6e22e>render</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		</span><span style=font-style:italic;color:#66d9ef>var </span><span>keyProp </span><span style=color:#f92672>= </span><span>this.props.keyProp;
+</span><span>		</span><span style=font-style:italic;color:#66d9ef>var </span><span>items </span><span style=color:#f92672>= </span><span>this.props.items;
+</span><span>		</span><span style=font-style:italic;color:#66d9ef>var </span><span>Child </span><span style=color:#f92672>= </span><span>this.props.template;
+</span><span>		</span><span style=color:#f92672>return </span><span>(
+</span><span>			<</span><span style=color:#f92672>div</span><span>>
+</span><span>			{
+</span><span>				items.</span><span style=color:#a6e22e>map</span><span>(</span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>item</span><span>){
+</span><span>					</span><span style=color:#f92672>return </span><span><</span><span style=font-style:italic;color:#66d9ef>Child </span><span style=color:#a6e22e>key</span><span style=color:#f92672>=</span><span>{item[keyProp]} </span><span style=color:#a6e22e>item</span><span style=color:#f92672>=</span><span>{item} />
+</span><span>				})
+</span><span>			}
+</span><span>			&LT/</span><span style=color:#f92672>div</span><span>>
+</span><span>		);
+</span><span>	}
+</span><span>});
+</span><span>
+</span><span style=color:#75715e>//the equivalent of our custom HTML to use for items in
+</span><span style=color:#75715e>//the tree, which calls back to the tree itself for the
+</span><span style=color:#75715e>//recursive rendering:
+</span><span style=font-style:italic;color:#66d9ef>var </span><span>TreeItem </span><span style=color:#f92672>= </span><span>React.</span><span style=color:#a6e22e>createClass</span><span>({
+</span><span>	propTypes: {
+</span><span>		item: React.PropTypes.</span><span style=color:#a6e22e>shape</span><span>({
+</span><span>			title: React.PropTypes.string.isRequired,
+</span><span>			children: React.PropTypes.array
+</span><span>		})
+</span><span>	},
+</span><span>	</span><span style=color:#a6e22e>getInitialState</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		</span><span style=color:#f92672>return </span><span>{childrenVisible: </span><span style=color:#ae81ff>false</span><span>};
+</span><span>	},
+</span><span>	</span><span style=color:#a6e22e>toggleChildren</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		this.</span><span style=color:#a6e22e>setState</span><span>({childrenVisible: </span><span style=color:#f92672>!</span><span>this.state.childrenVisible});
+</span><span>	},
+</span><span>	</span><span style=color:#a6e22e>render</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		</span><span style=font-style:italic;color:#66d9ef>var </span><span>item </span><span style=color:#f92672>= </span><span>this.props.item;
+</span><span>		</span><span style=font-style:italic;color:#66d9ef>var </span><span>visible </span><span style=color:#f92672>= </span><span>this.state.childrenVisible;
+</span><span>		</span><span style=color:#f92672>return </span><span>(
+</span><span>			<</span><span style=color:#f92672>div</span><span>>
+</span><span>				{item.title}
+</span><span>				{item.children</span><span style=color:#f92672>?
+</span><span>					<</span><span style=color:#f92672>button </span><span style=color:#a6e22e>onClick</span><span style=color:#f92672>=</span><span>{this.toggleChildren}>
+</span><span>						{(visible</span><span style=color:#f92672>? </span><span style=color:#e6db74>'Hide' </span><span style=color:#f92672>: </span><span style=color:#e6db74>'Show'</span><span>)</span><span style=color:#f92672>+</span><span style=color:#e6db74>' Children'</span><span>}
+</span><span>					&LT/</span><span style=color:#f92672>button</span><span>>
+</span><span>				</span><span style=color:#f92672>:</span><span style=color:#ae81ff>false</span><span>}
+</span><span>				{visible</span><span style=color:#f92672>?
+</span><span>					<</span><span style=font-style:italic;color:#66d9ef>Tree </span><span style=color:#a6e22e>items</span><span style=color:#f92672>=</span><span>{item.children </span><span style=color:#f92672>|| </span><span>[]} </span><span style=color:#a6e22e>keyProp</span><span style=color:#f92672>=</span><span style=color:#e6db74>"title" </span><span style=color:#a6e22e>template</span><span style=color:#f92672>=</span><span>{TreeItem} />
+</span><span>				</span><span style=color:#f92672>:</span><span style=color:#ae81ff>false</span><span>}
+</span><span>			&LT/</span><span style=color:#f92672>div</span><span>>
+</span><span>		);
+</span><span>	}
+</span><span>
+</span><span>});
+</span><span>
+</span><span>React.</span><span style=color:#a6e22e>render</span><span>(
+</span><span>	<</span><span style=font-style:italic;color:#66d9ef>Tree </span><span style=color:#a6e22e>items</span><span style=color:#f92672>=</span><span>{window.tree} </span><span style=color:#a6e22e>keyProp</span><span style=color:#f92672>=</span><span style=color:#e6db74>"title" </span><span style=color:#a6e22e>template</span><span style=color:#f92672>=</span><span>{TreeItem}/>,
+</span><span>	document.</span><span style=color:#66d9ef>getElementById</span><span>(</span><span style=color:#e6db74>"someElement"</span><span>)
+</span><span>);
+</span></code></pre><p>The React version uses the same basic React concepts we've made use of in prior examples. It's hardly even a tree component, being more general than that, but the end result is the same. In our more advanced Angular version, we pass a bunch of properties "under the hood" to each child tree, so we don't need to redeclare them. This is done by making use of scope inheritance. React prefers to be explicit, and so we have to pass properties explicitly down through child components.<p>On the one hand, the React example is much clearer and understandable. On the other, Angular has enabled me to create a much more general, powerful and reusable component. That is not to say that you could not create an equally powerful component in React, more that there is not an immediately obvious <em>Reacty</em> approach to doing so.<h2 id=multiple-transclusion>Multiple Transclusion</h2><p>Transclusion is a fancy term for essentially ripping out child nodes of a component so that we can reuse them elsewhere. We make use of it in our angular tree example above to rip out the HTML we intend to use to render each tree item from inside the outermost tree directive so that we can make use of it instead in place of each child item in the new HTML structure that the tree directive creates.<p>A very simple example in Angular might take some HTML such as:<pre class=language-html data-lang=html style=background:#272822;color:#f8f8f2><code class=language-html data-lang=html><span><</span><span style=color:#f92672>fancybox</span><span>>
+</span><span>	<</span><span style=color:#f92672>span</span><span>>Hello&LT/</span><span style=color:#f92672>span</span><span>>
+</span><span>	<</span><span style=color:#f92672>img </span><span style=color:#a6e22e>src</span><span>=</span><span style=color:#e6db74>"someimage.jpg"</span><span>/>
+</span><span>&LT/</span><span style=color:#f92672>fancybox</span><span>>
+</span></code></pre><p>And, given a simple implementation of fancybox that looks something like:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span>angular.</span><span style=color:#a6e22e>directive</span><span>(</span><span style=color:#e6db74>"fancybox"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>	</span><span style=color:#f92672>return </span><span>{
+</span><span>		transclude: </span><span style=color:#ae81ff>true</span><span>,
+</span><span>		template: </span><span style=color:#e6db74>'&LTdiv class="fancybox">&LTdiv class="fancybox-inner" ng-transclude>&LT/div>&LT/div>'
+</span><span>	};
+</span><span>});
+</span></code></pre><p>Render something like the resulting HTML:<pre class=language-html data-lang=html style=background:#272822;color:#f8f8f2><code class=language-html data-lang=html><span><</span><span style=color:#f92672>fancybox</span><span>>
+</span><span>	<</span><span style=color:#f92672>div </span><span style=color:#a6e22e>class</span><span>=</span><span style=color:#e6db74>"fancybox"</span><span>>
+</span><span>		<</span><span style=color:#f92672>div </span><span style=color:#a6e22e>class</span><span>=</span><span style=color:#e6db74>"fancybox-inner"</span><span>>
+</span><span>			<</span><span style=color:#f92672>span</span><span>>Hello&LT/</span><span style=color:#f92672>span</span><span>>
+</span><span>			<</span><span style=color:#f92672>img </span><span style=color:#a6e22e>src</span><span>=</span><span style=color:#e6db74>"someimage.jpg"</span><span>/>
+</span><span>		&LT/</span><span style=color:#f92672>div</span><span>>
+</span><span>	&LT/</span><span style=color:#f92672>div</span><span>>
+</span><span>&LT/</span><span style=color:#f92672>fancybox</span><span>>
+</span></code></pre><p>We have ripped out the child HTML of <code>fancybox</code> and reinserted it into a new place as determined by our use of <code>ngTransclude</code> above. This sort of thing is really useful for creating general purpose components of all types, from ones that automatically centre content for you to reusable popups, modals and so on. Basic transclusion is therefore very easy to do in both React and Angular.<p>The next step from this is multiple transclusion, where you'd like to provide a directive several HTML fragments, each to be ripped out and replaced at different locations in the new template. Let's first look at how we'd do this in Angular.<p>We'll start with this HTML:<pre class=language-html data-lang=html style=background:#272822;color:#f8f8f2><code class=language-html data-lang=html><span><</span><span style=color:#f92672>div </span><span style=color:#a6e22e>ng-controller</span><span>=</span><span style=color:#e6db74>"fancyWidgetCtrl as ctrl"</span><span>>
+</span><span>	<</span><span style=color:#f92672>fancy-widget</span><span>>
+</span><span>		<</span><span style=color:#f92672>span </span><span style=color:#a6e22e>part</span><span>=</span><span style=color:#e6db74>"title-part"</span><span>>
+</span><span>			Hello There <</span><span style=color:#f92672>em</span><span>>{{ctrl.name}}&LT/</span><span style=color:#f92672>em</span><span>>
+</span><span>		&LT/</span><span style=color:#f92672>span</span><span>>
+</span><span>		<</span><span style=color:#f92672>span </span><span style=color:#a6e22e>part</span><span>=</span><span style=color:#e6db74>"content-part"</span><span>>
+</span><span>			This is a {{ctrl.verb}} widget!
+</span><span>		&LT/</span><span style=color:#f92672>span</span><span>>
+</span><span>	&LT/</span><span style=color:#f92672>fancy-widget</span><span>>
+</span><span>&LT/</span><span style=color:#f92672>div</span><span>>
+</span></code></pre><p>This has two parts, "title-part" and "content-part", that we want to rip out and replace in some new locations in our final HTML. Each part also makes use of some angular variables available from our controller aliased as <code>ctrl</code>. Here's the Javascript:<pre class=language-javascript data-lang=javascript style=background:#272822;color:#f8f8f2><code class=language-javascript data-lang=javascript><span>angular.</span><span style=color:#a6e22e>module</span><span>(</span><span style=color:#e6db74>"fancyWidget"</span><span>, [])
+</span><span>	.</span><span style=color:#a6e22e>directive</span><span>(</span><span style=color:#e6db74>"fancyWidget"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		</span><span style=color:#f92672>return </span><span>{
+</span><span>			scope: {},
+</span><span>			transclude: </span><span style=color:#ae81ff>true</span><span>,
+</span><span>			</span><span style=color:#a6e22e>controller</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>$scope</span><span>,</span><span style=font-style:italic;color:#fd971f>$element</span><span>,</span><span style=font-style:italic;color:#fd971f>$transclude</span><span>){
+</span><span>
+</span><span>				</span><span style=color:#75715e>//just use the scope the content was pulled from.
+</span><span>				</span><span style=color:#a6e22e>$transclude</span><span>(</span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>el</span><span>){
+</span><span>					$element.</span><span style=color:#66d9ef>find</span><span>(</span><span style=color:#e6db74>"title-part"</span><span>).</span><span style=color:#66d9ef>replaceWith</span><span>(el.</span><span style=color:#a6e22e>filter</span><span>(</span><span style=color:#e6db74>"[part=title-part]"</span><span>));
+</span><span>					$element.</span><span style=color:#66d9ef>find</span><span>(</span><span style=color:#e6db74>"content-part"</span><span>).</span><span style=color:#66d9ef>replaceWith</span><span>(el.</span><span style=color:#a6e22e>filter</span><span>(</span><span style=color:#e6db74>"[part=content-part]"</span><span>));
+</span><span>				});
+</span><span>
+</span><span>			},
+</span><span>			template: </span><span style=color:#e6db74>"&LTh3>Title: &LTtitle-part/>&LT/h3>&LTdiv>Content: &LTcontent-part/>&LT/div>"
+</span><span>		};
+</span><span>	})
+</span><span>	.</span><span style=color:#a6e22e>controller</span><span>(</span><span style=color:#e6db74>"fancyWidgetCtrl"</span><span>, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		this.name </span><span style=color:#f92672>= </span><span style=color:#e6db74>"James"</span><span>;
+</span><span>		this.verb </span><span style=color:#f92672>= </span><span style=color:#e6db74>"fancy"</span><span>;
+</span><span>	});
+</span></code></pre><p>We define a very small template inline, though we'd provide a <code>templateUrl</code> for anything significant and keep the template in a separate file. In the template, we replace our <code>title-part</code> and <code>content-part</code> elements with the parts of corresponding names from the original HTML. For this, we make use of a little jQuery to pluck the relevant parts out of the transcluded result and place them as desired.<p>One of the nice things about Angular is that once you define directives like this, or the tree directive above, you can get back to working in just the HTML, focusing on what you want and having the directives do the leg work for you behind the scenes.<p>Multiple directives can be included on the same element to confer different properties. Often one might combine directives which handle events like drag and drop with those that perform some HTML transformation like the above. This style of composition is not available to us in React.<h3 id=react-3>React</h3><p>How does the React version compare? Here it is:<pre class=language-tsx data-lang=tsx style=background:#272822;color:#f8f8f2><code class=language-tsx data-lang=tsx><span style=font-style:italic;color:#66d9ef>var </span><span>FancyWidget </span><span style=color:#f92672>= </span><span>React.</span><span style=color:#a6e22e>createClass</span><span>({
+</span><span>	</span><span style=color:#a6e22e>render</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>
+</span><span>		</span><span style=color:#75715e>//find the chldren we want to use:
+</span><span>		</span><span style=font-style:italic;color:#66d9ef>var </span><span>title </span><span style=color:#f92672>= </span><span style=color:#ae81ff>false</span><span>, content </span><span style=color:#f92672>= </span><span style=color:#ae81ff>false</span><span>;
+</span><span>		React.Children.</span><span style=color:#66d9ef>forEach</span><span>(this.props.children, </span><span style=font-style:italic;color:#66d9ef>function</span><span>(</span><span style=font-style:italic;color:#fd971f>child</span><span>){
+</span><span>			</span><span style=color:#f92672>if</span><span>(child.props.part </span><span style=color:#f92672>== </span><span style=color:#e6db74>"title"</span><span>) title </span><span style=color:#f92672>= </span><span>child;
+</span><span>			</span><span style=color:#f92672>else if</span><span>(child.props.part </span><span style=color:#f92672>== </span><span style=color:#e6db74>"content"</span><span>) content </span><span style=color:#f92672>= </span><span>child;
+</span><span>		});
+</span><span>
+</span><span>		</span><span style=color:#f92672>return </span><span>(
+</span><span>			<</span><span style=color:#f92672>div</span><span>>
+</span><span>				<</span><span style=color:#f92672>h3</span><span>>Title: {title}&LT/</span><span style=color:#f92672>h3</span><span>>
+</span><span>				<</span><span style=color:#f92672>div</span><span>>Content: {content}&LT/</span><span style=color:#f92672>div</span><span>>
+</span><span>			&LT/</span><span style=color:#f92672>div</span><span>>
+</span><span>		);
+</span><span>
+</span><span>	}
+</span><span>});
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>var </span><span>App </span><span style=color:#f92672>= </span><span>React.</span><span style=color:#a6e22e>createClass</span><span>({
+</span><span>	</span><span style=color:#a6e22e>getDefaultProps</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		</span><span style=color:#f92672>return </span><span>{
+</span><span>			name: </span><span style=color:#e6db74>"James"</span><span>,
+</span><span>			verb: </span><span style=color:#e6db74>"fancy"
+</span><span>		}
+</span><span>	},
+</span><span>	</span><span style=color:#a6e22e>render</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>		</span><span style=color:#f92672>return </span><span>(
+</span><span>			<</span><span style=font-style:italic;color:#66d9ef>FancyWidget</span><span>>
+</span><span>				<</span><span style=color:#f92672>span </span><span style=color:#a6e22e>part</span><span style=color:#f92672>=</span><span style=color:#e6db74>"title"</span><span>>Hello there <</span><span style=color:#f92672>em</span><span>>{this.props.name}&LT/</span><span style=color:#f92672>em</span><span>>&LT/</span><span style=color:#f92672>span</span><span>>
+</span><span>				<</span><span style=color:#f92672>span </span><span style=color:#a6e22e>part</span><span style=color:#f92672>=</span><span style=color:#e6db74>"content"</span><span>>This is a {this.props.verb} widget!&LT/</span><span style=color:#f92672>span</span><span>>
+</span><span>			&LT/</span><span style=font-style:italic;color:#66d9ef>FancyWidget</span><span>>
+</span><span>		);
+</span><span>	}
+</span><span>})
+</span><span>
+</span><span>React.</span><span style=color:#a6e22e>render</span><span>(
+</span><span>	<</span><span style=font-style:italic;color:#66d9ef>App </span><span>/>,
+</span><span>	document.</span><span style=color:#66d9ef>getElementById</span><span>(</span><span style=color:#e6db74>"react-fancy-widget"</span><span>)
+</span><span>);
+</span></code></pre><p>The React version makes use of a helper provided to loop over child elements, conveniently provided as a <code>children</code> prop in the same way that other attributes are, and pluck out the relevant elements based on some attribute.<p>We also create an <code>App</code> component to take the place of the outermost controller in the Angular version, and show that we can work with dynamic content just as easily.<p>Both versions are actually quite simple, although the React version pips it for clarity once again I think (though it would be a close call in this case). Both versions are a similar length this time round.<p>The Angular version is more clunky if jQuery is not made use of. This is one of the minor gripes I have with Angular; it comes with a trimmed down version of jQuery called jqLite, and thus wraps all elements it exposes to you in this class, but jqLite lacks many very useful features of jQuery and so I tend to quickly feel obliged to include the full version to avoid jumping through hoops. In React I have avoided any need for either, and what DOM manipulation I have had to do in other projects I have always been happy enough with native browser methods.<h2 id=encapsulation-and-namespacing>Encapsulation and Namespacing</h2><p>One of the significant differences that might have become apparent through some of the examples is that of namespacing. In Angular (within a single app), every directive you create or pull in from elsewhere must be given a unique name so that they can be used separately in the HTML. The standard solution to this is prefixing directives in a particular package. This is one of the tradeoffs for getting to write "normal" HTML; you can only have one element of a given name.<p>Because React does not use HTML, it does not have this issue. React components are just functions, and so their name is irrelevant. You can easily hide away components so that they can't be used elsewhere in your application, for example:<pre class=language-tsx data-lang=tsx style=background:#272822;color:#f8f8f2><code class=language-tsx data-lang=tsx><span style=font-style:italic;color:#66d9ef>var </span><span>HelloWorld </span><span style=color:#f92672>= </span><span>(</span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>
+</span><span>	</span><span style=font-style:italic;color:#66d9ef>var </span><span>HiddenComponent </span><span style=color:#f92672>= </span><span>React.</span><span style=color:#a6e22e>createClass</span><span>({
+</span><span>		</span><span style=color:#a6e22e>render</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>			</span><span style=color:#f92672>return </span><span><</span><span style=color:#f92672>div</span><span>>Hello&LT/</span><span style=color:#f92672>div</span><span>>
+</span><span>		}
+</span><span>	});
+</span><span>
+</span><span>	</span><span style=color:#f92672>return </span><span>React.</span><span style=color:#a6e22e>createClass</span><span>({
+</span><span>		</span><span style=color:#a6e22e>render</span><span>: </span><span style=font-style:italic;color:#66d9ef>function</span><span>(){
+</span><span>			</span><span style=color:#f92672>return </span><span>(
+</span><span>				<</span><span style=color:#f92672>div</span><span>><</span><span style=font-style:italic;color:#66d9ef>HiddenComponent</span><span>/> World&LT/</span><span style=color:#f92672>div</span><span>>
+</span><span>			);
+</span><span>		}
+</span><span>	});
+</span><span>
+</span><span>}());
+</span></code></pre><p>We use a self executing function scope to hide our <code>HiddenComponent</code> from the outside world, exposing only those components we want. Using something like Browserify we'd just place the components we want to make public on <code>module.exports</code> and anything else can use only what it needs without any fear of conflict.<p>Looking at the component definitions themselves, React forces you to pass props explicitly to child components if you want them to be available there, whereas in angular the default behaviour is to inherit properties from parent scopes. This scope inheritance is often a stumbling block, for instance, what does the following do when you click the "Show Hello" button?<pre class=language-html data-lang=html style=background:#272822;color:#f8f8f2><code class=language-html data-lang=html><span><</span><span style=color:#f92672>div </span><span style=color:#a6e22e>ng-init</span><span>=</span><span style=color:#e6db74>"hidden = false; showButton = true"</span><span>>
+</span><span>	<</span><span style=color:#f92672>div </span><span style=color:#a6e22e>ng-if</span><span>=</span><span style=color:#e6db74>"showButton"</span><span>>
+</span><span>		<</span><span style=color:#f92672>button </span><span style=color:#a6e22e>ng-click</span><span>=</span><span style=color:#e6db74>"hidden = !hidden"</span><span>>Show Hello&LT/</span><span style=color:#f92672>button</span><span>>
+</span><span>	&LT/</span><span style=color:#f92672>div</span><span>>
+</span><span>	<</span><span style=color:#f92672>div </span><span style=color:#a6e22e>id</span><span>=</span><span style=color:#e6db74>"hello" </span><span style=color:#a6e22e>ng-if</span><span>=</span><span style=color:#e6db74>"!hidden"</span><span>>Hello!&LT/</span><span style=color:#f92672>div</span><span>>
+</span><span>&LT/</span><span style=color:#f92672>div</span><span>>
+</span></code></pre><p>The answer is, nothing. The <code>ng-if</code> directive on the element above the button actually creates a new scope, and then clicking the button sets the hidden property on that scope, rather than its parent, which is what the <code>#hello</code> div is looking at to determine whether to be hidden or not. A tiny change from <code>ng-if</code> to <code>ng-show</code> fixes the problem, as <code>ng-show</code> does not create a new scope:<pre class=language-html data-lang=html style=background:#272822;color:#f8f8f2><code class=language-html data-lang=html><span><</span><span style=color:#f92672>div </span><span style=color:#a6e22e>ng-init</span><span>=</span><span style=color:#e6db74>"hidden = false; showButton = true"</span><span>>
+</span><span>	<</span><span style=color:#f92672>div </span><span style=color:#a6e22e>ng-show</span><span>=</span><span style=color:#e6db74>"showButton"</span><span>>
+</span><span>		<</span><span style=color:#f92672>button </span><span style=color:#a6e22e>ng-click</span><span>=</span><span style=color:#e6db74>"hidden = !hidden"</span><span>>Show Hello&LT/</span><span style=color:#f92672>button</span><span>>
+</span><span>	&LT/</span><span style=color:#f92672>div</span><span>>
+</span><span>	<</span><span style=color:#f92672>div </span><span style=color:#a6e22e>id</span><span>=</span><span style=color:#e6db74>"hello" </span><span style=color:#a6e22e>ng-if</span><span>=</span><span style=color:#e6db74>"!hidden"</span><span>>Hello!&LT/</span><span style=color:#f92672>div</span><span>>
+</span><span>&LT/</span><span style=color:#f92672>div</span><span>>
+</span></code></pre><p>Even now I am occasionally tripped up with scope inheritance niggles like this. This sort of thing make the initial learning curve of Angular much steeper. Angular does provide things like the "controller as" syntax to help avoid the issue by forcing you specify on which scope you want values from explicitly.<p>When you understand scope inheritance, you can use it to make more beautiful directives by passing data behind the scenes rather than explicitly as attributes on each child as you would do in React. It can however be a source of hard to spot bugs, as in the HTML it can be almost impossible to know exactly where new scopes are created without a good understanding of every directive in use.<h1 id=conclusions>Conclusions</h1><p>Having looked at several examples of real use cases and how one might achieve them in each framework, I hope I have given you some insight into the pros and cons of each.<p>In general, each example seems to echo the statement that Angular can produce nicer interfaces in fewer lines of code than React, but at the cost of simplicity. Creating directives in Angular can be confusing at first not just because of the sudden need to understand various concepts that were previously tucked out of sight, but because of the multitude of ways that you can go about it. It is easy to get stuck wondering when is best to use the <code>link</code> method over the <code>controller</code> method for instance, since both provide access to the same properties and often either will be fine.<p>React does not give you so much out of the box, but also does not need so much. The React lifecycle is simple and explicit, and so we have no use for custom <code>$timeout</code>s, <code>$interval</code>s, custom event handlers like <code>ngClick</code> and the like, or a custom promise implementation; we just use native methods. Instead of <code>ngRepeat</code> we just use an <code>array.map(function(){..})</code> to repeat some HTML for a list. Instead of <code>$q</code> we use the native <code>Promise</code> interface (with a shim for older browser support if necessary). Instead of jQuery we use native selectors where we still have need for them.<p>The separation of HTML and Javascript provided by Angular is still a point of debate for me. Working with others, I love that I can create a directive to make something tick, while someone else can work on the HTML to make the thing look nice (so long as we agree on an interface). While logic and HTML are inseparable in both, Angular allows you to abstract a lot of that logic away into directives so that it is just possible to focus on the presentation layer. In React, you always have to consider the your layout and logic, but then the way in which you define components in React also means that the two are very much more tightly coupled. That said, it is worth checking out something like <a href=http://wix.github.io/react-templates/>React Templates</a>, which seems to take steps toward offering the same level of separation in React.<p>I will be favouring React for my personal projects, but then that is partly just because I have used Angular so much already and want to play with something new. Partly however, I like that while Angular took a fair bit of time to really get to grips with, one read over the React tutorials gave me everything I need straight off the bat. I appreciate elegance in code, and while React is more verbose, I think it is also more the more elegant of the two.<h1 id=the-future>The Future</h1><p>One thing worth mentioning with regard to either framework is where they are heading. Both frameworks are still on a path of rapid evolution. React 0.13 brings a new way of defining components using ES6 classes rather than the <code>createClass</code> method used above, though it currently lacks support for mixins and does not have a way to define static properties of classes yet. When it is time to make the change, it will be an easy transition to make as the interface is relatively unaffected.<p>Angular version 2, which is still under development, is also moving toward using an approach based on ES6 classes, however it is also a complete framework rewrite, which caused a bit of an uproar in the community. The upgrade path from Angular 1.x to 2.x is currently unclear and at the very least it looks like a fairly significant amount of work to bring your code forward. There are at least hints of a migration path whereby Angular 2.0 code will be able to be used alongside 1.x code in apps, allowing a more gradual shift in your codebase from one platform to the other.<p>In this sense, React is the safer choice if you are starting out with a new framework, although I expect that many of the concepts learned in Angular 1.x will give you a head start with <a href=http://angular.io>Angular 2</a> if it looks like your kind of thing.</div></div></section><footer></footer></div><script src=https://jsdw.me/page.js></script>

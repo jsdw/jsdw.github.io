@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script type="module">
+import * as component from "./rust_js/rust.js"
+
+// Define just enough to print to stdout:
+class ConsoleLogStream {
+  checkWrite() {
+    // Returns how many bytes can be written.
+    return BigInt(Number.MAX_SAFE_INTEGER);
+  }
+  write(contents) {
+    // Log the bytes we're given.
+    const decoder = new TextDecoder();
+    console.log(decoder.decode(contents));
+  }
+  blockingFlush() {}
+  subscribe() {
+    // This would block if needed:
+    return new Pollable();
+  }
+}
+
+class Pollable {
+    block() {}
+}
+
+// Instantiate our component, providing stubs for most of the
+// required imports, since they aren't used.
+const c = await component.instantiate(
+    // Provide a means to fetch and compile our WASM
+    (path) => {
+        const wasmPromise = fetch(`./rust_js/${path}`);
+        return WebAssembly.compileStreaming(wasmPromise)
+    },
+    // Provide the expected imports.
+    {
+        'wasi:cli/stdout': {
+            getStdout: () => new ConsoleLogStream()
+        },
+        'wasi:io/poll': {
+            Pollable: Pollable
+        },
+        'wasi:io/streams': {
+            OutputStream: ConsoleLogStream,
+            InputStream: {},
+        },
+        // Everything else is an unused stub:
+        'wasi:cli/environment': {
+            getEnvironment: () => []
+        },
+        'wasi:cli/exit': {
+            exit: () => {}
+        },
+        'wasi:cli/stderr': {
+            getStderr: () => {}
+        },
+        'wasi:cli/stdin': {
+            getStdin: () => {}
+        },
+        'wasi:cli/terminal-input': {
+            TerminalInput: {}
+        },
+        'wasi:cli/terminal-output': {
+            TerminalOutput: {}
+        },
+        'wasi:cli/terminal-stderr': {
+            getTerminalStderr: () => {}
+        },
+        'wasi:cli/terminal-stdin': {
+            getTerminalStdin: () => {}
+        },
+        'wasi:cli/terminal-stdout': {
+            getTerminalStdout: () => {}
+        },
+        'wasi:io/error': {
+            Error: {}
+        },
+    }
+);
+
+// Run our component
+c.run.run();
+
+</script>
+</head>
+<body>
+    Open the dev console.
+</body>
+</html>

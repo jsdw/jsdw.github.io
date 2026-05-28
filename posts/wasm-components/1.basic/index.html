@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script type="text/javascript">
+async function run() {
+    // A Promise to fetch our WASM:
+    const wasmPromise = fetch("basic.wasm");
+
+    // The imports that our WASM needs to run:
+    const imports = {
+        console: {
+            log: (arg) => console.log(arg)
+        }
+    };
+    const res = await WebAssembly.instantiateStreaming(wasmPromise, imports)
+
+    // Call our exported addAndLog function:
+    res.instance.exports.addAndLog(100, 200);
+}
+
+run()
+</script>
+</head>
+<body>
+    Open the dev console.
+</body>
+</html>

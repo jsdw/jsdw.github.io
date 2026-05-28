@@ -1,0 +1,378 @@
+<!doctype html><html><head><meta charset=utf-8><meta content="width=device-width,initial-scale=1" name=viewport><title>
+    jsdw - Rust: Fun with Function Traits
+</title><link href="https://fonts.googleapis.com/css?family=IBM+Plex+Serif|Open+Sans" rel=stylesheet><link href=https://jsdw.me/app.css rel=stylesheet><link href=https://jsdw.me/apple-touch-icon.png rel=apple-touch-icon sizes=180x180><link href=https://jsdw.me/favicon-32x32.png rel=icon sizes=32x32 type=image/png><link href=https://jsdw.me/favicon-16x16.png rel=icon sizes=16x16 type=image/png><link href=https://jsdw.me/site.webmanifest rel=manifest><link color=#5bbad5 href=https://jsdw.me/safari-pinned-tab.svg rel=mask-icon><meta content=#f9409c name=msapplication-TileColor><meta content=#ffffff name=theme-color><body><div class="body post"><header><div class=title-inner><div class=jsdw><a href=https://jsdw.me>JSDW</a></div><nav><a href=https://jsdw.me/posts/>posts</a><a href=https://jsdw.me/projects/>projects</a></nav></div></header><section><div class=top><div class=top-scene><svg class="polygon two" viewbox="0 0 100 100" height=100% style=fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421 version=1.1 width=100% xml:space=preserve xmlns=http://www.w3.org/2000/svg xmlns:serif=http://www.serif.com/ xmlns:xlink=http://www.w3.org/1999/xlink><polygon points="0 100, 15 40, 60 0, 100 30"/></svg><svg class="polygon one" viewbox="0 0 100 100" height=100% style=fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421 version=1.1 width=100% xml:space=preserve xmlns=http://www.w3.org/2000/svg xmlns:serif=http://www.serif.com/ xmlns:xlink=http://www.w3.org/1999/xlink><polygon points="0 40, 30 0, 80 33, 100 100"/></svg></div><div class=top-inner><h1 class=title>Rust: Fun with Function Traits <span class=date>2020-09-26</span></h1></div></div><div class=content-inner><div class=post><p>In this post I'm going to work towards writing a function that can accept and work with closures taking variable numbers and types of arguments. On the way, I'll look at <em>trait families</em>, and a way to avoid overlapping impls.<p>As a refresher, when we want to pass functions around in Rust, we normally resort to using the function traits <code>Fn</code>, <code>FnMut</code> and <code>FnOnce</code>. The function <em>type</em> <code>fn(foo) -> bar</code> can also be used but is decidedly less powerful.<p>I'm not particularly concerned about the distinction between those traits here (<a href=https://doc.rust-lang.org/book/ch13-01-closures.html>the rust book</a> covers that), but to sum it up:<ul><li>Things that impl <code>FnOnce</code> can mutate <em>and</em> consume (take ownership of) the values they close over when they run, and so can only be run once.<li>Things that impl <code>FnMut</code> can mutate the values they close over when they run, but not consume them.<li>Things that impl <code>Fn</code> can only immutably borrow variables when they run.</ul><p>Anything that implements <code>Fn</code> also implements <code>FnMut</code> and <code>FnOnce</code>. Anything that's <code>FnMut</code> also implements <code>FnOnce</code>. Closures and functions automatically implement these traits based on how they use the variables that they close over.<p>If you're writing something that can be handed a closure, It's often preferable to accept anything that implements the <code>FnOnce</code> trait if you are able, falling back to <code>FnMut</code> if you need to call the function more than once, or <code>Fn</code> if you can't mutate things. This gives as much flexibility to the person defining the function as possible.<p>Anyway, a very simple example which takes advantage of a function trait might look like this:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>run_twice</span><span>&LTF>(</span><span style=font-style:italic;color:#fd971f>f</span><span>: F, </span><span style=font-style:italic;color:#fd971f>input</span><span>: </span><span style=font-style:italic;color:#66d9ef>usize</span><span>) -> </span><span style=font-style:italic;color:#66d9ef>usize
+</span><span style=color:#f92672>where
+</span><span>  F: Fn(</span><span style=font-style:italic;color:#66d9ef>usize</span><span>) -> </span><span style=font-style:italic;color:#66d9ef>usize
+</span><span>{
+</span><span>    </span><span style=color:#66d9ef>f</span><span>(</span><span style=color:#66d9ef>f</span><span>(input))
+</span><span>}
+</span></code></pre><p>Here, <code>run_twice</code> takes a function of <code>usize -> usize</code> and an initial <code>input</code>, and returns the result of having applied that function twice.<p>We can make our <code>run_twice</code> function more widely usable by making the function argument and return type generic:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>run_twice</span><span>&LTF,T>(</span><span style=font-style:italic;color:#fd971f>f</span><span>: F, </span><span style=font-style:italic;color:#fd971f>input</span><span>: T) -> T
+</span><span style=color:#f92672>where
+</span><span>  F: Fn(T) -> T
+</span><span>{
+</span><span>    </span><span style=color:#66d9ef>f</span><span>(</span><span style=color:#66d9ef>f</span><span>(input))
+</span><span>}
+</span></code></pre><p>Aside: a nice property of this is that we are being less specific to the function about what its arguments will be, and so the range of things that the function can do with the arguments is reduced (this function can't alter the <code>T</code>'s itself, for instance, whereas the less generic version could have altered the <code>usize</code>s).<p>Using this looks like:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=color:#66d9ef>run_twice</span><span>(|</span><span style=font-style:italic;color:#fd971f>n</span><span>| n </span><span style=color:#f92672>* </span><span style=color:#ae81ff>2</span><span>, </span><span style=color:#ae81ff>2</span><span>);
+</span><span style=color:#66d9ef>run_twice</span><span>(|</span><span style=color:#f92672>mut </span><span style=font-style:italic;color:#fd971f>v</span><span>| { v.</span><span style=color:#66d9ef>push</span><span>(</span><span style=color:#ae81ff>true</span><span>); v }, vec![</span><span style=color:#ae81ff>false</span><span>,</span><span style=color:#ae81ff>true</span><span>]);
+</span></code></pre><p>If we need to be able to do certain things with our <code>T</code>'s, we can constrain the input and output of the function to requiring certain traits be implemented on them, here <code>Debug</code>:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>run_twice_and_log</span><span>&LTF,T>(</span><span style=font-style:italic;color:#fd971f>f</span><span>: F, </span><span style=font-style:italic;color:#fd971f>input</span><span>: T) -> T
+</span><span style=color:#f92672>where
+</span><span>  T: std::fmt::Debug,
+</span><span>  F: Fn(T) -> T
+</span><span>{
+</span><span>    println!(</span><span style=color:#e6db74>"Before: </span><span style=color:#ae81ff>{:?}</span><span style=color:#e6db74>"</span><span>, input);
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>let</span><span> after </span><span style=color:#f92672>= </span><span style=color:#66d9ef>f</span><span>(</span><span style=color:#66d9ef>f</span><span>(input));
+</span><span>    println!(</span><span style=color:#e6db74>"After: </span><span style=color:#ae81ff>{:?}</span><span style=color:#e6db74>"</span><span>, after);
+</span><span>    after
+</span><span>}
+</span></code></pre><p>As well as built-in traits, we can also require that our own traits are implemented on the inputs and outputs:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=color:#75715e>// Return the name of the type as a String
+</span><span style=color:#75715e>// (`Any` provides similar functionality)
+</span><span style=font-style:italic;color:#66d9ef>trait </span><span>TypeName {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>type_name</span><span>() -> String;
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>// Some implementations on types we want to be able to inspect.
+</span><span style=color:#75715e>// We could use macros to help generate these for many types.
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>TypeName </span><span style=color:#f92672>for </span><span>usize {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>type_name</span><span>() -> String {
+</span><span>        </span><span style=color:#e6db74>"usize"</span><span>.</span><span style=color:#66d9ef>to_owned</span><span>()
+</span><span>    }
+</span><span>}
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>TypeName </span><span style=color:#f92672>for </span><span>String {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>type_name</span><span>() -> String {
+</span><span>        </span><span style=color:#e6db74>"String"</span><span>.</span><span style=color:#66d9ef>to_owned</span><span>()
+</span><span>    }
+</span><span>}
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>&LTT: TypeName> TypeName </span><span style=color:#f92672>for </span><span>Vec&LTT> {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>type_name</span><span>() -> String {
+</span><span>        format!(</span><span style=color:#e6db74>"Vec<</span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>>"</span><span>, T::type_name())
+</span><span>    }
+</span><span>}
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>TypeName </span><span style=color:#f92672>for</span><span> () {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>type_name</span><span>() -> String {
+</span><span>        </span><span style=color:#e6db74>"()"</span><span>.</span><span style=color:#66d9ef>to_owned</span><span>()
+</span><span>    }
+</span><span>}
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>&LTT1: TypeName, T2: TypeName> TypeName </span><span style=color:#f92672>for</span><span> (T1,T2) {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>type_name</span><span>() -> String {
+</span><span>        format!(</span><span style=color:#e6db74>"(</span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>,</span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>)"</span><span>, </span><span style=color:#ae81ff>T1</span><span>::type_name(), </span><span style=color:#ae81ff>T2</span><span>::type_name())
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>// Allow some basic introspection given the above:
+</span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>inspect_function</span><span>&LTF,T1,T2>(</span><span style=font-style:italic;color:#fd971f>f</span><span>: F)
+</span><span style=color:#f92672>where
+</span><span>  F: Fn(T1) -> T2,
+</span><span>  T1: TypeName,
+</span><span>  T2: TypeName
+</span><span>{
+</span><span>    println!(</span><span style=color:#e6db74>"This function has the shape: </span><span style=color:#ae81ff>{}</span><span style=color:#e6db74> -> </span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>"</span><span>,
+</span><span>        </span><span style=color:#ae81ff>T1</span><span>::type_name(),
+</span><span>        </span><span style=color:#ae81ff>T2</span><span>::type_name());
+</span><span>}
+</span><span>
+</span><span style=color:#66d9ef>inspect_function</span><span>(|</span><span style=font-style:italic;color:#fd971f>n</span><span>: </span><span style=font-style:italic;color:#66d9ef>usize</span><span>| n.</span><span style=color:#66d9ef>to_string</span><span>());
+</span><span style=color:#75715e>// -> This function has the shape: i8 -> String
+</span><span style=color:#66d9ef>inspect_function</span><span>(|</span><span style=color:#f92672>mut </span><span style=font-style:italic;color:#fd971f>v</span><span>: </span><span style=font-style:italic;color:#66d9ef>Vec</span><span><</span><span style=color:#f92672>_</span><span>>| { v.</span><span style=color:#66d9ef>push</span><span>(</span><span style=color:#ae81ff>10</span><span style=font-style:italic;color:#66d9ef>usize</span><span>); });
+</span><span style=color:#75715e>// -> This function has the shape: Vec&LTi8> -> ()
+</span></code></pre><p>Is there a way to allow our <code>inspect_function</code> to accept functions that take a variable number of arguments? If you'd asked me a few months ago I'd probably have said no, but traits in Rust continue to surprise me, so let's see how we can do this.<h1 id=more-traits>More Traits</h1><p>If we want to work with a collection of different things in a uniform way, we look towards traits. So, what if we could do something like this:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=color:#75715e>// Write a trait which all function types we're
+</span><span style=color:#75715e>// interested in must implement:
+</span><span style=font-style:italic;color:#66d9ef>trait </span><span>Describable {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>describe</span><span>() -> String;
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>// Use this trait to allow different function
+</span><span style=color:#75715e>// types to be provided:
+</span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>inspect_function</span><span>&LTF>(</span><span style=font-style:italic;color:#fd971f>f</span><span>: F)
+</span><span style=color:#f92672>where
+</span><span>  F: Describable
+</span><span>{
+</span><span>    println!(</span><span style=color:#e6db74>"This function has the shape: </span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>"</span><span>, F::describe());
+</span><span>}
+</span></code></pre><p>We'd just need to implement <code>Describable</code> for different shapes of function and job done! Let's have a go at one such implementation:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=font-style:italic;color:#66d9ef>impl </span><span>&LTF, T1, T2> Describable </span><span style=color:#f92672>for </span><span>F
+</span><span style=color:#f92672>where
+</span><span>  F: Fn(T1) -> T2,
+</span><span>  T1: TypeName,
+</span><span>  T2: TypeName
+</span><span>{
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>describe</span><span>() -> String {
+</span><span>        format!(</span><span style=color:#e6db74>"</span><span style=color:#ae81ff>{}</span><span style=color:#e6db74> -> </span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>"</span><span>, </span><span style=color:#ae81ff>T1</span><span>::type_name(), </span><span style=color:#ae81ff>T2</span><span>::type_name())
+</span><span>    }
+</span><span>}
+</span></code></pre><p>With this in hand, we are roughly back to where we started; <code>inspect_function</code> can describe simple 1 argument <code>Fn</code>s.<p>Well, actually we're worse off right now, because the above doesn't actually work..<pre style=background:#272822;color:#f8f8f2><code><span>error[E0207]: the type parameter `T1` is not constrained by the impl trait, self type, or predicates
+</span><span>  --> src/main.rs:50:10
+</span><span>   |
+</span><span>50 | impl &LTF, T1, T2> Describable for F
+</span><span>   |          ^^ unconstrained type parameter
+</span><span>
+</span><span>error[E0207]: the type parameter `T2` is not constrained by the impl trait, self type, or predicates
+</span><span>  --> src/main.rs:50:14
+</span><span>   |
+</span><span>50 | impl &LTF, T1, T2> Describable for F
+</span><span>   |              ^^ unconstrained type parameter
+</span></code></pre><p>What's that all about? Well, I'm not entirely sure, but <a href=https://github.com/rust-lang/rfcs/blob/master/text/0447-no-unused-impl-parameters.md>this RFC</a> goes into detail about the reasons for disallowing things like the above. Fortunately, the fix is easy; we have to mention <code>T1</code> and <code>T2</code> somewhere in the <code>impl</code> line. One way to do that is to allow our <code>Describable</code> trait to take type parameters, so we'd have something more like:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=font-style:italic;color:#66d9ef>trait </span><span>Describable&LTArgs> {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>describe</span><span>() -> String;
+</span><span>}
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>&LTF, T1, T2> Describable<(T1,T2)> </span><span style=color:#f92672>for </span><span>F
+</span><span style=color:#f92672>where
+</span><span>  F: Fn(T1) -> T2,
+</span><span>  T1: TypeName,
+</span><span>  T2: TypeName
+</span><span>{
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>describe</span><span>() -> String {
+</span><span>        format!(</span><span style=color:#e6db74>"</span><span style=color:#ae81ff>{}</span><span style=color:#e6db74> -> </span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>"</span><span>, </span><span style=color:#ae81ff>T1</span><span>::type_name(), </span><span style=color:#ae81ff>T2</span><span>::type_name())
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>inspect_function</span><span>&LTF,Args>(</span><span style=font-style:italic;color:#fd971f>f</span><span>: F)
+</span><span style=color:#f92672>where
+</span><span>  F: Describable&LTArgs>
+</span><span>{
+</span><span>    println!(</span><span style=color:#e6db74>"This function has the shape: </span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>"</span><span>, F::describe());
+</span><span>}
+</span></code></pre><p>Now, <code>inspect_function</code> will work as expected. We've added a type parameter <code>Args</code> to the <code>Describable</code> trait, and then we've "used up" any spare parameters by passing them to this, so <code>Args</code> becomes <code>(T1,T2)</code> in our single implementation above. We've also made <code>inspect_function</code> generic over <code>Args</code> as well now, since we'll need to pass them along to <code>Describable</code>.<p>What we've really done here is turn the <code>Describable</code> trait into a <em>family</em> of traits where each possible value for <code>Args</code> leads to a different concrete trait.<h1 id=trait-families>Trait Families</h1><p>I'm not sure whether the term "trait families" is used by others, but it feels like a good way of thinking about traits that take generic parameters. Let's dig a little more into what you gain by using trait families in the first place.<p>If I have:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=font-style:italic;color:#66d9ef>trait </span><span>Foo {}
+</span></code></pre><p>I can implement this for every type <code>T</code> by doing:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=font-style:italic;color:#66d9ef>impl </span><span>&LTT> Foo </span><span style=color:#f92672>for </span><span>T {}
+</span></code></pre><p>But once I've done that, I can't implement <code>Foo</code> for anything else, because it's already been implemented for every type. Why not? Because we aren't (currently) allowed to have overlapping implementations of a given trait. If we did, the compiler wouldn't know which of the multiple valid implementations to use.<p>Even if I have some trait <code>A</code> and some trait <code>B</code>, and nothing implements them both, I can't write something like this:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=font-style:italic;color:#66d9ef>impl </span><span>&LTT> Foo </span><span style=color:#f92672>for </span><span>T </span><span style=color:#f92672>where</span><span> T: A {}
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>&LTT> Foo </span><span style=color:#f92672>for </span><span>T </span><span style=color:#f92672>where</span><span> T: B {}
+</span></code></pre><p>Despite the fact that <em>we</em> know that these implementations don't overlap, the compiler doesn't. There's no guarantee that nothing will ever implement both <code>A</code> and <code>B</code>, and if something ever did, we'll end up with overlapping implementations again.<p>However, what I <em>can</em> do is to define a family of traits like so:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=font-style:italic;color:#66d9ef>trait </span><span>Foo&LTT> {}
+</span></code></pre><p>Each time I vary <code>T</code> I have bought into being a new concrete trait to work with, and so this is perfectly valid:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=font-style:italic;color:#66d9ef>struct </span><span>One;
+</span><span style=font-style:italic;color:#66d9ef>struct </span><span>Two;
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>&LTT> Foo&LTOne> </span><span style=color:#f92672>for </span><span>T {}
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>&LTT> Foo&LTTwo> </span><span style=color:#f92672>for </span><span>T {}
+</span></code></pre><p>In many ways, this is the same as just defining <code>FooOne</code> and <code>FooTwo</code> as separate traits. However, by using a generic parameter and defining <code>Foo&LTOne></code> and <code>Foo&LTTwo></code> instead, we are promising that the general shape of each trait is the same (they are all <code>Foo</code>ey, even if the actual implementations differ). Perhaps more importantly, we also gain ways to talk about the whole family of <code>Foo</code> traits together, in a way that we can't with <code>FooOne</code> and <code>FooTwo</code>. In fact, because Rust has excellent type inference, we can often get away without telling it what the type <code>T</code> is in <code>Foo&LTT></code>, and instead we can let the compiler work it out for us. As we'll see, this is super useful!<p>Let's look at a more complete example to see what I mean:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=color:#75715e>// First, let's define a couple of traits
+</span><span style=color:#75715e>// (with default impls for simplicity):
+</span><span style=font-style:italic;color:#66d9ef>trait </span><span>A {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>a</span><span>(</span><span style=color:#f92672>&</span><span style=font-style:italic;color:#fd971f>self</span><span>) -> </span><span style=color:#f92672>&'static </span><span style=font-style:italic;color:#66d9ef>str </span><span>{ </span><span style=color:#e6db74>"A" </span><span>}
+</span><span>}
+</span><span style=font-style:italic;color:#66d9ef>trait </span><span>B {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>b</span><span>(</span><span style=color:#f92672>&</span><span style=font-style:italic;color:#fd971f>self</span><span>) -> </span><span style=color:#f92672>&'static </span><span style=font-style:italic;color:#66d9ef>str </span><span>{ </span><span style=color:#e6db74>"B" </span><span>}
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>// Define a family of WhatAmI traits:
+</span><span style=font-style:italic;color:#66d9ef>trait </span><span>WhatAmI&LTT> {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>what_am_i</span><span>(</span><span style=color:#f92672>&</span><span style=font-style:italic;color:#fd971f>self</span><span>);
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>// Create a couple of arbitrary types that
+</span><span style=color:#75715e>// we'll assign to T, above.
+</span><span style=font-style:italic;color:#66d9ef>struct </span><span>One;
+</span><span style=font-style:italic;color:#66d9ef>struct </span><span>Two;
+</span><span>
+</span><span style=color:#75715e>// impl WhatAmI&LTOne> for all T's that impl A
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>&LTT> WhatAmI&LTOne> </span><span style=color:#f92672>for </span><span>T
+</span><span style=color:#f92672>where</span><span> T: A
+</span><span>{
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>what_am_i</span><span>(</span><span style=color:#f92672>&</span><span style=font-style:italic;color:#fd971f>self</span><span>) {
+</span><span>        println!(</span><span style=color:#e6db74>"</span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>"</span><span>, self.</span><span style=color:#66d9ef>a</span><span>());
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>// impl WhatAmI&LTTwo> for all T's that impl B
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>&LTT> WhatAmI&LTTwo> </span><span style=color:#f92672>for </span><span>T
+</span><span style=color:#f92672>where</span><span> T: B
+</span><span>{
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>what_am_i</span><span>(</span><span style=color:#f92672>&</span><span style=font-style:italic;color:#fd971f>self</span><span>) {
+</span><span>        println!(</span><span style=color:#e6db74>"</span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>"</span><span>, self.</span><span style=color:#66d9ef>b</span><span>());
+</span><span>    }
+</span><span>}
+</span></code></pre><p>So, the above is sortof equivalent to having defined and implemented a <code>WhatAmIOne</code> and <code>WhatAmITwo</code> trait. There is no overlap, since they are separate concrete traits. However, because they both belong to the same family, we have a way to talk about them both at once in other places.<p>The following function accepts any concrete trait from the <code>WhatAmI</code> family:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>say_what_i_am</span><span>&LTW,T>(</span><span style=font-style:italic;color:#fd971f>thing</span><span>: W)
+</span><span style=color:#f92672>where
+</span><span>  W: WhatAmI&LTT>
+</span><span>{
+</span><span>    thing.</span><span style=color:#66d9ef>what_am_i</span><span>();
+</span><span>}
+</span></code></pre><p>The concrete value of <code>W</code> is constrained to be not just anything that implements a single trait, but anything implementing <em>any</em> trait from the <code>WhatAmI</code> family.<p>The real magic happens when we try using this <code>say_what_i_am</code> method:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=font-style:italic;color:#66d9ef>struct </span><span>IsA;
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>A </span><span style=color:#f92672>for </span><span>IsA {}
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>struct </span><span>IsB;
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>B </span><span style=color:#f92672>for </span><span>IsB {}
+</span><span>
+</span><span style=color:#66d9ef>say_what_i_am</span><span>(IsA); </span><span style=color:#75715e>// prints "A"
+</span><span style=color:#66d9ef>say_what_i_am</span><span>(IsB); </span><span style=color:#75715e>// prints "B"
+</span></code></pre><p>The super cool thing here is that for <code>IsA</code> and <code>IsB</code>, which only impl one of <code>A</code> and <code>B</code>, the compiler can infer exactly which concrete trait from the family of <code>WhatAmI</code> traits to use. In other words, it knows that we must be referring to <code>WhatAmI&LTOne></code> when <code>IsA</code> is passed in, and <code>WhatAmI&LTTwo></code> when <code>IsB</code> is passed in! It can infer that this is the case because there is only one possible choice in each case.<p>If there was something that implemented <code>A</code> and <code>B</code>, we'd run into issues:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=font-style:italic;color:#66d9ef>struct </span><span>IsBoth;
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>A </span><span style=color:#f92672>for </span><span>IsBoth {}
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>B </span><span style=color:#f92672>for </span><span>IsBoth {}
+</span><span>
+</span><span style=color:#66d9ef>say_what_i_am</span><span>(IsBoth); </span><span style=color:#75715e>// error!
+</span></code></pre><p>Type inference fails now, because <code>IsBoth</code> now implements both <code>WhatAmI&LTOne></code> and <code>WhatAmI&LTTwo></code>. So, we have to help the compiler by telling it which of <code>One</code> or <code>Two</code> we want to use:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span>say_what_i_am::<</span><span style=color:#f92672>_</span><span>,One>(IsBoth); </span><span style=color:#75715e>// prints "A"
+</span><span>say_what_i_am::<</span><span style=color:#f92672>_</span><span>,Two>(IsBoth); </span><span style=color:#75715e>// prints "B"
+</span></code></pre><p>So, what we have here is a way to avoid issues with overlapping implementations (we just stamp out a different concrete trait from a given family of traits each time), but retain some of the niceness of working with traits, because we can work with families of traits in a similar way, and rely on type inference to keep things simple.<h1 id=accepting-variable-arity-functions-using-trait-families>Accepting variable arity functions using Trait Families</h1><p>Armed with this knowledge, let's see how we can write a function that can accept closures with variable numbers of arguments.<p>This is where we'd got to before our digression into trait families:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=font-style:italic;color:#66d9ef>trait </span><span>Describable&LTArgs> {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>describe</span><span>() -> String;
+</span><span>}
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>&LTF, T1, T2> Describable<(T1,T2)> </span><span style=color:#f92672>for </span><span>F
+</span><span style=color:#f92672>where
+</span><span>  F: Fn(T1) -> T2,
+</span><span>  T1: TypeName,
+</span><span>  T2: TypeName
+</span><span>{
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>describe</span><span>() -> String {
+</span><span>        format!(</span><span style=color:#e6db74>"</span><span style=color:#ae81ff>{}</span><span style=color:#e6db74> -> </span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>"</span><span>, </span><span style=color:#ae81ff>T1</span><span>::type_name(), </span><span style=color:#ae81ff>T2</span><span>::type_name())
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>inspect_function</span><span>&LTF,Args>(</span><span style=font-style:italic;color:#fd971f>f</span><span>: F)
+</span><span style=color:#f92672>where
+</span><span>  F: Describable&LTArgs>
+</span><span>{
+</span><span>    println!(</span><span style=color:#e6db74>"This function has the shape: </span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>"</span><span>, F::describe());
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>// inspect_function(|n: usize| n.to_string());
+</span><span style=color:#75715e>//   prints "This function has the shape: i8 -> String"
+</span><span style=color:#75715e>// inspect_function(|mut v: Vec<_>| { v.push(10usize); });
+</span><span style=color:#75715e>//   prints "This function has the shape: Vec&LTi8> -> ()"
+</span></code></pre><p>Let's implement <code>Describable</code> for some different numbers of function arguments:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=font-style:italic;color:#66d9ef>impl </span><span>&LTF,T1,T2,T3> Describable<(T1,T2,T3)> </span><span style=color:#f92672>for </span><span>F
+</span><span style=color:#f92672>where
+</span><span>  F: Fn(T1,T2) -> T3,
+</span><span>  T1: TypeName,
+</span><span>  T2: TypeName,
+</span><span>  T3: TypeName
+</span><span>{
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>describe</span><span>() -> String {
+</span><span>        format!(</span><span style=color:#e6db74>"(</span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>,</span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>) -> </span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>"</span><span>,
+</span><span>            </span><span style=color:#ae81ff>T1</span><span>::type_name(),
+</span><span>            </span><span style=color:#ae81ff>T2</span><span>::type_name(),
+</span><span>            </span><span style=color:#ae81ff>T3</span><span>::type_name())
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>&LTF,T1,T2,T3,T4> Describable<(T1,T2,T3,T4)> </span><span style=color:#f92672>for </span><span>F
+</span><span style=color:#f92672>where
+</span><span>  F: Fn(T1,T2,T3) -> T4,
+</span><span>  T1: TypeName,
+</span><span>  T2: TypeName,
+</span><span>  T3: TypeName,
+</span><span>  T4: TypeName
+</span><span>{
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>describe</span><span>() -> String {
+</span><span>        format!(</span><span style=color:#e6db74>"(</span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>,</span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>,</span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>) -> </span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>"</span><span>,
+</span><span>            </span><span style=color:#ae81ff>T1</span><span>::type_name(),
+</span><span>            </span><span style=color:#ae81ff>T2</span><span>::type_name(),
+</span><span>            </span><span style=color:#ae81ff>T3</span><span>::type_name(),
+</span><span>            </span><span style=color:#ae81ff>T4</span><span>::type_name())
+</span><span>    }
+</span><span>}
+</span></code></pre><p>This works because we are stamping out new concrete traits from our <code>Describable</code> trait family for every different set of function types (ie, the type <code>(T1,T2)</code> will never overlap with <code>(T1,T2,T3)</code> which never overlaps with <code>(T1,T2,T3,T4)</code>). Since <code>inspect_function</code> accepts all members of the <code>Describable</code> trait family, and inference can resolve <em>which</em> member to use in each case, <code>inspect_function</code> will work much like it did before, but accept more different function shapes:<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=color:#66d9ef>inspect_function</span><span>(|</span><span style=font-style:italic;color:#fd971f>n</span><span>: </span><span style=font-style:italic;color:#66d9ef>usize</span><span>| n.</span><span style=color:#66d9ef>to_string</span><span>());
+</span><span style=color:#75715e>// -> This function has the shape: i8 -> String
+</span><span style=color:#66d9ef>inspect_function</span><span>(|</span><span style=color:#f92672>mut </span><span style=font-style:italic;color:#fd971f>v</span><span>: </span><span style=font-style:italic;color:#66d9ef>Vec</span><span><</span><span style=color:#f92672>_</span><span>>| { v.</span><span style=color:#66d9ef>push</span><span>(</span><span style=color:#ae81ff>10</span><span style=font-style:italic;color:#66d9ef>usize</span><span>); });
+</span><span style=color:#75715e>// -> This function has the shape: Vec&LTi8> -> ()
+</span><span style=color:#66d9ef>inspect_function</span><span>(|</span><span style=font-style:italic;color:#fd971f>a</span><span>: </span><span style=font-style:italic;color:#66d9ef>usize</span><span>, </span><span style=font-style:italic;color:#fd971f>b</span><span>: String| {});
+</span><span style=color:#75715e>// -> This function has the shape: (usize,String) -> ()
+</span><span style=color:#66d9ef>inspect_function</span><span>(|</span><span style=font-style:italic;color:#fd971f>a</span><span>: </span><span style=font-style:italic;color:#66d9ef>usize</span><span>, </span><span style=font-style:italic;color:#fd971f>b</span><span>: </span><span style=font-style:italic;color:#66d9ef>Vec</span><span><</span><span style=font-style:italic;color:#66d9ef>String</span><span>>, </span><span style=font-style:italic;color:#fd971f>c</span><span>: (</span><span style=font-style:italic;color:#66d9ef>usize</span><span>,</span><span style=font-style:italic;color:#66d9ef>usize</span><span>)| { </span><span style=color:#e6db74>"hi"</span><span>.</span><span style=color:#66d9ef>to_owned</span><span>() });
+</span><span style=color:#75715e>// -> This function has the shape: (usize,Vec&LTString>,(usize,usize)) -> String
+</span></code></pre><p>Awesome! <code>inspect_function</code> can take functions with variable numbers of arguments!<p>This approach seems to have good mileage from my experimentation; as long as the function types can be inferred, and there is only one valid implementation from a family of traits at a time (taking constraints and such into account), Rust is smart enough to infer which concrete trait to use.<p>One thing you may notice above, and run into if you try doing similar, is the amount of code duplication when implementing traits for various numbers of arguments.<p>To avoid some copypasta, we can replace the <code>Describable</code> implementations with a macro+usage like so (we have to tweak the string building in <code>describe</code> to make it amenable to this generalisation):<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=color:#66d9ef>macro_rules! </span><span>describable {
+</span><span>    (</span><span style=color:#f92672>$</span><span>( $(</span><span style=font-style:italic;color:#fd971f>$arg</span><span>:</span><span style=font-style:italic;color:#66d9ef>ident</span><span>)</span><span style=color:#f92672>*</span><span> => </span><span style=font-style:italic;color:#fd971f>$res</span><span>:</span><span style=font-style:italic;color:#66d9ef>ident </span><span>),+) => (
+</span><span>        </span><span style=color:#f92672>$</span><span>(
+</span><span>            impl &LTF,$res,$($arg),</span><span style=color:#f92672>*</span><span>> Describable<($res,</span><span style=color:#f92672>$</span><span>($arg),</span><span style=color:#f92672>*</span><span>)> for F
+</span><span>            where
+</span><span>              F: Fn(</span><span style=color:#f92672>$</span><span>($arg),</span><span style=color:#f92672>*</span><span>) -> $res,
+</span><span>              $res: TypeName,
+</span><span>              $( $arg: TypeName ),*
+</span><span>            {
+</span><span>                fn describe() -> String {
+</span><span>                    let mut s = String::new();
+</span><span>                    $(
+</span><span>                        s += &$arg::type_name();
+</span><span>                        s += ",";
+</span><span>                    )*
+</span><span>                    s += " -> ";
+</span><span>                    s += &$res::type_name();
+</span><span>                    s
+</span><span>                }
+</span><span>            }
+</span><span>        )</span><span style=color:#f92672>+
+</span><span>    )
+</span><span>}
+</span><span>
+</span><span>describable!(
+</span><span>    </span><span style=color:#f92672>=> </span><span style=color:#ae81ff>T1</span><span>,
+</span><span>    </span><span style=color:#ae81ff>T1 </span><span style=color:#f92672>=> </span><span style=color:#ae81ff>T2</span><span>,
+</span><span>    </span><span style=color:#ae81ff>T1 T2 </span><span style=color:#f92672>=> </span><span style=color:#ae81ff>T3</span><span>,
+</span><span>    </span><span style=color:#ae81ff>T1 T2 T3 </span><span style=color:#f92672>=> </span><span style=color:#ae81ff>T4</span><span>,
+</span><span>    </span><span style=color:#ae81ff>T1 T2 T3 T4 </span><span style=color:#f92672>=> </span><span style=color:#ae81ff>T5
+</span><span>);
+</span></code></pre><p>Now we can easily implement <code>Describable</code> for any reasonable number of function args we'd like to handle.<p>I hope that this proves useful!<p>Below is the final version of all of our code. Thanks for reading!<pre class=language-rust data-lang=rust style=background:#272822;color:#f8f8f2><code class=language-rust data-lang=rust><span style=color:#75715e>// A custom trait to experiment with
+</span><span style=font-style:italic;color:#66d9ef>trait </span><span>TypeName {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>type_name</span><span>() -> String;
+</span><span>}
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>TypeName </span><span style=color:#f92672>for </span><span>usize {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>type_name</span><span>() -> String {
+</span><span>        </span><span style=color:#e6db74>"usize"</span><span>.</span><span style=color:#66d9ef>to_owned</span><span>()
+</span><span>    }
+</span><span>}
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>TypeName </span><span style=color:#f92672>for </span><span>String {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>type_name</span><span>() -> String {
+</span><span>        </span><span style=color:#e6db74>"String"</span><span>.</span><span style=color:#66d9ef>to_owned</span><span>()
+</span><span>    }
+</span><span>}
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>&LTT: TypeName> TypeName </span><span style=color:#f92672>for </span><span>Vec&LTT> {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>type_name</span><span>() -> String {
+</span><span>        format!(</span><span style=color:#e6db74>"Vec<</span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>>"</span><span>, T::type_name())
+</span><span>    }
+</span><span>}
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>TypeName </span><span style=color:#f92672>for</span><span> () {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>type_name</span><span>() -> String {
+</span><span>        </span><span style=color:#e6db74>"()"</span><span>.</span><span style=color:#66d9ef>to_owned</span><span>()
+</span><span>    }
+</span><span>}
+</span><span style=font-style:italic;color:#66d9ef>impl </span><span>&LTT1: TypeName, T2: TypeName> TypeName </span><span style=color:#f92672>for</span><span> (T1,T2) {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>type_name</span><span>() -> String {
+</span><span>        format!(</span><span style=color:#e6db74>"(</span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>,</span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>)"</span><span>, </span><span style=color:#ae81ff>T1</span><span>::type_name(), </span><span style=color:#ae81ff>T2</span><span>::type_name())
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>// A family of traits that can describe things
+</span><span style=font-style:italic;color:#66d9ef>trait </span><span>Describable&LTArgs> {
+</span><span>    </span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>describe</span><span>() -> String;
+</span><span>}
+</span><span>
+</span><span style=color:#75715e>// implement the above for functions of varying arities
+</span><span style=color:#66d9ef>macro_rules! </span><span>describable {
+</span><span>    (</span><span style=color:#f92672>$</span><span>( $(</span><span style=font-style:italic;color:#fd971f>$arg</span><span>:</span><span style=font-style:italic;color:#66d9ef>ident</span><span>)</span><span style=color:#f92672>*</span><span> => </span><span style=font-style:italic;color:#fd971f>$res</span><span>:</span><span style=font-style:italic;color:#66d9ef>ident </span><span>),+) => (
+</span><span>        </span><span style=color:#f92672>$</span><span>(
+</span><span>            impl &LTF,$res,$($arg),</span><span style=color:#f92672>*</span><span>> Describable<($res,</span><span style=color:#f92672>$</span><span>($arg),</span><span style=color:#f92672>*</span><span>)> for F
+</span><span>            where
+</span><span>              F: Fn(</span><span style=color:#f92672>$</span><span>($arg),</span><span style=color:#f92672>*</span><span>) -> $res,
+</span><span>              $res: TypeName,
+</span><span>              $( $arg: TypeName ),*
+</span><span>            {
+</span><span>                fn describe() -> String {
+</span><span>                    let mut s = String::new();
+</span><span>                    $(
+</span><span>                        s += &$arg::type_name();
+</span><span>                        s += ",";
+</span><span>                    )*
+</span><span>                    s += " -> ";
+</span><span>                    s += &$res::type_name();
+</span><span>                    s
+</span><span>                }
+</span><span>            }
+</span><span>        )</span><span style=color:#f92672>+
+</span><span>    )
+</span><span>}
+</span><span>describable!(
+</span><span>    </span><span style=color:#f92672>=> </span><span style=color:#ae81ff>T1</span><span>,
+</span><span>    </span><span style=color:#ae81ff>T1 </span><span style=color:#f92672>=> </span><span style=color:#ae81ff>T2</span><span>,
+</span><span>    </span><span style=color:#ae81ff>T1 T2 </span><span style=color:#f92672>=> </span><span style=color:#ae81ff>T3</span><span>,
+</span><span>    </span><span style=color:#ae81ff>T1 T2 T3 </span><span style=color:#f92672>=> </span><span style=color:#ae81ff>T4</span><span>,
+</span><span>    </span><span style=color:#ae81ff>T1 T2 T3 T4 </span><span style=color:#f92672>=> </span><span style=color:#ae81ff>T5
+</span><span>);
+</span><span>
+</span><span style=color:#75715e>// Finally, a function to show the Describable trait family in action
+</span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>inspect_function</span><span>&LTF,Args>(</span><span style=font-style:italic;color:#fd971f>f</span><span>: F)
+</span><span style=color:#f92672>where
+</span><span>  F: Describable&LTArgs>
+</span><span>{
+</span><span>    println!(</span><span style=color:#e6db74>"This function has the shape: </span><span style=color:#ae81ff>{}</span><span style=color:#e6db74>"</span><span>, F::describe());
+</span><span>}
+</span><span>
+</span><span style=font-style:italic;color:#66d9ef>fn </span><span style=color:#a6e22e>main </span><span>() {
+</span><span>    </span><span style=color:#66d9ef>inspect_function</span><span>(|</span><span style=font-style:italic;color:#fd971f>n</span><span>: </span><span style=font-style:italic;color:#66d9ef>usize</span><span>| n.</span><span style=color:#66d9ef>to_string</span><span>());
+</span><span>    </span><span style=color:#66d9ef>inspect_function</span><span>(|</span><span style=color:#f92672>mut </span><span style=font-style:italic;color:#fd971f>v</span><span>: </span><span style=font-style:italic;color:#66d9ef>Vec</span><span><</span><span style=color:#f92672>_</span><span>>| { v.</span><span style=color:#66d9ef>push</span><span>(</span><span style=color:#ae81ff>10</span><span style=font-style:italic;color:#66d9ef>usize</span><span>); });
+</span><span>    </span><span style=color:#66d9ef>inspect_function</span><span>(|</span><span style=font-style:italic;color:#fd971f>a</span><span>: </span><span style=font-style:italic;color:#66d9ef>usize</span><span>, </span><span style=font-style:italic;color:#fd971f>b</span><span>: String| {});
+</span><span>    </span><span style=color:#66d9ef>inspect_function</span><span>(|</span><span style=font-style:italic;color:#fd971f>a</span><span>: </span><span style=font-style:italic;color:#66d9ef>usize</span><span>, </span><span style=font-style:italic;color:#fd971f>b</span><span>: </span><span style=font-style:italic;color:#66d9ef>Vec</span><span><</span><span style=font-style:italic;color:#66d9ef>String</span><span>>, </span><span style=font-style:italic;color:#fd971f>c</span><span>: (</span><span style=font-style:italic;color:#66d9ef>usize</span><span>,</span><span style=font-style:italic;color:#66d9ef>usize</span><span>)| { </span><span style=color:#e6db74>"hi"</span><span>.</span><span style=color:#66d9ef>to_owned</span><span>() });
+</span><span>}
+</span></code></pre></div></div></section><footer></footer></div><script src=https://jsdw.me/page.js></script>

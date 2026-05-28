@@ -1,0 +1,81 @@
+<script type="module">
+    import * as component from "./rust_lib_js/rust_lib.js"
+    
+    const c = await component.instantiate(
+        // Provide a means to fetch and compile our WASM
+        (path) => {
+            const wasmPromise = fetch(`./rust_lib_js/${path}`);
+            return WebAssembly.compileStreaming(wasmPromise)
+        },
+        // Provide the expected imports.
+        {
+            // This is the import we defined; a single function to pass items in.
+            "set-items": {
+                default: () => [
+                    {
+                        name: "my_dir",
+                        ty: "folder"
+                    },
+                    {
+                        name: "Foo.txt",
+                        ty: "file"
+                    }
+                ]
+            },
+            // This is called once from Rust to initialise the HashMap with randomness.
+            'wasi:random/insecure-seed': {
+                insecureSeed: () => {
+                    return [0, 0]
+                }
+            },
+            // Stubs for WASI imports that our component is asking for but doesn't use.
+            'wasi:cli/environment': {
+                getEnvironment: () => {}
+            },
+            'wasi:cli/exit': {
+                exit: () => {}
+            },
+            'wasi:cli/stderr': {
+                getStderr: () => {}
+            },
+            'wasi:cli/stdin': {
+                getStdin: () => {}
+            },
+            'wasi:cli/stdout': {
+                getStdout: () => {}
+            },
+            'wasi:cli/terminal-input': {
+                TerminalInput: {}
+            },
+            'wasi:cli/terminal-output': {
+                TerminalOutput: {}
+            },
+            'wasi:cli/terminal-stderr': {
+                getTerminalStderr: () => {}
+            },
+            'wasi:cli/terminal-stdin': {
+                getTerminalStdin: () => {}
+            },
+            'wasi:cli/terminal-stdout': {
+                getTerminalStdout: () => {}
+            },
+            'wasi:io/error': {
+                Error: {}
+            },
+            'wasi:io/poll': {
+                Pollable: {}
+            },
+            'wasi:io/streams': {
+                InputStream: {},
+                OutputStream: {},
+            },
+        }
+    );
+    
+    // This calls `<MyItems as exports::item_handling::GuestItems>::new()`:
+    const items = new c.itemHandling.Items()
+    window.ITEMS = items;
+    // Now we can call the `get` method defined on our `item` resource:
+    console.log(items.get("my_dir"));
+    console.log(items.get("Foo.txt"));
+    </script>
