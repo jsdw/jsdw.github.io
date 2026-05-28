@@ -1,6 +1,6 @@
 +++
 title = "Working with WebAssembly and WASI 0.2 components"
-description = "This post introduces WebAssembly, looks at how we pass data in and out of it, and then looks to the WASI 0.2 standard and WebAssembly Component modal as a way to pass more complex data back and forth"
+description = "This post introduces WebAssembly, looks at how we pass data in and out of it, and then looks to the WASI 0.2 standard and WebAssembly component modal as a way to pass more complex data back and forth"
 date = 2026-05-28
 draft = false
 [extra]
@@ -8,11 +8,11 @@ created = "2026-05-27"
 toc = 1
 +++
 
-WebAssembly (or WASM) is a stack based assembly-like binary language format that is supported across modern browsers, can be executed at near-native speeds, and is a compilation target supported by languages like C/C++ and Rust, allowing native code to be compiled and executed in web browsers. As well as browsers, we have WASM runtimes like [`wasmtime`][wasmtime] and [Wasmer](https://wasmer.io/) which can execute WASM binaries outside of browsers.
+WebAssembly (or WASM) is a stack-based assembly-like binary language format that is supported across modern browsers, can be executed at near-native speeds, and is a compilation target supported by languages like C/C++ and Rust, allowing native code to be compiled and executed in web browsers. As well as browsers, we have WASM runtimes like [Wasmtime][wasmtime] and [Wasmer](https://wasmer.io/) which can execute WASM binaries outside of browsers.
 
 Before WebAssembly, we had tools like [Emscripten][emscripten] which could compile C into JavaScript to run in browsers, and languages like Elm, Coffeescript and Purescript which were compiled to JavaScript. Being a high level garbage collected language somewhat far from machine code, compiling to JavaScript isn't the ideal target for languages like C and Rust, which have no garbage collector. WebAssembly provides an alternative that is simpler, much closer to machine code, and offers more predictable performance (though not necessarily faster, given that JavaScript has had countless man hours put into optimising it).
 
-I'll be looking at how WebAssembly allows us to interact with it, both in browsers and natively, and how WebAssembly Components solve some of the key issues we'll run into.
+I'll be looking at how WebAssembly allows us to interact with it, both in browsers and natively, and how WebAssembly components solve some of the key issues we'll run into.
 
 # Prerequisites
 
@@ -32,7 +32,7 @@ npm install -g @bytecodealliance/jco
 cargo install wac-cli
 ```
 
-These assume that the Rust toolchain has been installed already ([go here][installing-rust] to install it); this comes with a `cargo` binary for installing Rust crates.
+These assume that the NodeJS and Rust toolchains have been installed already ([go here][installing-node] to install NodeJS or [here][installing-rust] to install Rust). These provide the `npm` and `cargo` commands to install packages respectively.
 
 # Talking to WebAssembly
 
@@ -80,7 +80,7 @@ Below is a basic WebAssembly program printed as WAT. The focus here is on seeing
 
 This program expects a function "log" in the "console" namespace to be provided to it, and exports a function called "addAndLog" which requires two 32bit integers and calls the imported function with the result.
 
-Note that being a stack based language, we don't put things into registers (as is the case in many assembly languages); instead we are pushing items onto the top of a stack and then popping them off the top as needed.
+Note that being a stack based language, we don't put things into registers (as is the case in many assembly languages); instead we are pushing items onto the top of a stack and then different instructions will pop values off the top as needed. For instance, the `i32.add` instruction will pop the top two values off the top of the stack and place the result of adding them together back onto the top of the stack.
 
 To execute this code, we first need to convert it to the binary WASM format. We can convert between WAT and WASM like so:
 
@@ -91,7 +91,32 @@ wasm-tools parse basic.wat > basic.wasm
 wasm-tools print basic.wasm > basic.wat
 ```
 
-For now we'll only try running it in a browser. For this, let's make a very simple `index.html` file that can run this `basic.wasm` file we've produced:
+It's worth being aware that if you convert the above WAT to WASM and then back to WAT again the output will be a little different. In this case, when we run `wasm-tools print basic.wasm` to view the WASM that we have just created, we get back:
+
+```wat
+(module
+  (type (;0;) (func (param i32)))
+  (type (;1;) (func (param i32 i32) (result i32)))
+  (type (;2;) (func (param i32 i32)))
+  (import "console" "log" (func $log (;0;) (type 0)))
+  (export "addAndLog" (func $addAndLog))
+  (func $add (;1;) (type 1) (param $a i32) (param $b i32) (result i32)
+    local.get $a
+    local.get $b
+    i32.add
+  )
+  (func $addAndLog (;2;) (type 2) (param $a i32) (param $b i32)
+    local.get $a
+    local.get $b
+    call $add
+    call $log
+  )
+)
+```
+
+This is semantically the same, but things like imports and exports will be ordered to the top of the module, functions will have their types defined at the top, and anything written using an S-expression format will be printed in the actual stack-based format that it represents.
+
+For now we'll only try running our WASM file in a browser. For this, let's make a very simple `index.html` file that can run this `basic.wasm` file we've produced:
 
 ```html
 <!DOCTYPE html>
@@ -125,23 +150,23 @@ run()
 
 Here, we provide our "log" function in a "console" namespace as required by our WebAssembly, and then we call the exported `addAndLog` function after instantiating it. We can serve this to try out with something like `python3 -m http.server 8080`.
 
-Here, we are just working with one of the basic WebAssembly types, `i32`; a 32bit integer. WebAssembly has a few other value types we might use — for instance `i64`, `f32` and `f64` — but it has no types which map to more complex types like strings, lists, variants and structs. Languages which compile to WebAssembly will each decide how to represent these complex types as collections of WASM primitives. For example, a string could be represented as an i32 denoting the length of the string, and then an i32 for each character in the string. Or, it could be represented as an i32 denoting each 4 ASCII bytes in the string and end with a 0 byte to denote when it's finished.
+Our code is just working with one of the basic WebAssembly types, `i32`; a 32bit integer (signed _or_ unsigned). WebAssembly has a few other value types we might use — for instance `i64`, `f32` and `f64` — but it has no types which map to more complex things like strings, lists, variants and structs. Languages which compile to WebAssembly will each decide how to represent these complex types as collections of WASM primitives. For example, a string could be represented as an i32 denoting the length of the string, and then an i32 for each character in the string. Or, it could be represented as an i32 denoting each 4 ASCII bytes in the string and end with a 0 byte to denote when it's finished. Different representations come with different tradeoffs.
 
 # WebAssembly Components
 
 One of the goals of WebAssembly components is to standardise the interface between WebAssembly and the host platform. This includes standardising how to pass complex types back and forth, and standardising the sorts of interfaces that a WebAssembly program can expect to be provided by the host.
 
-There have been other attempts to create such a standard, but I'll be focusing on the [WASI][wasi] (WebAssembly System Interface) here as it appears to be the dominant standard. WASI 0.1 (or "WASI Preview 1") was the first iteration which I have not spent much time looking into. WASI 0.2 (or "WASI preview 2") came next, which introduces the idea of _components_, and as I understand it, represents a significant departure from WASI 0.1. WASI 0.3 is an upcoming release (possibly landing sometime in 2026 or 2027) which iterates on WASI 0.2 and is promised to be a much more incremental update. 
+There have been other attempts to create such a standard, but I'll be focusing on the [WASI][wasi] (WebAssembly System Interface) here as it appears to be the dominant standard. WASI 0.1 (or "WASI Preview 1") was the first iteration which I have not spent much time looking into. WASI 0.2 (or "WASI preview 2") came next, which introduces the idea of _components_, and represents a significant departure from WASI 0.1. WASI 0.3 is an upcoming release (possibly landing sometime in 2026 or 2027) which iterates on WASI 0.2 and is promised to be a much more incremental update. 
 
-I will be focusing on WASI Preview 2 components here, as the tooling for this is available today.
+I will be focusing on WASI Preview 2 (or WASI 0.2) components here, as the tooling for this is available today.
 
 WASI 0.2 and WebAssembly components do two things:
-1. They define how more complex types will be imported and exported (the [_Canonical ABI_][component-abi]).
-2. They allow multiple WebAssembly programs to be combined such that the exports of one program can be used to satisfy the required imports of another.
+1. They define how more complex types will be imported and exported (see the [Canonical ABI][component-abi]).
+2. They allow multiple WebAssembly programs to be combined into a single binary such that the exports of one program are used to satisfy the required imports of another.
 
 The first point gives us a standard way to define how complex types like strings, variants and structs are passed in and out of our WebAssembly program. This allows any WASM binary which adheres to this component model to be used with any WASM runtime which supports the component model.
 
-The second point gives us a building block which allows us to create more complex WASM components by composing smaller ones. This is most useful if we want to run WASM using native runtimes like [`wasmtime`][wasmtime]; you provide components to satisfy any required imports since you have no other way to provide them. I'll give an example of this later.
+The second point gives us a building block which allows us to create more complex WASM components by composing smaller ones. This is most useful if we want to run WASM using native runtimes like [Wasmtime][wasmtime]; you combine different components to satisfy any required imports before running the final output.
 
 ## A Hello World Component
 
@@ -159,7 +184,7 @@ world example {
 }
 ```
 
-Here, our component is in the "demo" namespace and is called "addcomponent", version 0.1.0. There is a single interface, `adder`, which defines a single add method that works on unsigned 32bit integers. The component itself (via ths "world" annotation) exports only this adder interface and requires no imports.
+Here, our component is in the "demo" namespace and is called "addcomponent", version 0.1.0. There is a single interface, `adder`, which defines a single add method that works on unsigned 32bit integers. The component itself (via the "world" annotation) exports only this adder interface and requires no imports.
 
 We can satisfy this interface with the following WebAssembly program:
 
@@ -177,33 +202,90 @@ We can satisfy this interface with the following WebAssembly program:
 
 This program exports a single _add_ method with a name which corresponds to the "add" method of the "adder" interface of our component.
 
-With our interface and program defined, we now combine them into a single file, and then turn this file into a component:
+With our interface and program defined, we now combine them into a single file, and then turn this file into a component.
+
+First, we combine our WAT code (could also be in the form of a WASM binary) with our WIT definition:
 
 ```sh
-# Embed the WIT definitions. We could provide .wasm instead of .wat:
 wasm-tools component embed adder.wit adder.wat -o adder.wasm
-# Turn this into a new component:
+```
+
+If we were to view this new `adder.wasm` as WAT with `wasm-tools print adder.wasm` we would see that the WIT definitions are now encoded and embedded in a custom field:
+
+```wat
+(module
+  (type (;0;) (func (param i32 i32) (result i32)))
+  (export "demo:addcomponent/adder@0.1.0#add" (func $add))
+  (func $add (;0;) (type 0) (param $a i32) (param $b i32) (result i32)
+    local.get $a
+    local.get $b
+    i32.add
+  )
+  (@custom "component-type" (after code) "\00asm\0d\00\01\00\00\19\16wit-component-encoding\04\00\07b\01A\02\01A\02\01B\02\01@\02\01ay\01by\00y\04\00\03add\01\00\04\00\1ddemo:addcomponent/adder@0.1.0\05\00\04\00\1fdemo:addcomponent/example@0.1.0\04\00\0b\0d\01\00\07example\03\00\00\00/\09producers\01\0cprocessed-by\01\0dwit-component\070.248.0")
+)
+```
+
+Next, we convert this WebAssembly core module with embedded WIT into a WebAssembly component:
+
+```sh
 wasm-tools component new adder.wasm -o adder.component.wasm
 ```
 
-Now, we can run this component using a native runtime that supports components, such as `wasmtime`, like so:
+WebAssembly components have a different binary format which extends that of WebAssembly core modules and thus cannot be executed by programs expecting basic WebAssembly modules. We can see this if we try viewing our newly created `adder.component.wasm` as WAT with `wasm-tools print adder.component.wasm`:
 
-```sh
-wasmtime run --invoke 'add(1,200)' adder.component.wasm
+```wat
+(component
+  (core module $main (;0;)
+    (type (;0;) (func (param i32 i32) (result i32)))
+    (export "demo:addcomponent/adder@0.1.0#add" (func $add))
+    (func $add (;0;) (type 0) (param $a i32) (param $b i32) (result i32)
+      local.get $a
+      local.get $b
+      i32.add
+    )
+    (@producers
+      (processed-by "wit-component" "0.248.0")
+    )
+  )
+  (core instance $main (;0;) (instantiate $main))
+  (type (;0;) (func (param "a" u32) (param "b" u32) (result u32)))
+  (alias core export $main "demo:addcomponent/adder@0.1.0#add" (core func $demo:addcomponent/adder@0.1.0#add (;0;)))
+  (func $add (;0;) (type 0) (canon lift (core func $demo:addcomponent/adder@0.1.0#add)))
+  (component $demo:addcomponent/adder@0.1.0-shim-component (;0;)
+    (type (;0;) (func (param "a" u32) (param "b" u32) (result u32)))
+    (import "import-func-add" (func (;0;) (type 0)))
+    (type (;1;) (func (param "a" u32) (param "b" u32) (result u32)))
+    (export (;1;) "add" (func 0) (func (type 1)))
+  )
+  (instance $demo:addcomponent/adder@0.1.0-shim-instance (;0;) (instantiate $demo:addcomponent/adder@0.1.0-shim-component
+      (with "import-func-add" (func $add))
+    )
+  )
+  (export $demo:addcomponent/adder@0.1.0 (;1;) "demo:addcomponent/adder@0.1.0" (instance $demo:addcomponent/adder@0.1.0-shim-instance))
+  (@producers
+    (processed-by "wit-component" "0.248.0")
+  )
+)
 ```
 
-Alternately, we can run our component in a browser. For this, we first use `jco` to transpile our WASM Component back into a core WebAssembly module plus an interface (browsers cannot directly run WASM Components):
+We can see that our new WebAssembly component contains the core WAT that we defined above (albeit tweaked, since the precise format is not preserved), but that it is wrapped in a bunch of additional component related code. One of the notable additions is that the WIT interface that was previously encoded into a custom field in our WASM is now a well defined part of the component binary format. For instance, we can see `u32` types being referenced which are not one of the core WebAssembly types.
+
+Now that we have our component, we can run it using any native runtime that supports components, such as Wasmtime, like so:
+
+```sh
+$ wasmtime run --invoke 'add(1,200)' adder.component.wasm
+201
+```
+
+Alternately, we can run our component in a browser. For this, we first use `jco` to transpile our WASM component back into a core WebAssembly module plus an interface (browsers cannot directly run WASM components):
 
 ```sh
 jco transpile adder.component.wasm -o adder_js
 ```
 
-And then we can import and run our component like so:
+Now we can put a small script in an `index.html` file to run this transpiled component code:
 
 ```html
-<!DOCTYPE html>
-<html>
-<head>
 <script type="module">
 import { adder } from "./adder_js/adder.component.js"
 
@@ -211,11 +293,6 @@ import { adder } from "./adder_js/adder.component.js"
 console.log("500 + 1 =", adder.add(500, 1));
 console.log("123 + 6 =", adder.add(123, 6));
 </script>
-</head>
-<body>
-    Open the dev console.
-</body>
-</html>
 ```
 
 Noting that we have moved to using JavaScript _modules_ to allow us to use the `import` syntax without any extra build steps.
@@ -290,7 +367,7 @@ Caused by:
     2: function implementation is missing
 ```
 
-This is because our component requires an import that `wasmtime` doesn't know how to satisfy. To satisfy the import, we can create a component whose exports satisfy the missing import:
+This is because our component requires an import that Wasmtime doesn't know how to satisfy. To satisfy the import, we can create a component whose exports satisfy the missing import:
 
 ```wit
 package demo:importing@0.1.0;
@@ -331,7 +408,7 @@ Now, we can use the `wac` tool to plug our new `provider.component.wasm` compone
 wac plug --plug provider.component.wasm importing.component.wasm -o complete.component.wasm
 ```
 
-And now we can run our `complete.component.wasm` with `wasmtime`:
+And now we can run our `complete.component.wasm` with Wasmtime:
 
 ```sh
 $ wasmtime run --invoke 'add(1)' complete.component.wasm
@@ -342,17 +419,17 @@ We can see that this new composed component uses the argument given on the comma
 
 If a component requires many imports, we can create multiple components which each satisfy some subset of those imports, and plug them all in to satisfy everything.
 
-We've seen how imports can be satisfied in native runtimes like `wasmtime`, but how are imports handled in the browser?
+We've seen how imports can be satisfied in native runtimes like Wasmtime, but how are imports handled in the browser?
 
 ## Imports and browser components
 
-As before, we can use the `jco` tool to transpile a component so that it can be used in the browser. We won't use our composed component for this since it no logner requires any imports, and will instead transpile our `importing.component.wasm`, which requires the `provider` interface (the single `get` function):
+As before, we can use the `jco` tool to transpile a component so that it can be used in the browser. We won't use our composed component for this since it no longer requires any imports, and will instead transpile our `importing.component.wasm`, which requires the `provider` interface (the single `get` function):
 
 ```sh
 jco transpile importing.component.wasm -o importing_js
 ```
 
-This default command generates Javascript which tries to import the required interface like so:
+This default command generates Javascript which includes this import:
 
 ```js
 import { get } from 'demo:importing/provider';
@@ -429,7 +506,7 @@ console.log("1000 * 2 =", adder.mul(2))
 
 Thus far, we've only looked at building very simple components in WAT. Now it's time to move to a higher level language, Rust, so that we can explore how to create and use more complex components.
 
-Historically in Rust, the easiest approach to create WenAssembly to use in a browser was:
+Historically in Rust, the typical approach to create WebAssembly to use in a browser was:
 1. Compile to the `wasm32-unknown-unknown` target (the `unknown`s here signify that we know nothing about the host platform or architecture, and so have no access to things like networking and the filesystem).
 2. Use something like `wasm-bindgen` which makes it easier to define an interface between WASM and Javascript, and generates the required Javascript. Or, manually import and export things as if we were writing a C library, and writing the glue code ourselves to pass values in and out.
 
@@ -447,7 +524,7 @@ rustup target add wasm32-wasip2
 cargo init --bin rust
 ```
 
-This creates a Rust binary crate which simply prints to the console:
+This creates a Rust binary crate containing this code:
 
 ```rust
 fn main() {
@@ -466,7 +543,7 @@ cargo build --manifest-path rust/Cargo.toml --target wasm32-wasip2
 wasmtime rust/target/wasm32-wasip2/debug/rust.wasm
 ```
 
-Because WASI 0.2 defines stdin, stdout and stderr as a part of its `wasi:cli` interface, the `println` makes use of these interfaces to output via `stdout` as needed. `wasmtime` provides the WASI 0.2 interfaces by default, so WASM components relying only on those should _Just Work_.
+Because WASI 0.2 defines stdin, stdout and stderr as a part of its `wasi:cli` interface, the `println` makes use of these interfaces to output via `stdout` as needed. Wasmtime provides implementations of these WASI 0.2 interfaces by default, so WASM components relying on them should _Just Work_.
 
 If we want to see which interfaces some WASM code imports and exports, we can extract the WIT definition from it:
 
@@ -578,19 +655,19 @@ package wasi:cli@0.2.0 {
 }
 ```
 
-It's worth noting that if the code did more complex things like open files or require randomness (for instance to initialise a `HashMap`), it would require more imports.
+As we can see, even a very basic Rust program requires a bunch of different WASI interfaces to be provided. If the code did more complex things like open files or require randomness (for instance to initialise a `HashMap`), it would require more imports.
 
-`wasmtime` makes these WASI imports available by default, but we would have to make sure to provide them if we wanted to run this code in the browser. Let's see what that looks like.
+Wasmtime makes these WASI imports available by default, but we would have to make sure to provide them if we wanted to run this code in the browser. Let's see what that looks like.
 
 ## Hello World in the browser
 
-As with our simpler examples, our first step is to transpile to JS:
+As with our simpler examples, our first step is to transpile our "Hello World" Rust component to JavaScript:
 
 ```sh
 jco transpile rust/target/wasm32-wasip2/debug/rust.wasm --instantiation async -o rust_js
 ```
 
-We'll write just enough code to make the `println!` print via `console.log` bug otherwise provide stubs since we know they won't actually be called. For more complex programs, more of these will need actual implementations. While you can get a feeling for what you need by printing the WIT, viewing [the actual WIT files for WASI 0.2][wasi-wit] is recommended as they are better commented and give a better idea for what any implementations you write need to actually do.
+We'll write just enough code to make the `println!` print via `console.log` and otherwise provide stubs for the imports that won't be used. For more complex programs, more of these will need actual implementations. While you can get a feeling for what you need by printing the WIT, viewing [the actual WIT files for WASI 0.2][wasi-wit] is recommended as they are better commented and give a better idea for what any implementations you write need to actually do.
 
 ```html
 <script type="module">
@@ -678,9 +755,11 @@ c.run.run();
 </script>
 ```
 
+The generated code is good at throwing up an error for any unused imports, so it was fairly easy to follow the errors until everything was stubbed out.
+
 ## Creating a library using `wit-bindgen`
 
-While being able to run WASM binaries in different locations is very powerful, the main use case I tend to have for WASM is sharing code between the backend and frontend, so I'm more interested in how to create a shared library that can run in the browser, too.
+While being able to run Rust binaries as WASM is very cool, the main use case I tend to have for WASM is sharing code between the backend and frontend, so I'm more interested in how to create a shared library that can run in the browser, too.
 
 I've created a rather contrived WIT definition just to show off the ability to pass around more complex types; it looks like this:
 
@@ -851,7 +930,7 @@ impl exports::item_handling::Guest for Component {
 
 There is plenty of boilerplate to work through here. 
 
-Concrete types in the WIT definition are auto generated separate4ly for any imports and exports (so we end up with two `item` types here of the same shape, which I named `ImportedItem` and `ExportedItem`, since we both import and export this type). Resources and methods that are exported need their implementations to be defined, and we do that by implementing all of the generated traits. Imports are generated at the top level and can be called as needed (the implementations are provided by the host); we do that here when we call `bindings::set_items` to pull in a list of items from the host which we will use.
+Concrete types in the WIT definition are auto generated separately for any imports and exports (so we end up with two `item` types here of the same shape, which I named `ImportedItem` and `ExportedItem`, since we both import and export this type). Resources and methods that are exported need their implementations to be defined, and we do that by implementing all of the generated traits. Imports are generated at the top level and can be called as needed (the implementations are provided by the host); we do that here when we call `bindings::set_items` to pull in a list of items from the host which we will use.
 
 We use the same commands and approach that we are now familiar with to transpile this for JS; `wit-bindgen` and compiling to the `wasm32-wasip2` target handle the rest for us:
 
@@ -955,17 +1034,17 @@ Object { ty: "file", name: "Foo.txt" }
 
 This demonstrates that we've successfully passed complex types in and out of our WebAssembly component, where `wit-bindgen` has defined the correct ABI on the Rust side, and `jco` has transformed the WIT types to/from suitable JS types as needed.
 
-As with other components, we could also run this component in `wasmtime` if we plugged in some other component which satisfied the required import, but I'll leave that as an exercise for the reader.
+As with other components, we could also run this component in Wasmtime if we plugged in some other component which satisfied the required import, but I'll leave that as an exercise for the reader.
 
 # Further investigation
 
 There is still a lot that I have not looked into regarding WebAssembly components, but needs more exploration:
 
-1. If I create a resource in JavaScript, how do I then "drop" it to clean up when I no longer need it? Offhand I cannot see any explicit logic for this, and so it may be necessary to export a `consume`/`drop` method on any resource owned by the host (ie browser) to allow the host to clean up when done.
+1. If I create a resource in JavaScript, how do I then "drop" it to clean up when I no longer need it? Offhand I cannot see any explicit logic for this, and so we probably need to export a `consume`/`drop` method on any resource owned by the host (often the web browser) to allow the host to manually clean up when done.
 2. How large does the generated JavaScript get? `jco` generated ~6000loc of JavaScript for my simple example above. It is worth keeping an eye on this and taking steps to optimize it if possible.
-3. What is the performance like? Passing values from/to WebAssembly is inherently going to be less performant as they need to be converted to/from the shapes that the guest and host expect (ie strings are represented as utf16 in JavaScript and utf8 in Rust). WebAssembly Components introduce an intermediate ABI which means transforming types into this ABI representation and then from that into the target representation, likely adding extra overhead.
+3. What is the performance like? Passing values from/to WebAssembly is inherently going to be less performant as they need to be converted to/from the shapes that the guest and host expect (ie strings are represented as utf16 in JavaScript and utf8 in Rust). WebAssembly components introduce an intermediate ABI which means transforming types into this ABI representation and then from that into the target representation, likely adding extra overhead.
 4. Are there any competing approaches to pay more attention to? How long until we get WASI 1.0? I would always aim to keep the `wit-bindgen` layer as small as possible and separate from core logic so that it can be swapped with something else if needed in the future.
-5. Defining stub WIT interfaces in JavaScript is a bit of a pain, but also powerful as it gives you complete control. There are also shims available like [this one][wasi-shim] which are worth looking more into for real projects.
+5. Defining stub WIT interfaces in JavaScript is a bit cumbersome but also very flexible as it gives you complete control over what your WASM program is able to do. There are also shims available like [this one][wasi-shim] which are worth looking more into for real projects.
 
 # Final Thoughts
 
@@ -973,10 +1052,13 @@ We started small to explore how things are imported and exported to WebAssembly,
 
 While other approaches exist to share Rust code with the browser, such as `wasm-bindgen`, I am excited by WASI 0.2 and beyond as a standard way to have compelx interfaces between WebAssembly and native code. I could see this being very useful for instance in allowing WebAssembly based plugins to be written for some piece of software, or simply for sharing more complex native code between browser and backend (particularly if you're using languages like Rust which has great support for compiling to these new WebAssembly targets).
 
+Finally, thank you for reading!
+
 
 [wasmtime]: https://github.com/bytecodealliance/wasmtime
 [wasmer]: https://wasmer.io/
 [emscripten]: https://emscripten.org/
+[installing-node]: https://nodejs.org
 [installing-rust]: https://rust-lang.org/tools/install/
 [component-abi]: https://component-model.bytecodealliance.org/advanced/canonical-abi.html
 [wasi]: https://github.com/WebAssembly/WASI
